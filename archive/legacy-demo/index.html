@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>InsightUp</title>
+  <link rel="icon" type="image/x-icon" href="./InsightUpRmBg.ico" />
+  <link rel="stylesheet" href="./style.css?v=20260423-16" />
+  <link rel="stylesheet" href="./src/theme.css?v=20260423-14" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "@material/web/": "https://esm.run/@material/web/"
+      }
+    }
+  </script>
+  <script type="module">
+    import '@material/web/all.js';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+
+<body>
+  <header id="topbar" class="topbar">
+    <button id="brand-button" class="brand-button" type="button">
+      <img class="brand-icon" src="./InsightUpRmBg.ico" alt="" aria-hidden="true" />
+      <span class="brand-label">InsightUp</span>
+    </button>
+
+    <div class="topbar-actions">
+      <button id="header-theme-toggle" class="icon-button theme-toggle-button" type="button"
+        aria-label="Switch to dark mode">
+        <span class="material-symbols-outlined" aria-hidden="true">dark_mode</span>
+      </button>
+
+      <!-- theme controls moved to Profile Settings -->
+
+      <div id="user-menu-container" class="user-menu-container hidden">
+        <button id="user-menu-button" class="user-menu-button" type="button" aria-label="User menu">
+          <img id="user-avatar" class="user-avatar" alt="User avatar" />
+        </button>
+
+        <div id="user-dropdown" class="user-dropdown hidden">
+          <div class="user-dropdown-info">
+            <img id="dropdown-avatar" class="dropdown-avatar" alt="User avatar" />
+            <div class="user-dropdown-meta">
+              <div id="dropdown-name" class="dropdown-name">-</div>
+              <div id="dropdown-email" class="dropdown-email">-</div>
+            </div>
+          </div>
+
+          <button id="open-profile-button" class="dropdown-link" type="button">Profile Settings</button>
+          <button id="logout-button" class="dropdown-logout" type="button">Log Out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div id="guest-placeholder"></div>
+
+    <section id="home-view" class="home-view hidden">
+      <div class="home-header">
+        <div id="record-date" class="record-date">Latest record: -</div>
+        <md-filled-tonal-icon-button id="add-data-button" class="mw-add-button" type="button"
+          aria-label="Add InBody Record" title="Add InBody Record">
+          <md-icon>add</md-icon>
+        </md-filled-tonal-icon-button>
+      </div>
+
+      <section class="chart-card overview-card">
+        <div class="chart-card-header">
+          <div>
+            <h2 class="section-title">Body Composition Trends</h2>
+            <p class="section-subtitle chart-subtitle">
+              Info: included records only. Switch area and use the legend to compare metrics.
+            </p>
+          </div>
+        </div>
+
+        <div id="chart-view-switch" class="chart-view-switch" aria-label="Chart view switch"></div>
+
+        <div id="overview-chart-grid" class="chart-grid" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <!-- profile content is loaded dynamically from profile.html -->
+    <div id="profile-placeholder"></div>
+  </main>
+
+  <!-- Keep Material dialogs inside templates and mount them on first use to avoid hidden-control animation warnings. -->
+  <template id="add-data-dialog-template">
+    <md-dialog id="add-data-modal" class="mw-record-dialog" aria-label="Add InBody Record">
+      <div slot="headline" class="mw-dialog-headline">
+        <span id="modal-title">Add InBody Record</span>
+        <md-icon-button id="close-modal-button" class="mw-dialog-close" type="button" aria-label="Close dialog">
+          <md-icon>close</md-icon>
+        </md-icon-button>
+      </div>
+
+      <form id="add-data-form" class="data-form" slot="content" novalidate>
+        <div class="modal-body-scroll">
+          <div id="form-save-feedback" class="form-save-feedback hidden" role="alert" aria-live="assertive"></div>
+
+          <div class="form-grid">
+            <div class="form-field form-field-native form-field-span-2">
+              <label for="form-date">Date</label>
+              <input id="form-date" name="date" type="date" required />
+              <p id="form-date-support" class="field-support">Required. Used for history order and chart placement.</p>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-select id="form-source-type" name="sourceType" label="Source"
+                supporting-text="How this record entered the system.">
+                <md-select-option value="manual" selected>
+                  <div slot="headline">Manual entry</div>
+                </md-select-option>
+                <md-select-option value="photo_scan">
+                  <div slot="headline">Photo scan review</div>
+                </md-select-option>
+              </md-outlined-select>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-height" name="height" label="Height (cm)" type="number" step="0.1"
+                placeholder="170" no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-age" name="age" label="Age" type="number" step="1" placeholder="28"
+                no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-select id="form-gender" name="gender" label="Gender"
+                supporting-text="Optional. Helps contextualize score and composition.">
+                <md-select-option value="" selected>
+                  <div slot="headline">Unspecified</div>
+                </md-select-option>
+                <md-select-option value="male">
+                  <div slot="headline">Male</div>
+                </md-select-option>
+                <md-select-option value="female">
+                  <div slot="headline">Female</div>
+                </md-select-option>
+              </md-outlined-select>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-score" name="score" label="InBody Score" type="number" step="1" min="0"
+                max="100" placeholder="80" supporting-text="Optional. Usually shown on the InBody report."
+                no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-weight" name="weight" label="Weight (kg)" type="number" step="0.1"
+                min="10" max="400" placeholder="68.5" supporting-text="Required for a usable body composition record."
+                required no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-muscle" name="muscle" label="Skeletal Muscle Mass (kg)" type="number"
+                step="0.1" min="1" max="200" placeholder="31.2"
+                supporting-text="Required. Used for both overall and segmental comparisons." required
+                no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-fat" name="fat" label="Body Fat Mass (kg)" type="number" step="0.1"
+                min="0" max="200" placeholder="12.8" supporting-text="Required. Keep decimals if available." required
+                no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-fat-percent" name="fatPercent" label="Body Fat Percentage (%)"
+                type="number" step="0.1" min="0" max="100" placeholder="18.6"
+                supporting-text="Required. Enter the percentage shown on the report." required
+                no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-visceral-fat" name="visceralFatLevel" label="Visceral Fat Level"
+                type="number" step="1" min="0" max="30" placeholder="6"
+                supporting-text="Optional. Whole-number level only." no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-bmr" name="bmr" label="Basal Metabolic Rate" type="number" step="1"
+                min="500" max="5000" placeholder="1520" supporting-text="Optional. Calories burned at rest."
+                no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field">
+              <md-outlined-text-field id="form-calories" name="recommendedCalories" label="Recommended Calories"
+                type="number" step="1" min="500" max="8000" placeholder="2200"
+                supporting-text="Optional. Recommended daily calorie intake." no-spinner></md-outlined-text-field>
+            </div>
+
+            <div class="form-field form-field-span-2 form-switch-field">
+              <div class="switch-card">
+                <div class="switch-copy">
+                  <div class="switch-label">Include in chart analysis</div>
+                  <p class="switch-description">Keep suspicious measurements in history without forcing them into the
+                    chart.</p>
+                </div>
+                <md-switch id="form-include-in-charts" name="isIncludedInCharts"
+                  aria-label="Include record in chart analysis" selected icons show-only-selected-icon></md-switch>
+              </div>
+            </div>
+          </div>
+
+          <section class="segmental-section">
+            <div class="segmental-section-header">
+              <h4>Segmental Composition</h4>
+              <p>Optional. Any blank field will fall back to a derived estimate from the overall record values.</p>
+            </div>
+
+            <div class="segmental-grid">
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-left-arm-muscle" name="segmentLeftArmMuscle"
+                  label="Left Arm Muscle (kg)" type="number" step="0.01" min="0" max="50" placeholder="2.84"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-left-arm-fat" name="segmentLeftArmFat"
+                  label="Left Arm Fat (kg)" type="number" step="0.01" min="0" max="50" placeholder="0.60"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-right-arm-muscle" name="segmentRightArmMuscle"
+                  label="Right Arm Muscle (kg)" type="number" step="0.01" min="0" max="50" placeholder="3.15"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-right-arm-fat" name="segmentRightArmFat"
+                  label="Right Arm Fat (kg)" type="number" step="0.01" min="0" max="50" placeholder="0.50"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-trunk-muscle" name="segmentTrunkMuscle"
+                  label="Trunk Muscle (kg)" type="number" step="0.01" min="0" max="80" placeholder="23.70"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-trunk-fat" name="segmentTrunkFat" label="Trunk Fat (kg)"
+                  type="number" step="0.01" min="0" max="80" placeholder="5.90" supporting-text="Optional override."
+                  no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-left-leg-muscle" name="segmentLeftLegMuscle"
+                  label="Left Leg Muscle (kg)" type="number" step="0.01" min="0" max="60" placeholder="8.34"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-left-leg-fat" name="segmentLeftLegFat"
+                  label="Left Leg Fat (kg)" type="number" step="0.01" min="0" max="60" placeholder="1.90"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-right-leg-muscle" name="segmentRightLegMuscle"
+                  label="Right Leg Muscle (kg)" type="number" step="0.01" min="0" max="60" placeholder="8.37"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+
+              <div class="form-field">
+                <md-outlined-text-field id="form-segment-right-leg-fat" name="segmentRightLegFat"
+                  label="Right Leg Fat (kg)" type="number" step="0.01" min="0" max="60" placeholder="1.90"
+                  supporting-text="Optional override." no-spinner></md-outlined-text-field>
+              </div>
+            </div>
+          </section>
+        </div>
+      </form>
+
+      <div slot="actions" class="modal-actions">
+        <md-outlined-button id="cancel-modal-button" class="mw-modal-cancel" type="button">Cancel</md-outlined-button>
+        <md-filled-button id="submit-record-button" class="mw-modal-submit" type="submit" form="add-data-form">Save
+          Record</md-filled-button>
+      </div>
+    </md-dialog>
+  </template>
+
+  <script type="module" src="./app.js?v=20260423-7"></script>
+</body>
+
+</html>

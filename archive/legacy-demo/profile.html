@@ -1,0 +1,32 @@
+<!-- Profile fragment for dynamic loading into index.html -->
+<section id="profile-view" class="profile-page">
+    <div class="profile-header">
+        <md-filled-tonal-icon-button id="back-button" class="back-button mw-add-button mw-back-button" type="button"
+            aria-label="Back to home">
+            <md-icon>arrow_back</md-icon>
+        </md-filled-tonal-icon-button>
+    </div>
+
+    <section class="profile-card profile-summary-card">
+        <img id="profile-avatar" class="profile-avatar" alt="User avatar" />
+        <h1 id="profile-name">-</h1>
+        <p id="profile-email" class="profile-email">-</p>
+        <p id="profile-created" class="profile-meta">Created: -</p>
+    </section>
+
+    <section class="profile-card record-manager-card">
+        <div class="record-manager-header">
+            <div>
+                <h2 class="section-title">Chart Record Settings</h2>
+                <p class="section-subtitle">
+                    Review which records are included in chart analysis, edit saved values, or hide a record without
+                    deleting the entire history.
+                </p>
+            </div>
+            <div id="profile-chart-summary" class="profile-chart-summary">0 included / 0 excluded</div>
+        </div>
+
+        <div id="record-manager-empty" class="record-manager-empty hidden">No records yet.</div>
+        <div id="record-manager-list" class="record-manager-list" aria-live="polite"></div>
+    </section>
+</section>
