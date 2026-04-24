@@ -2,7 +2,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { LoginProductIntroModal } from "@/components/auth/login-product-intro-modal";
-import { Button } from "@/components/ui/button";
+import { LoginSignalBadges } from "@/components/auth/login-signal-badges";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface HomePageProps {
@@ -27,60 +27,42 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
 
   return (
-    <main className="relative mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-8 sm:px-6 sm:py-12 lg:px-10">
-      <section className="matte-panel brand-grid-lines relative w-full overflow-hidden rounded-[2rem] border border-border/70 px-4 py-6 shadow-panel sm:rounded-[2.25rem] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-        <div className="brand-motion-line brand-motion-line-left" />
-        <div className="brand-motion-line brand-motion-line-right" />
+    <main className="relative overflow-hidden bg-[radial-gradient(circle_at_top,rgba(121,215,195,0.16),transparent_0_24%),linear-gradient(180deg,#f7fbff_0%,#eef5f9_56%,#e8f1f7_100%)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_50%_0%,rgba(28,54,95,0.12),transparent_0_60%)]" />
 
-        <div className="relative z-10 mx-auto max-w-3xl space-y-8 text-center sm:space-y-9">
-          <div className="mx-auto inline-flex items-center gap-4 rounded-full border border-white/60 bg-white/72 px-4 py-3 shadow-[0_10px_22px_rgba(16,35,63,0.06)] sm:px-5">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+        <section className="animate-fade-up w-full max-w-xl rounded-[2rem] border border-[rgba(151,176,198,0.30)] bg-[rgba(255,255,255,0.78)] px-4 py-5 text-center shadow-[0_18px_40px_rgba(16,35,63,0.08)] backdrop-blur-[10px] sm:px-6 sm:py-7">
+          <div className="animate-fade-up-delay-1 mx-auto inline-flex items-center gap-3 rounded-full border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(247,251,255,0.86)_100%)] px-4 py-3 shadow-[0_12px_24px_rgba(16,35,63,0.06)] sm:gap-3.5 sm:px-4.5">
             <Image alt="InsightUp" className="size-12 rounded-full sm:size-14" height={56} priority src="/insightup-logo-rmbg.png" width={56} />
             <div className="text-left">
-              <p className="font-display text-3xl leading-none text-foreground sm:text-4xl">InsightUp</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground sm:text-xs">InBody tracker</p>
+              <p className="font-display text-[1.75rem] leading-none text-foreground sm:text-[2rem]">InsightUp</p>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground sm:text-[11px]">InBody tracker</p>
             </div>
           </div>
 
-          <div className="space-y-5">
-            <p className="brand-kicker justify-center">See deeper. Move upward.</p>
-            <h1 className="mx-auto max-w-3xl font-display text-4xl leading-[1.06] text-foreground sm:text-5xl lg:text-6xl">
-              看見變化，判斷下一步。
-            </h1>
-            <p className="mx-auto max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-              InsightUp 讓 InBody 紀錄變成更容易讀懂的趨勢畫面，把日常數據整理成真正能支持判斷的洞見。
-            </p>
+          <div className="animate-fade-up-delay-2 mt-5 flex items-center justify-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[var(--brand-navy-800)] sm:text-[0.76rem]">
+            <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgba(121,215,195,0.25),rgba(28,54,95,0.75))] sm:w-10" />
+            <p className="font-display text-center text-[0.82rem] tracking-[0.18em] sm:text-[0.88rem]">See Deeper, Move Upward</p>
+            <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgba(28,54,95,0.75),rgba(121,215,195,0.25))] sm:w-10" />
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <GoogleSignInButton nextPath="/dashboard" />
-            <LoginProductIntroModal />
-          </div>
+          <LoginSignalBadges />
 
-          <div className="grid gap-3 text-left sm:grid-cols-3" id="why-insightup">
-            <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-[0_8px_18px_rgba(16,35,63,0.05)]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Insight</p>
-              <p className="mt-3 font-display text-2xl text-foreground">單指標聚焦</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">每張卡片只處理一個 metric，趨勢判讀更快。</p>
-            </div>
-            <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-[0_8px_18px_rgba(16,35,63,0.05)]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Flow</p>
-              <p className="mt-3 font-display text-2xl text-foreground">Dashboard / Records 分工</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">前者專注讀趨勢，後者專注整理資料與納入規則。</p>
-            </div>
-            <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-[0_8px_18px_rgba(16,35,63,0.05)]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Evidence</p>
-              <p className="mt-3 font-display text-2xl text-foreground">保留歷史脈絡</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">排除圖表分析不等於刪除紀錄，資料仍然完整保存。</p>
-            </div>
+          <div className="animate-fade-up-delay-4 mt-5 grid gap-2.5 sm:max-w-md sm:mx-auto">
+            <GoogleSignInButton className="h-[46px] w-full justify-center rounded-[1.05rem] bg-[linear-gradient(135deg,#274979_0%,#315685_100%)] text-[0.94rem] shadow-[0_8px_16px_rgba(28,54,95,0.10)] hover:brightness-105" label="登入" nextPath="/dashboard" />
           </div>
 
           {authState === "failed" ? (
-            <div className="mx-auto max-w-xl rounded-[1.25rem] border border-[rgba(184,91,115,0.32)] bg-[rgba(184,91,115,0.10)] px-4 py-3 text-left text-sm leading-6 text-[#7d4158]">
+            <div className="mx-auto mt-4 max-w-md rounded-[1.1rem] border border-[rgba(184,91,115,0.32)] bg-[rgba(184,91,115,0.10)] px-4 py-3 text-left text-sm leading-6 text-[#7d4158]">
               <p>{authMessage ?? "登入失敗"}</p>
             </div>
           ) : null}
-        </div>
-      </section>
+
+          <div className="animate-fade-up-delay-5 mt-3 sm:max-w-md sm:mx-auto">
+            <LoginProductIntroModal triggerClassName="h-11 w-full justify-center rounded-[1.05rem] border-white/70 bg-white/84 text-[0.93rem]" />
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

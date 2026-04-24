@@ -9,9 +9,11 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 interface GoogleSignInButtonProps {
   nextPath?: string;
+  className?: string;
+  label?: string;
 }
 
-export function GoogleSignInButton({ nextPath = "/dashboard" }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ nextPath = "/dashboard", className, label = "使用 Google 開始使用" }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSignIn() {
@@ -38,9 +40,9 @@ export function GoogleSignInButton({ nextPath = "/dashboard" }: GoogleSignInButt
   }
 
   return (
-    <Button size="lg" onClick={handleSignIn} disabled={isLoading}>
+    <Button className={className} size="lg" onClick={handleSignIn} disabled={isLoading}>
       {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : null}
-      使用 Google 開始使用
+      {label}
     </Button>
   );
 }
