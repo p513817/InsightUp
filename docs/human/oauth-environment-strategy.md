@@ -12,8 +12,10 @@
 
 完整 callback URL 由以下規則組出：
 
-1. 優先使用 `NEXT_PUBLIC_SITE_URL`
-2. 如果沒有明確設定，退回目前頁面的 origin
+1. 如果目前正在瀏覽器內互動登入流程，優先使用目前頁面的 origin
+2. 如果沒有可用的目前 origin，退回 `NEXT_PUBLIC_SITE_URL`
+
+這樣可以避免本地開發時混用 `localhost` 和 `127.0.0.1`，導致 PKCE verifier cookie 寫在不同 host 上。
 
 ## 建議設定
 
@@ -24,6 +26,13 @@
 ```env
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 ```
+
+重要：實際開瀏覽器測試時，請固定只用同一種 host。
+
+- 如果 `.env.local` 寫 `127.0.0.1`，就用 `http://127.0.0.1:3000`
+- 如果你習慣用 `localhost`，就把 `NEXT_PUBLIC_SITE_URL` 改成 `http://localhost:3000`
+
+不要在同一輪 OAuth 流程中混用 `localhost` 和 `127.0.0.1`。
 
 ### Fly.io 正式環境
 

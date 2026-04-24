@@ -41,6 +41,9 @@
 如果是新的 Supabase 專案，先套用：
 
 - `infra/supabase/migrations/20260422_001_init.sql`
+- `infra/supabase/migrations/20260424_001_dashboard_preferences.sql`
+
+如果你已經跑過第一支 migration，但打開 dashboard 時看到 `PGRST205` / `Could not find the table 'public.user_dashboard_preferences' in the schema cache`，代表第二支 migration 還沒套用到目前這個 Supabase 專案。
 
 如果你要理解欄位與 RLS 設計，再看：
 
