@@ -19,10 +19,10 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isProfile = pathname === "/profile";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-[#f7f2e8]/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-white/45 bg-[rgba(237,244,248,0.94)]">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-10">
-        <div className="flex items-center justify-between gap-4">
-          <Link className="flex min-w-0 items-center gap-3" href="/dashboard">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          <Link className="flex min-w-0 max-w-full items-center gap-3 rounded-full border border-white/55 bg-white/72 px-3 py-2 shadow-[0_8px_18px_rgba(16,35,63,0.06)]" href="/dashboard">
             <Image alt="InsightUp" className="size-10 rounded-full sm:size-11" height={44} src="/insightup-logo-rmbg.png" width={44} />
             <div className="min-w-0">
               <p className="truncate font-display text-xl text-foreground">InsightUp</p>
@@ -30,16 +30,16 @@ export function AppHeader({ user }: AppHeaderProps) {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img alt={user.name} className="size-10 rounded-full border border-border object-cover sm:size-11" src={user.avatarUrl} />
             ) : (
-              <div className="flex size-10 items-center justify-center rounded-full border border-border bg-[#efe5d4] text-sm font-semibold text-foreground sm:size-11">
+              <div className="flex size-10 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.42),rgba(28,54,95,0.12))] text-sm font-semibold text-foreground sm:size-11">
                 {getUserInitials(user.name)}
               </div>
             )}
-            <div className="hidden text-right md:block">
+            <div className="hidden rounded-full border border-white/55 bg-white/72 px-4 py-2 text-right shadow-[0_8px_18px_rgba(16,35,63,0.06)] md:block">
               <p className="text-sm font-semibold text-foreground">{user.name}</p>
               <p className="text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
             </div>
@@ -47,7 +47,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-full border border-border/80 bg-card/70 p-1 sm:inline-flex sm:w-fit sm:self-center">
+        <div className="grid w-full grid-cols-2 gap-2 rounded-full border border-white/55 bg-white/74 p-1 shadow-[0_8px_18px_rgba(16,35,63,0.06)] sm:inline-flex sm:w-fit sm:self-center">
           <Button asChild size="sm" variant={isDashboard ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
             <Link href="/dashboard">
               <LayoutDashboard className="size-4" />

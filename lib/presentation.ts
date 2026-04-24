@@ -55,6 +55,19 @@ export function formatShortDate(value: string | null | undefined) {
   }).format(date);
 }
 
+export function formatCompactDate(value: string | null | undefined) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).format(date);
+}
+
 export function formatDecimal(value: number | null | undefined) {
   if (value == null || Number.isNaN(Number(value))) return "-";
   const numericValue = Number(value);
