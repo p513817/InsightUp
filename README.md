@@ -1,1 +1,1 @@
-# inbody270-report-scanner
+# InsightUp
