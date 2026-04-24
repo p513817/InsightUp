@@ -9,21 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#f4efe5",
-        foreground: "#1d2a24",
-        card: "#fffdf7",
-        border: "#d3c5ae",
+        background: "#edf4f8",
+        foreground: "#10233f",
+        card: "#f7fbff",
+        border: "#c7d8e6",
         primary: {
-          DEFAULT: "#1f6b52",
-          foreground: "#f8f6f0",
+          DEFAULT: "#1c365f",
+          foreground: "#f7fbff",
         },
         accent: {
-          DEFAULT: "#df8f5f",
-          foreground: "#1d2a24",
+          DEFAULT: "#79d7c3",
+          foreground: "#10233f",
         },
         muted: {
-          DEFAULT: "#e6ddd0",
-          foreground: "#5c645a",
+          DEFAULT: "#dde8f1",
+          foreground: "#61758f",
         },
       },
       fontFamily: {
@@ -31,7 +31,7 @@ const config: Config = {
         display: ["var(--font-display)"],
       },
       boxShadow: {
-        panel: "0 24px 80px rgba(54, 39, 18, 0.12)",
+        panel: "0 18px 44px rgba(16, 35, 63, 0.09)",
       },
       borderRadius: {
         xl: "1.25rem",
