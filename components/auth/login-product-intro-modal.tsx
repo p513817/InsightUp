@@ -32,7 +32,7 @@ export function LoginProductIntroModal() {
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Control</p>
               <p className="mt-3 font-display text-2xl text-foreground">管理資料脈絡</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Profile 集中處理新增、編輯與納入圖表規則，讓資料整理與趨勢閱讀清楚分工。
+                Records 集中處理新增、編輯與納入圖表規則，讓資料整理與趨勢閱讀清楚分工。
               </p>
             </div>
             <div className="rounded-[1.35rem] border border-border/70 bg-[linear-gradient(180deg,#fbfdff_0%,#f3f8fc_100%)] p-4">
@@ -49,7 +49,7 @@ export function LoginProductIntroModal() {
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">How It Works</p>
               <h3 className="font-display text-3xl text-foreground">從紀錄到判斷，流程保持單純。</h3>
               <p className="text-sm leading-7 text-muted-foreground">
-                先用 Profile 整理 InBody 紀錄，再進到 Dashboard 觀察趨勢。兩個頁面分工明確，能降低理解成本，也更符合日常使用節奏。
+                先用 Records 整理 InBody 紀錄，再進到 Dashboard 觀察趨勢。兩個頁面分工明確，能降低理解成本，也更符合日常使用節奏。
               </p>
             </div>
 

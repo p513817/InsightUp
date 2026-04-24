@@ -64,7 +64,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
             <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-[0_8px_18px_rgba(16,35,63,0.05)]">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Flow</p>
-              <p className="mt-3 font-display text-2xl text-foreground">Dashboard / Profile 分工</p>
+              <p className="mt-3 font-display text-2xl text-foreground">Dashboard / Records 分工</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">前者專注讀趨勢，後者專注整理資料與納入規則。</p>
             </div>
             <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-[0_8px_18px_rgba(16,35,63,0.05)]">
