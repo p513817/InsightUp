@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
-import { formatDecimal, formatLongDate, formatMetricValue } from "@/lib/presentation";
+import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/presentation";
 
 interface MiniTrendGridProps {
   chart: ChartPayload;
@@ -273,9 +273,9 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
 
                       const point = payload[0]?.payload as { date?: string; value?: number | null } | undefined;
                       return (
-                        <div className="rounded-2xl border border-white/70 bg-card/96 px-3 py-2 shadow-[0_8px_20px_rgba(16,35,63,0.08)]">
+                        <div className="rounded-xl border border-border bg-white px-3 py-2 shadow-panel">
                           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                            {formatLongDate(point?.date)}
+                            {formatChartDate(point?.date)}
                           </p>
                           <p className="mt-1 text-sm font-medium text-foreground">{formatMetricValue(metric, point?.value)}</p>
                         </div>

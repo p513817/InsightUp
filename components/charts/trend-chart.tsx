@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import type { ChartPayload } from "@/lib/inbody/types";
-import { formatLongDate, formatMetricValue } from "@/lib/presentation";
+import { formatChartDate, formatMetricValue } from "@/lib/presentation";
 
 interface TrendChartProps {
   chart: ChartPayload;
@@ -86,9 +86,9 @@ export function TrendChart({ chart }: TrendChartProps) {
                 }
 
                 return (
-                  <div className="min-w-52 rounded-3xl border border-border bg-card px-4 py-3 shadow-panel">
+                  <div className="min-w-52 rounded-2xl border border-border bg-card px-4 py-3 shadow-panel">
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                      {formatLongDate(String(label || payload[0]?.payload?.date || ""))}
+                      {formatChartDate(String(label || payload[0]?.payload?.date || ""))}
                     </p>
                     <div className="mt-3 space-y-2">
                       {payload.map((item) => {
