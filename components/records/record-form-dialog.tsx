@@ -109,6 +109,8 @@ function FieldShell({
 export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }: RecordFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const currentYear = new Date().getFullYear();
+  const sectionClassName =
+    "space-y-2.5 rounded-[1.25rem] border border-border/80 bg-[linear-gradient(180deg,#f8fbfe_0%,#eff5fa_100%)] p-4 sm:p-4.5";
   const controlClassName =
     "h-10 rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5 shadow-none placeholder:text-[#8092a8] focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const selectClassName =
@@ -147,161 +149,194 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3.5 sm:px-6 sm:py-4">
             <div className="grid gap-4">
-              <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <FieldShell error={form.formState.errors.date?.message} label="Date" required>
-                  <Controller
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => {
-                      const parts = splitDateParts(field.value);
-                      const earliestYear = Math.min(parts.year ? Number(parts.year) : currentYear, currentYear - 20);
-                      const yearOptions = Array.from(
-                        { length: currentYear - earliestYear + 1 },
-                        (_, index) => String(currentYear - index),
-                      );
-                      const monthOptions = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0"));
-                      const dayOptions = Array.from(
-                        { length: getDaysInMonth(parts.year, parts.month) },
-                        (_, index) => String(index + 1).padStart(2, "0"),
-                      );
+              <section className={sectionClassName}>
+                <div>
+                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Record Details</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">日期、來源與是否納入圖表分析先在這裡決定。</p>
+                </div>
 
-                      function updateDate(nextParts: Partial<typeof parts>) {
-                        field.onChange(buildDateValue({ ...parts, ...nextParts }));
-                      }
-
-                      return (
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-3 gap-2">
-                            <select
-                              className={selectClassName}
-                              onChange={(event) => updateDate({ year: event.target.value })}
-                              value={parts.year}
-                            >
-                              <option value="">Year</option>
-                              {yearOptions.map((optionYear) => (
-                                <option key={optionYear} value={optionYear}>
-                                  {optionYear}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              className={selectClassName}
-                              onChange={(event) => updateDate({ month: event.target.value })}
-                              value={parts.month}
-                            >
-                              <option value="">Month</option>
-                              {monthOptions.map((optionMonth) => (
-                                <option key={optionMonth} value={optionMonth}>
-                                  {optionMonth}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              className={selectClassName}
-                              onChange={(event) => updateDate({ day: event.target.value })}
-                              value={parts.day}
-                            >
-                              <option value="">Day</option>
-                              {dayOptions.map((optionDay) => (
-                                <option key={optionDay} value={optionDay}>
-                                  {optionDay}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                              className="h-8 rounded-full px-3 text-xs"
-                              onClick={() => field.onChange(getRelativeDateValue(0))}
-                              type="button"
-                              variant="outline"
-                            >
-                              Today
-                            </Button>
-                            <Button
-                              className="h-8 rounded-full px-3 text-xs"
-                              onClick={() => field.onChange(getRelativeDateValue(-1))}
-                              type="button"
-                              variant="outline"
-                            >
-                              Yesterday
-                            </Button>
-                            <p className="text-xs text-muted-foreground">
-                              {field.value ? field.value.replace(/-/g, "/") : "Choose measurement date"}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }}
-                  />
-                </FieldShell>
-
-                <FieldShell error={form.formState.errors.sourceType?.message} label="Source">
-                  <select className={selectClassName} {...form.register("sourceType")}>
-                    <option value="manual">Manual entry</option>
-                    <option value="photo_scan">Photo scan review</option>
-                  </select>
-                </FieldShell>
-
-                <FieldShell label="Include in chart">
-                  <div className="flex h-10 items-center justify-between rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5">
-                    <span className="text-sm text-foreground">Keep in chart analysis</span>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <FieldShell error={form.formState.errors.date?.message} label="Date" required>
                     <Controller
                       control={form.control}
-                      name="isIncludedInCharts"
-                      render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
-                    />
-                  </div>
-                </FieldShell>
+                      name="date"
+                      render={({ field }) => {
+                        const parts = splitDateParts(field.value);
+                        const earliestYear = Math.min(parts.year ? Number(parts.year) : currentYear, currentYear - 20);
+                        const yearOptions = Array.from(
+                          { length: currentYear - earliestYear + 1 },
+                          (_, index) => String(currentYear - index),
+                        );
+                        const monthOptions = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0"));
+                        const dayOptions = Array.from(
+                          { length: getDaysInMonth(parts.year, parts.month) },
+                          (_, index) => String(index + 1).padStart(2, "0"),
+                        );
 
-                <FieldShell error={form.formState.errors.height?.message} label="Height (cm)">
-                  <Input className={controlClassName} placeholder="170" step="0.1" type="number" {...form.register("height")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.age?.message} label="Age">
-                  <Input className={controlClassName} placeholder="29" step="1" type="number" {...form.register("age")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.gender?.message} label="Gender">
-                  <select className={selectClassName} {...form.register("gender")}>
-                    <option value="unknown">Unknown</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </FieldShell>
-                <FieldShell error={form.formState.errors.score?.message} label="InBody Score">
-                  <Input className={controlClassName} placeholder="81" step="1" type="number" {...form.register("score")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.weight?.message} label="Weight (kg)" required>
-                  <Input className={controlClassName} placeholder="66.1" step="0.1" type="number" {...form.register("weight")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.muscle?.message} label="Muscle (kg)" required>
-                  <Input className={controlClassName} placeholder="30.5" step="0.1" type="number" {...form.register("muscle")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.fat?.message} label="Fat (kg)" required>
-                  <Input className={controlClassName} placeholder="11.9" step="0.1" type="number" {...form.register("fat")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.fatPercent?.message} label="Fat Percentage (%)" required>
-                  <Input className={controlClassName} placeholder="18.0" step="0.1" type="number" {...form.register("fatPercent")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.visceralFatLevel?.message} label="Visceral Fat Level">
-                  <Input className={controlClassName} placeholder="6" step="1" type="number" {...form.register("visceralFatLevel")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.bmr?.message} label="BMR (kcal)">
-                  <Input className={controlClassName} placeholder="1508" step="1" type="number" {...form.register("bmr")} />
-                </FieldShell>
-                <FieldShell error={form.formState.errors.recommendedCalories?.message} label="Recommended Calories (kcal)">
-                  <Input className={controlClassName} placeholder="2140" step="1" type="number" {...form.register("recommendedCalories")} />
+                        function updateDate(nextParts: Partial<typeof parts>) {
+                          field.onChange(buildDateValue({ ...parts, ...nextParts }));
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-3 gap-2">
+                              <select
+                                className={selectClassName}
+                                onChange={(event) => updateDate({ year: event.target.value })}
+                                value={parts.year}
+                              >
+                                <option value="">Year</option>
+                                {yearOptions.map((optionYear) => (
+                                  <option key={optionYear} value={optionYear}>
+                                    {optionYear}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                className={selectClassName}
+                                onChange={(event) => updateDate({ month: event.target.value })}
+                                value={parts.month}
+                              >
+                                <option value="">Month</option>
+                                {monthOptions.map((optionMonth) => (
+                                  <option key={optionMonth} value={optionMonth}>
+                                    {optionMonth}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                className={selectClassName}
+                                onChange={(event) => updateDate({ day: event.target.value })}
+                                value={parts.day}
+                              >
+                                <option value="">Day</option>
+                                {dayOptions.map((optionDay) => (
+                                  <option key={optionDay} value={optionDay}>
+                                    {optionDay}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                className="h-8 rounded-full px-3 text-xs"
+                                onClick={() => field.onChange(getRelativeDateValue(0))}
+                                type="button"
+                                variant="outline"
+                              >
+                                Today
+                              </Button>
+                              <Button
+                                className="h-8 rounded-full px-3 text-xs"
+                                onClick={() => field.onChange(getRelativeDateValue(-1))}
+                                type="button"
+                                variant="outline"
+                              >
+                                Yesterday
+                              </Button>
+                              <p className="text-xs text-muted-foreground">
+                                {field.value ? field.value.replace(/-/g, "/") : "Choose measurement date"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                  </FieldShell>
+
+                  <FieldShell error={form.formState.errors.sourceType?.message} label="Source">
+                    <select className={selectClassName} {...form.register("sourceType")}>
+                      <option value="manual">Manual entry</option>
+                      <option value="photo_scan">Photo scan review</option>
+                    </select>
+                  </FieldShell>
+
+                  <FieldShell label="Include in chart">
+                    <div className="flex h-10 items-center justify-between rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5">
+                      <span className="text-sm text-foreground">Keep in chart analysis</span>
+                      <Controller
+                        control={form.control}
+                        name="isIncludedInCharts"
+                        render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
+                      />
+                    </div>
+                  </FieldShell>
+                </div>
+              </section>
+
+              <section className={sectionClassName}>
+                <div>
+                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Body Composition</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">核心量測值放一起，輸入時比較接近實際 InBody 閱讀順序。</p>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <FieldShell error={form.formState.errors.weight?.message} label="Weight (kg)" required>
+                    <Input className={controlClassName} placeholder="66.1" step="0.1" type="number" {...form.register("weight")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.muscle?.message} label="Muscle (kg)" required>
+                    <Input className={controlClassName} placeholder="30.5" step="0.1" type="number" {...form.register("muscle")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.fat?.message} label="Fat (kg)" required>
+                    <Input className={controlClassName} placeholder="11.9" step="0.1" type="number" {...form.register("fat")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.fatPercent?.message} label="Fat Percentage (%)" required>
+                    <Input className={controlClassName} placeholder="18.0" step="0.1" type="number" {...form.register("fatPercent")} />
+                  </FieldShell>
+                </div>
+              </section>
+
+              <section className={sectionClassName}>
+                <div>
+                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Additional Metrics</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">補充欄位放在次要區塊，避免主要量測值被稀釋。</p>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <FieldShell error={form.formState.errors.height?.message} label="Height (cm)">
+                    <Input className={controlClassName} placeholder="170" step="0.1" type="number" {...form.register("height")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.age?.message} label="Age">
+                    <Input className={controlClassName} placeholder="29" step="1" type="number" {...form.register("age")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.gender?.message} label="Gender">
+                    <select className={selectClassName} {...form.register("gender")}>
+                      <option value="unknown">Unknown</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.score?.message} label="InBody Score">
+                    <Input className={controlClassName} placeholder="81" step="1" type="number" {...form.register("score")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.visceralFatLevel?.message} label="Visceral Fat Level">
+                    <Input className={controlClassName} placeholder="6" step="1" type="number" {...form.register("visceralFatLevel")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.bmr?.message} label="BMR (kcal)">
+                    <Input className={controlClassName} placeholder="1508" step="1" type="number" {...form.register("bmr")} />
+                  </FieldShell>
+                  <FieldShell error={form.formState.errors.recommendedCalories?.message} label="Recommended Calories (kcal)">
+                    <Input className={controlClassName} placeholder="2140" step="1" type="number" {...form.register("recommendedCalories")} />
+                  </FieldShell>
+                </div>
+              </section>
+
+              <section className={sectionClassName}>
+                <div>
+                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Notes</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">補充測量狀態、含水量或任何需要回頭判讀的背景資訊。</p>
+                </div>
+
+                <FieldShell className="block" error={form.formState.errors.notes?.message} label="Notes">
+                  <Textarea className={textareaClassName} placeholder="Optional note about measurement conditions, hydration, or scan confidence." {...form.register("notes")} />
                 </FieldShell>
               </section>
 
-              <FieldShell className="block" error={form.formState.errors.notes?.message} label="Notes">
-                <Textarea className={textareaClassName} placeholder="Optional note about measurement conditions, hydration, or scan confidence." {...form.register("notes")} />
-              </FieldShell>
-
-              <section className="space-y-2.5 rounded-[1.4rem] border border-border/80 bg-[linear-gradient(180deg,#f8fbfe_0%,#eff5fa_100%)] p-4 sm:p-4.5">
+              <section className={sectionClassName}>
                 <div>
-                  <h3 className="font-display text-[1.6rem] text-foreground sm:text-[1.75rem]">Segmental Composition</h3>
+                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Segmental Composition</h3>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">只要填肌肉與脂肪數值，其餘比例會沿用推導結果。沒有填的欄位會使用整體數據推估值。</p>
                 </div>
 
