@@ -124,35 +124,25 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   if (mode === "dashboard") {
     return (
       <div className="space-y-4 sm:space-y-5">
-        <section className="matte-panel brand-grid-lines relative overflow-hidden rounded-[1.5rem] border border-border/70 px-4 py-4 shadow-panel sm:rounded-[1.75rem] sm:px-6 sm:py-5">
+        <section className="relative overflow-hidden rounded-[1.5rem] border border-border/45 bg-transparent px-4 py-4 sm:rounded-[1.75rem] sm:px-6 sm:py-5">
           <div className="brand-motion-line brand-motion-line-left" />
           <div className="brand-motion-line brand-motion-line-right" />
 
-          <div className="relative z-10 mx-auto max-w-5xl space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <p className="brand-kicker">Dashboard / Motion Grid</p>
-              <div>
-                <h1 className="font-display text-2xl text-foreground sm:text-3xl">Motion Grid</h1>
-                <p className="mt-1 text-sm leading-7 text-muted-foreground">
-                  拖曳卡片調整順序，右上角查看最近兩筆變化。
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-[1.25rem] border border-white/65 bg-white/76 p-3 shadow-[0_8px_18px_rgba(16,35,63,0.05)] sm:rounded-[1.4rem] sm:p-3.5">
+          <div className="relative z-10 mx-auto max-w-5xl">
+            <div className="rounded-[1.25rem] border border-white/45 bg-[rgba(255,255,255,0.28)] p-3 shadow-[0_6px_14px_rgba(16,35,63,0.035)] backdrop-blur-[6px] sm:rounded-[1.4rem] sm:p-3.5">
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.2fr_0.9fr_0.9fr]">
-                <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/88 px-3 py-3 sm:min-w-0">
+                <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.36)] px-3 py-3 backdrop-blur-[4px] sm:min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Latest Included</p>
                   <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
                     <span className="sm:hidden">{formatCompactDate(latestIncludedRecord?.date)}</span>
                     <span className="hidden sm:inline">{latestIncludedRecord ? formatLongDate(latestIncludedRecord.date) : "-"}</span>
                   </p>
                 </div>
-                <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3 sm:min-w-0">
+                <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] px-3 py-3 backdrop-blur-[4px] sm:min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
                   <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{includedCount}/{records.length || 0}</p>
                 </div>
-                <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3 sm:min-w-0">
+                <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] px-3 py-3 backdrop-blur-[4px] sm:min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Library</p>
                   <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{records.length}</p>
                 </div>
@@ -170,34 +160,24 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
 
   return (
     <div className="space-y-8">
-      <section className="matte-panel brand-grid-lines relative overflow-hidden rounded-[1.75rem] border border-border/70 p-5 shadow-panel sm:rounded-[2rem] sm:p-8">
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-border/45 bg-transparent p-5 sm:rounded-[2rem] sm:p-8">
         <div className="brand-motion-line brand-motion-line-left" />
         <div className="brand-motion-line brand-motion-line-right" />
 
-        <div className="relative z-10 mx-auto max-w-5xl space-y-3 sm:space-y-4">
-          <div className="space-y-2">
-            <p className="brand-kicker">Records / Library Control</p>
-            <div>
-              <h1 className="font-display text-2xl text-foreground sm:text-3xl">Record Library</h1>
-              <p className="mt-1 text-sm leading-7 text-muted-foreground">
-                新增、編輯並管理 InBody 紀錄，決定哪些資料進入分析，但不破壞完整歷史脈絡。
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-[1.25rem] border border-white/65 bg-white/76 p-3 shadow-[0_8px_18px_rgba(16,35,63,0.05)] sm:rounded-[1.4rem] sm:p-3.5">
+        <div className="relative z-10 mx-auto max-w-5xl">
+          <div className="rounded-[1.25rem] border border-white/45 bg-[rgba(255,255,255,0.28)] p-3 shadow-[0_6px_14px_rgba(16,35,63,0.035)] backdrop-blur-[6px] sm:rounded-[1.4rem] sm:p-3.5">
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]">
-              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/88 px-3 py-3 sm:min-w-0">
+              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.36)] px-3 py-3 backdrop-blur-[4px] sm:min-w-0">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Create</p>
                 <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">Add or revise</p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">把新的量測資料補進 library，維持時間軸完整。</p>
               </div>
-              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3 sm:min-w-0">
+              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] px-3 py-3 backdrop-blur-[4px] sm:min-w-0">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Control</p>
                 <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">Include rules</p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">決定哪些紀錄要進圖表，哪些只保留在資料庫。</p>
               </div>
-              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3 sm:min-w-0">
+              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] px-3 py-3 backdrop-blur-[4px] sm:min-w-0">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">History</p>
                 <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">Safe archive</p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">排除分析不等於刪除，所有判讀脈絡仍然保留。</p>

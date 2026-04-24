@@ -30,17 +30,14 @@ body {
   min-height: 100vh;
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(circle at 16% 18%, rgba(121, 215, 195, 0.18), transparent 0 24%),
-    radial-gradient(circle at 84% 12%, rgba(28, 54, 95, 0.14), transparent 0 28%),
-    linear-gradient(180deg, #f7fbff 0%, #edf4f8 48%, #e3edf5 100%);
+  background: #f4f8fb;
   color: var(--brand-navy-950);
   font-family: var(--font-body), sans-serif;
 }
 
 body::before,
 body::after {
-  content: "";
+  content: none;
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -48,17 +45,13 @@ body::after {
 }
 
 body::before {
-  inset: -8% -10%;
-  background:
-    radial-gradient(circle at 20% 26%, rgba(121, 215, 195, 0.18), transparent 0 18%),
-    radial-gradient(circle at 82% 18%, rgba(28, 54, 95, 0.08), transparent 0 20%);
+  inset: 0;
+  background: none;
 }
 
 body::after {
-  background:
-    linear-gradient(120deg, transparent 0 20%, rgba(121, 215, 195, 0.08) 25%, transparent 31%),
-    linear-gradient(132deg, transparent 60%, rgba(28, 54, 95, 0.05) 67%, transparent 74%);
-  opacity: 0.72;
+  background: none;
+  opacity: 0;
 }
 
 a {
@@ -77,23 +70,20 @@ textarea {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(rgba(16, 35, 63, 0.08) 0.7px, transparent 0.7px);
-  background-size: 16px 16px;
-  content: "";
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 75%);
+  background-image: none;
+  background-size: auto;
+  content: none;
+  mask-image: none;
 }
 
 .matte-panel {
-  background: linear-gradient(180deg, rgba(247, 251, 255, 0.88) 0%, rgba(236, 244, 249, 0.74) 100%);
-  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .brand-grid-lines {
-  background-image:
-    linear-gradient(to right, rgba(97, 117, 143, 0.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(97, 117, 143, 0.12) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-position: center;
+  background-image: none;
+  background-size: auto;
+  background-position: initial;
 }
 
 .brand-kicker {
@@ -140,11 +130,7 @@ textarea {
 }
 
 .brand-motion-line {
-  position: absolute;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(121, 215, 195, 0.95), rgba(28, 54, 95, 0.55), transparent);
-  opacity: 0.72;
+  display: none;
 }
 
 .brand-motion-line-left {
@@ -198,10 +184,6 @@ textarea {
 }
 
 @media (max-width: 640px) {
-  .matte-panel {
-    backdrop-filter: none;
-  }
-
   .brand-grid-lines {
     background-image:
       linear-gradient(to right, rgba(97, 117, 143, 0.06) 1px, transparent 1px),

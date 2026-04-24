@@ -306,12 +306,9 @@ export function RecordManager({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="font-display text-2xl text-foreground sm:text-3xl">{mode === "dashboard" ? "Record Library" : "Records"}</h2>
-          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-            共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。
-          </p>
-        </div>
+        <p className="text-sm leading-6 text-muted-foreground">
+          共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。
+        </p>
         <Button className="self-start sm:self-auto" onClick={onAdd}>
           <Plus className="size-4" />
           新增 InBody 紀錄
