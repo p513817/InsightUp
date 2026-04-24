@@ -42,21 +42,21 @@ const RECORD_SELECT = `
 `;
 
 const OVERALL_METRICS: ChartMetric[] = [
-  { key: "weight", label: "Weight", color: "#1f6b52", unit: "kg", axis: "mass" },
-  { key: "muscle", label: "Muscle", color: "#2559b3", unit: "kg", axis: "mass" },
-  { key: "fat", label: "Fat", color: "#d66b38", unit: "kg", axis: "mass" },
-  { key: "fatPercent", label: "Fat %", color: "#ab4f77", unit: "%", axis: "ratio" },
-  { key: "score", label: "InBody Score", color: "#7b8f2a", unit: "pt", axis: "ratio" },
-  { key: "visceralFatLevel", label: "Visceral Fat", color: "#b66d2c", unit: "lvl", axis: "ratio" },
-  { key: "bmr", label: "BMR", color: "#55656d", unit: "kcal", axis: "ratio" },
-  { key: "recommendedCalories", label: "Calories", color: "#6f4fa0", unit: "kcal", axis: "ratio" },
+  { key: "weight", label: "Weight", color: "#1c365f", unit: "kg", axis: "mass" },
+  { key: "muscle", label: "Muscle", color: "#3d7bb2", unit: "kg", axis: "mass" },
+  { key: "fat", label: "Fat", color: "#b56878", unit: "kg", axis: "mass" },
+  { key: "fatPercent", label: "Fat %", color: "#8a659f", unit: "%", axis: "ratio" },
+  { key: "score", label: "InBody Score", color: "#79d7c3", unit: "pt", axis: "ratio" },
+  { key: "visceralFatLevel", label: "Visceral Fat", color: "#5e88a7", unit: "lvl", axis: "ratio" },
+  { key: "bmr", label: "BMR", color: "#71839a", unit: "kcal", axis: "ratio" },
+  { key: "recommendedCalories", label: "Calories", color: "#4d67a8", unit: "kcal", axis: "ratio" },
 ];
 
 const SEGMENTAL_METRICS: ChartMetric[] = [
-  { key: "muscle", label: "Muscle", color: "#2559b3", unit: "kg", axis: "mass" },
-  { key: "fat", label: "Fat", color: "#d66b38", unit: "kg", axis: "mass" },
-  { key: "muscleRatio", label: "Muscle Ratio", color: "#1f6b52", unit: "%", axis: "ratio" },
-  { key: "fatRatio", label: "Fat Ratio", color: "#ab4f77", unit: "%", axis: "ratio" },
+  { key: "muscle", label: "Muscle", color: "#3d7bb2", unit: "kg", axis: "mass" },
+  { key: "fat", label: "Fat", color: "#b56878", unit: "kg", axis: "mass" },
+  { key: "muscleRatio", label: "Muscle Ratio", color: "#79d7c3", unit: "%", axis: "ratio" },
+  { key: "fatRatio", label: "Fat Ratio", color: "#8a659f", unit: "%", axis: "ratio" },
 ];
 
 export function createSegmentalDataFromRecord(record: Partial<RecordInput>): SegmentMap {
