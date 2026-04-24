@@ -20,8 +20,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-Hant">
-      <body className={`${fontDisplay.variable} ${fontBody.variable} grain-overlay`}>
+    <html lang="zh-Hant" suppressHydrationWarning>
+      <body className={`${fontDisplay.variable} ${fontBody.variable} grain-overlay`} suppressHydrationWarning>
         {children}
         <Toaster position="top-right" richColors />
       </body>

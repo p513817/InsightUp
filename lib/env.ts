@@ -18,7 +18,7 @@ export function getSupabaseEnv() {
 }
 
 export function getSiteUrl(fallbackOrigin?: string) {
-  return normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL || fallbackOrigin || "http://127.0.0.1:3000");
+  return normalizeOrigin(fallbackOrigin || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:5500");
 }
 
 export function getOAuthRedirectUrl(fallbackOrigin?: string) {
