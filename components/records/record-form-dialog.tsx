@@ -25,6 +25,62 @@ interface RecordFormDialogProps {
   onSubmit: (values: RecordFormValues) => Promise<void>;
 }
 
+function splitDateParts(value: string | null | undefined) {
+  if (!value) {
+    return { year: "", month: "", day: "" };
+  }
+
+  const matchedParts = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (matchedParts) {
+    return {
+      year: matchedParts[1],
+      month: matchedParts[2],
+      day: matchedParts[3],
+    };
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { year: "", month: "", day: "" };
+  }
+
+  return {
+    year: String(date.getFullYear()),
+    month: String(date.getMonth() + 1).padStart(2, "0"),
+    day: String(date.getDate()).padStart(2, "0"),
+  };
+}
+
+function getDaysInMonth(year: string, month: string) {
+  if (!year || !month) {
+    return 31;
+  }
+
+  return new Date(Number(year), Number(month), 0).getDate();
+}
+
+function buildDateValue(parts: { year: string; month: string; day: string }) {
+  const { year, month, day } = parts;
+  if (!year || !month || !day) {
+    return "";
+  }
+
+  const safeDay = Math.min(Number(day), getDaysInMonth(year, month));
+  return `${year}-${month}-${String(safeDay).padStart(2, "0")}`;
+}
+
+function getRelativeDateValue(offsetDays = 0) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + offsetDays);
+
+  return [
+    String(date.getFullYear()),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function FieldShell({
   children,
   label,
@@ -52,6 +108,7 @@ function FieldShell({
 
 export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }: RecordFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const currentYear = new Date().getFullYear();
   const controlClassName =
     "h-10 rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5 shadow-none placeholder:text-[#8092a8] focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const selectClassName =
@@ -92,7 +149,92 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
             <div className="grid gap-4">
               <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 <FieldShell error={form.formState.errors.date?.message} label="Date" required>
-                  <Input className={controlClassName} type="date" {...form.register("date")} />
+                  <Controller
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => {
+                      const parts = splitDateParts(field.value);
+                      const earliestYear = Math.min(parts.year ? Number(parts.year) : currentYear, currentYear - 20);
+                      const yearOptions = Array.from(
+                        { length: currentYear - earliestYear + 1 },
+                        (_, index) => String(currentYear - index),
+                      );
+                      const monthOptions = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0"));
+                      const dayOptions = Array.from(
+                        { length: getDaysInMonth(parts.year, parts.month) },
+                        (_, index) => String(index + 1).padStart(2, "0"),
+                      );
+
+                      function updateDate(nextParts: Partial<typeof parts>) {
+                        field.onChange(buildDateValue({ ...parts, ...nextParts }));
+                      }
+
+                      return (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-3 gap-2">
+                            <select
+                              className={selectClassName}
+                              onChange={(event) => updateDate({ year: event.target.value })}
+                              value={parts.year}
+                            >
+                              <option value="">Year</option>
+                              {yearOptions.map((optionYear) => (
+                                <option key={optionYear} value={optionYear}>
+                                  {optionYear}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              className={selectClassName}
+                              onChange={(event) => updateDate({ month: event.target.value })}
+                              value={parts.month}
+                            >
+                              <option value="">Month</option>
+                              {monthOptions.map((optionMonth) => (
+                                <option key={optionMonth} value={optionMonth}>
+                                  {optionMonth}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              className={selectClassName}
+                              onChange={(event) => updateDate({ day: event.target.value })}
+                              value={parts.day}
+                            >
+                              <option value="">Day</option>
+                              {dayOptions.map((optionDay) => (
+                                <option key={optionDay} value={optionDay}>
+                                  {optionDay}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              className="h-8 rounded-full px-3 text-xs"
+                              onClick={() => field.onChange(getRelativeDateValue(0))}
+                              type="button"
+                              variant="outline"
+                            >
+                              Today
+                            </Button>
+                            <Button
+                              className="h-8 rounded-full px-3 text-xs"
+                              onClick={() => field.onChange(getRelativeDateValue(-1))}
+                              type="button"
+                              variant="outline"
+                            >
+                              Yesterday
+                            </Button>
+                            <p className="text-xs text-muted-foreground">
+                              {field.value ? field.value.replace(/-/g, "/") : "Choose measurement date"}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
                 </FieldShell>
 
                 <FieldShell error={form.formState.errors.sourceType?.message} label="Source">
