@@ -40,7 +40,7 @@ export function GoogleSignInButton({ nextPath = "/dashboard" }: GoogleSignInButt
   return (
     <Button size="lg" onClick={handleSignIn} disabled={isLoading}>
       {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : null}
-      使用 Google 登入
+      使用 Google 開始使用
     </Button>
   );
 }
