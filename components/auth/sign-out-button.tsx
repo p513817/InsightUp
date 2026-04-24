@@ -21,7 +21,7 @@ export function SignOutButton() {
   return (
     <Button variant="ghost" onClick={handleSignOut} disabled={isLoading}>
       {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <LogOut className="size-4" />}
-      登出
+      <span className="hidden sm:inline">登出</span>
     </Button>
   );
 }

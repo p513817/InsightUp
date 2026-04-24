@@ -83,6 +83,16 @@ create table public.inbody_segments (
   constraint inbody_segments_fat_ratio_check check (fat_ratio is null or fat_ratio >= 0)
 );
 
+create table public.user_dashboard_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  metric_order text[] not null default '{}'::text[],
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint user_dashboard_preferences_metric_order_limit check (
+    coalesce(array_length(metric_order, 1), 0) <= 24
+  )
+);
+
 create index inbody_records_user_recorded_at_idx
   on public.inbody_records (user_id, recorded_at desc)
   where deleted_at is null;
@@ -107,6 +117,11 @@ before update on public.inbody_segments
 for each row
 execute function public.set_updated_at();
 
+create trigger set_user_dashboard_preferences_updated_at
+before update on public.user_dashboard_preferences
+for each row
+execute function public.set_updated_at();
+
 create or replace view public.active_inbody_records as
 select *
 from public.inbody_records
@@ -114,6 +129,7 @@ where deleted_at is null;
 
 alter table public.inbody_records enable row level security;
 alter table public.inbody_segments enable row level security;
+alter table public.user_dashboard_preferences enable row level security;
 
 create policy "Users can view their own records"
 on public.inbody_records
@@ -193,6 +209,22 @@ using (
   )
 );
 
+create policy "Users can view their own dashboard preferences"
+on public.user_dashboard_preferences
+for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own dashboard preferences"
+on public.user_dashboard_preferences
+for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update their own dashboard preferences"
+on public.user_dashboard_preferences
+for update
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
 comment on table public.inbody_records is
 'User-owned InBody records. Supports manual entry, photo scan, chart inclusion, and soft deletion.';
 
@@ -204,5 +236,8 @@ comment on column public.inbody_records.deleted_at is
 
 comment on table public.inbody_segments is
 'Per-body-part composition values attached to an InBody record.';
+
+comment on table public.user_dashboard_preferences is
+'User-owned dashboard UI preferences such as metric card order.';
 
 commit;

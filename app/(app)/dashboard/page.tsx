@@ -1,3 +1,4 @@
+import { getDashboardMetricOrder } from "@/lib/dashboard-preferences";
 import { RecordsWorkspace } from "@/components/workspace/records-workspace";
 import { listRecords } from "@/lib/inbody/records";
 import { summarizeUser } from "@/lib/presentation";
@@ -14,6 +15,14 @@ export default async function DashboardPage() {
   }
 
   const records = await listRecords(supabase, user.id);
+  const metricOrder = await getDashboardMetricOrder(supabase, user.id);
 
-  return <RecordsWorkspace initialRecords={records} mode="dashboard" user={summarizeUser(user)} />;
+  return (
+    <RecordsWorkspace
+      initialDashboardMetricOrder={metricOrder}
+      initialRecords={records}
+      mode="dashboard"
+      user={summarizeUser(user)}
+    />
+  );
 }

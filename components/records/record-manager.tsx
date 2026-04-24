@@ -34,11 +34,9 @@ export function RecordManager({
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-3xl text-foreground">
-            {mode === "dashboard" ? "Record Library" : "Chart Record Settings"}
-          </h2>
+          <h2 className="font-display text-3xl text-foreground">{mode === "dashboard" ? "Record Library" : "Records"}</h2>
           <p className="mt-2 text-sm leading-7 text-muted-foreground">
-            共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。可在這裡快速編輯、排除或軟刪除紀錄。
+            共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。
           </p>
         </div>
         <Button onClick={onAdd}>
