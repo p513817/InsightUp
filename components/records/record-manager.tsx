@@ -11,7 +11,7 @@ import { formatLongDate, formatSourceType, formatDecimal } from "@/lib/presentat
 interface RecordManagerProps {
   records: InbodyRecord[];
   busyRecordId: string | null;
-  mode: "dashboard" | "profile";
+  mode: "dashboard" | "records";
   onAdd: () => void;
   onEdit: (record: InbodyRecord) => void;
   onDelete: (record: InbodyRecord) => Promise<void>;

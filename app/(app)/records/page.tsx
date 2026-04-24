@@ -1,9 +1,8 @@
-import { getDashboardMetricOrder } from "@/lib/dashboard-preferences";
 import { RecordsWorkspace } from "@/components/workspace/records-workspace";
 import { listRecords } from "@/lib/inbody/records";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export default async function DashboardPage() {
+export default async function RecordsPage() {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -14,7 +13,6 @@ export default async function DashboardPage() {
   }
 
   const records = await listRecords(supabase, user.id);
-  const metricOrder = await getDashboardMetricOrder(supabase, user.id);
 
-  return <RecordsWorkspace initialDashboardMetricOrder={metricOrder} initialRecords={records} mode="dashboard" />;
+  return <RecordsWorkspace initialRecords={records} mode="records" />;
 }

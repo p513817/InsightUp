@@ -3,11 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UserRound } from "lucide-react";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Files, LayoutDashboard } from "lucide-react";
+import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
 import type { AppUserSummary } from "@/lib/presentation";
-import { getUserInitials } from "@/lib/presentation";
 
 interface AppHeaderProps {
   user: AppUserSummary;
@@ -16,7 +15,7 @@ interface AppHeaderProps {
 export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
   const isDashboard = pathname === "/dashboard";
-  const isProfile = pathname === "/profile";
+  const isRecords = pathname === "/records" || pathname === "/profile";
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/45 bg-[rgba(237,244,248,0.94)]">
@@ -31,19 +30,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           </Link>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img alt={user.name} className="size-10 rounded-full border border-border object-cover sm:size-11" src={user.avatarUrl} />
-            ) : (
-              <div className="flex size-10 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.42),rgba(28,54,95,0.12))] text-sm font-semibold text-foreground sm:size-11">
-                {getUserInitials(user.name)}
-              </div>
-            )}
-            <div className="hidden rounded-full border border-white/55 bg-white/72 px-4 py-2 text-right shadow-[0_8px_18px_rgba(16,35,63,0.06)] md:block">
-              <p className="text-sm font-semibold text-foreground">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
-            </div>
-            <SignOutButton />
+            <AccountMenu user={user} />
           </div>
         </div>
 
@@ -54,10 +41,10 @@ export function AppHeader({ user }: AppHeaderProps) {
               Dashboard
             </Link>
           </Button>
-          <Button asChild size="sm" variant={isProfile ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
-            <Link href="/profile">
-              <UserRound className="size-4" />
-              Profile
+          <Button asChild size="sm" variant={isRecords ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
+            <Link href="/records">
+              <Files className="size-4" />
+              Records
             </Link>
           </Button>
         </div>

@@ -8,14 +8,12 @@ import { RecordManager } from "@/components/records/record-manager";
 import { buildChartPayload, getLatestIncludedRecord } from "@/lib/inbody/records";
 import { type RecordFormValues } from "@/lib/inbody/schema";
 import { type InbodyRecord } from "@/lib/inbody/types";
-import type { AppUserSummary } from "@/lib/presentation";
-import { formatCompactDate, formatLongDate, formatRecordCountLabel, getUserInitials } from "@/lib/presentation";
+import { formatCompactDate, formatLongDate } from "@/lib/presentation";
 
 interface RecordsWorkspaceProps {
   initialDashboardMetricOrder?: string[];
   initialRecords: InbodyRecord[];
-  mode: "dashboard" | "profile";
-  user: AppUserSummary;
+  mode: "dashboard" | "records";
 }
 
 async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
@@ -39,7 +37,7 @@ function sortRecords(records: InbodyRecord[]) {
   return [...records].sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
 }
 
-export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialRecords, mode, user }: RecordsWorkspaceProps) {
+export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialRecords, mode }: RecordsWorkspaceProps) {
   const [records, setRecords] = useState(sortRecords(initialRecords));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
@@ -176,87 +174,33 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
         <div className="brand-motion-line brand-motion-line-left" />
         <div className="brand-motion-line brand-motion-line-right" />
 
-        <div className="relative z-10 space-y-5 sm:hidden">
-          <div className="space-y-3">
-            <p className="brand-kicker">Profile / Record Control</p>
-            <div className="flex items-center gap-3">
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img alt={user.name} className="size-12 rounded-full border border-border object-cover shadow-[0_4px_12px_rgba(16,35,63,0.08)]" src={user.avatarUrl} />
-              ) : (
-                <div className="flex size-12 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.42),rgba(28,54,95,0.12))] text-sm font-semibold text-foreground shadow-[0_4px_12px_rgba(16,35,63,0.08)]">
-                  {getUserInitials(user.name)}
-                </div>
-              )}
-              <div className="min-w-0">
-                <h1 className="break-words font-display text-[clamp(1.95rem,8vw,2.5rem)] leading-[1.08] text-foreground">{user.name}</h1>
-                <p className="truncate text-sm text-muted-foreground">{user.email || "Signed in with Google"}</p>
-              </div>
+        <div className="relative z-10 mx-auto max-w-5xl space-y-3 sm:space-y-4">
+          <div className="space-y-2">
+            <p className="brand-kicker">Records / Library Control</p>
+            <div>
+              <h1 className="font-display text-2xl text-foreground sm:text-3xl">Record Library</h1>
+              <p className="mt-1 text-sm leading-7 text-muted-foreground">
+                新增、編輯並管理 InBody 紀錄，決定哪些資料進入分析，但不破壞完整歷史脈絡。
+              </p>
             </div>
-            <p className="max-w-[34ch] text-sm leading-7 text-muted-foreground">
-              新增、編輯並管理納入圖表的紀錄，同時保留完整歷史脈絡。
-            </p>
-          </div>
-
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/65 bg-white/82 px-3 py-3 shadow-[0_6px_16px_rgba(16,35,63,0.04)]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Latest Included</p>
-              <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{formatCompactDate(latestIncludedRecord?.date)}</p>
-            </div>
-            <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/65 bg-white/76 px-3 py-3 shadow-[0_6px_16px_rgba(16,35,63,0.04)]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{includedCount}/{records.length || 0}</p>
-            </div>
-            <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/65 bg-white/76 px-3 py-3 shadow-[0_6px_16px_rgba(16,35,63,0.04)]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Library</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{records.length}</p>
-            </div>
-            <div className="min-w-[7.25rem] shrink-0 rounded-[1rem] border border-white/65 bg-white/76 px-3 py-3 shadow-[0_6px_16px_rgba(16,35,63,0.04)]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Joined</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{formatCompactDate(user.createdAt)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10 hidden flex-col gap-5 sm:flex">
-          <div className="space-y-4">
-            <p className="brand-kicker">Profile / Record Control</p>
-            <div className="flex items-start gap-4 sm:items-center">
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img alt={user.name} className="size-14 rounded-full border border-border object-cover shadow-[0_6px_16px_rgba(16,35,63,0.10)]" src={user.avatarUrl} />
-              ) : (
-                <div className="flex size-14 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.42),rgba(28,54,95,0.12))] text-base font-semibold text-foreground shadow-[0_6px_16px_rgba(16,35,63,0.10)]">
-                  {getUserInitials(user.name)}
-                </div>
-              )}
-              <div className="min-w-0 space-y-1">
-                <h1 className="break-words font-display text-[clamp(2rem,8.5vw,2.75rem)] leading-tight text-foreground">{user.name}</h1>
-                <p className="break-all text-sm leading-7 text-muted-foreground">{user.email || "Signed in with Google"}</p>
-              </div>
-            </div>
-            <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
-              這裡是你的紀錄控制台。可以新增與編輯資料、管理圖表納入狀態，並保留完整歷史而不破壞分析脈絡。
-            </p>
           </div>
 
           <div className="rounded-[1.25rem] border border-white/65 bg-white/76 p-3 shadow-[0_8px_18px_rgba(16,35,63,0.05)] sm:rounded-[1.4rem] sm:p-3.5">
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-[1rem] border border-white/70 bg-white/88 px-3 py-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Latest Included</p>
-                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{latestIncludedRecord ? formatLongDate(latestIncludedRecord.date) : "-"}</p>
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]">
+              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/88 px-3 py-3 sm:min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Create</p>
+                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">Add or revise</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">把新的量測資料補進 library，維持時間軸完整。</p>
               </div>
-              <div className="rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
-                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{includedCount}/{records.length || 0}</p>
+              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3 sm:min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Control</p>
+                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">Include rules</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">決定哪些紀錄要進圖表，哪些只保留在資料庫。</p>
               </div>
-              <div className="rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Library</p>
-                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{formatRecordCountLabel(records.length)}</p>
-              </div>
-              <div className="rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Joined</p>
-                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground">{formatLongDate(user.createdAt)}</p>
+              <div className="min-w-[8.75rem] shrink-0 rounded-[1rem] border border-white/70 bg-white/84 px-3 py-3 sm:min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">History</p>
+                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">Safe archive</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">排除分析不等於刪除，所有判讀脈絡仍然保留。</p>
               </div>
             </div>
           </div>
