@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 
+const withOpacity = (variableName: string) => `rgb(var(${variableName}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -9,21 +11,40 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#edf4f8",
-        foreground: "#10233f",
-        card: "#f7fbff",
-        border: "#c7d8e6",
+        background: withOpacity("--background"),
+        foreground: withOpacity("--foreground"),
+        card: withOpacity("--card"),
+        "card-foreground": withOpacity("--card-foreground"),
+        surface: withOpacity("--surface"),
+        "surface-alt": withOpacity("--surface-alt"),
+        border: withOpacity("--border"),
+        input: withOpacity("--input"),
+        ring: withOpacity("--ring"),
         primary: {
-          DEFAULT: "#1c365f",
-          foreground: "#f7fbff",
+          DEFAULT: withOpacity("--primary"),
+          strong: withOpacity("--primary-strong"),
+          foreground: withOpacity("--primary-foreground"),
         },
         accent: {
-          DEFAULT: "#79d7c3",
-          foreground: "#10233f",
+          DEFAULT: withOpacity("--accent"),
+          strong: withOpacity("--accent-strong"),
+          foreground: withOpacity("--accent-foreground"),
         },
         muted: {
-          DEFAULT: "#dde8f1",
-          foreground: "#61758f",
+          DEFAULT: withOpacity("--muted"),
+          foreground: withOpacity("--muted-foreground"),
+        },
+        success: withOpacity("--success"),
+        warning: withOpacity("--warning"),
+        danger: withOpacity("--danger"),
+        chart: {
+          weight: withOpacity("--chart-weight"),
+          muscle: withOpacity("--chart-muscle"),
+          fat: withOpacity("--chart-fat"),
+          "fat-percent": withOpacity("--chart-fat-percent"),
+          score: withOpacity("--chart-score"),
+          bmr: withOpacity("--chart-bmr"),
+          calories: withOpacity("--chart-calories"),
         },
       },
       fontFamily: {

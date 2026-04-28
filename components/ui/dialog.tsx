@@ -16,7 +16,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn("dialog-overlay fixed inset-0 z-50 bg-[rgba(16,35,63,0.22)] backdrop-blur-[3px]", className)}
+    className={cn("dialog-overlay fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.24)] backdrop-blur-[3px]", className)}
     {...props}
   />
 ));
@@ -31,13 +31,13 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-border/70 bg-white shadow-panel",
+        "dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-border/70 bg-card shadow-panel",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogClose className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-[rgba(121,215,195,0.18)] hover:text-foreground">
+      <DialogClose className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent/18 hover:text-foreground">
         <X className="size-4" />
         <span className="sr-only">Close</span>
       </DialogClose>

@@ -9,14 +9,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[linear-gradient(135deg,#1c365f_0%,#2b5388_100%)] px-5 text-primary-foreground shadow-[0_10px_20px_rgba(28,54,95,0.14)] hover:-translate-y-px hover:brightness-110",
+          "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] px-5 text-primary-foreground shadow-[0_10px_20px_rgba(23,52,93,0.18)] hover:-translate-y-px hover:brightness-110",
         outline:
-          "border border-border bg-white/70 px-5 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:border-accent/60 hover:bg-[rgba(121,215,195,0.14)]",
+          "border border-border bg-card/88 px-5 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.62)] hover:border-accent/60 hover:bg-accent/12",
         secondary:
-          "bg-[linear-gradient(135deg,rgba(121,215,195,0.88),rgba(184,238,227,0.95))] px-5 text-[#10233f] hover:brightness-105",
-        ghost: "px-3 text-muted-foreground hover:bg-[rgba(28,54,95,0.08)] hover:text-foreground",
+          "bg-[linear-gradient(135deg,rgb(var(--accent))_0%,rgb(var(--brand-mint-300))_100%)] px-5 text-accent-foreground shadow-[0_10px_20px_rgba(63,175,154,0.16)] hover:brightness-105",
+        ghost: "px-3 text-muted-foreground hover:bg-primary/8 hover:text-foreground",
         destructive:
-          "bg-[linear-gradient(135deg,#b85b73_0%,#a34761_100%)] px-5 text-white shadow-[0_10px_18px_rgba(184,91,115,0.16)] hover:brightness-105",
+          "bg-[linear-gradient(135deg,rgb(var(--danger))_0%,rgb(163,71,97)_100%)] px-5 text-white shadow-[0_10px_18px_rgba(184,91,115,0.18)] hover:brightness-105",
       },
       size: {
         default: "h-11",
