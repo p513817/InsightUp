@@ -124,7 +124,8 @@ before update on public.inbody_segments
 for each row
 execute function public.set_updated_at();
 
-create or replace view public.active_inbody_records as
+create or replace view public.active_inbody_records
+with (security_invoker = on) as
 select *
 from public.inbody_records
 where deleted_at is null;

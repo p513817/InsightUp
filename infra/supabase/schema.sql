@@ -274,7 +274,8 @@ as $$
   order by coalesce(latest.recorded_at::timestamptz, f.created_at) desc, p.display_name asc;
 $$;
 
-create or replace view public.active_inbody_records as
+create or replace view public.active_inbody_records
+with (security_invoker = on) as
 select *
 from public.inbody_records
 where deleted_at is null;
