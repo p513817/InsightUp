@@ -113,10 +113,6 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
           </Button>
         </div>
 
-        <div className="space-y-2">
-          <h2 className="font-display text-[1.3rem] leading-tight text-foreground sm:text-[1.55rem]">Friends List</h2>
-        </div>
-
         <FriendsTable busyFriendId={busyFriendId} friends={friends} onRemove={handleRemoveFriend} />
       </section>
 
