@@ -13,7 +13,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { LoaderCircle, PencilLine, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, LoaderCircle, PencilLine, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,6 @@ interface MobileRecordCardProps {
   heroColumns: MobileRecordColumn[];
   trailingColumns: MobileRecordColumn[];
   metricColumns: MobileRecordColumn[];
-  detailColumns: MobileRecordColumn[];
   footerColumns: MobileRecordColumn[];
 }
 
@@ -58,43 +57,36 @@ function renderMobileColumn(column: MobileRecordColumn, record: InbodyRecord, is
   return column.columnDef.meta?.mobileRender?.(record, isBusy) ?? null;
 }
 
-function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metricColumns, detailColumns, footerColumns }: MobileRecordCardProps) {
+function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metricColumns, footerColumns }: MobileRecordCardProps) {
   return (
-    <Card className="gap-4 border-white/65 bg-white/88 p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
+    <Card className="gap-3 border-border/55 bg-card/84 p-4 sm:gap-4 sm:p-6">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0 flex flex-wrap items-center gap-2">
             {heroColumns.map((column) => (
               <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
             ))}
           </div>
+
+          <div className="flex shrink-0 items-center gap-1.5">
+            {trailingColumns.map((column) => (
+              <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
+            ))}
+            {footerColumns.map((column) => (
+              <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
+            ))}
+            {isBusy ? <LoaderCircle className="size-4 animate-spin text-muted-foreground" /> : null}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {trailingColumns.map((column) => (
-            <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
+
+        <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+          {metricColumns.map((column) => (
+            <div className={column.columnDef.meta?.mobileCardClassName} key={column.id}>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{column.columnDef.meta?.mobileLabel}</p>
+              {renderMobileColumn(column, record, isBusy)}
+            </div>
           ))}
-          {isBusy ? <LoaderCircle className="size-5 animate-spin text-muted-foreground" /> : null}
         </div>
-      </div>
-
-      <div className="grid gap-2 sm:grid-cols-4">
-        {metricColumns.map((column) => (
-          <div className={column.columnDef.meta?.mobileCardClassName} key={column.id}>
-            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{column.columnDef.meta?.mobileLabel}</p>
-            {renderMobileColumn(column, record, isBusy)}
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {detailColumns.map((column) => (
-          <div className="text-sm text-muted-foreground" key={column.id}>
-            {renderMobileColumn(column, record, isBusy)}
-          </div>
-        ))}
-        {footerColumns.map((column) => (
-          <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
-        ))}
       </div>
     </Card>
   );
@@ -170,7 +162,7 @@ export function RecordManager({
         header: "Date",
         meta: {
           mobileSlot: "hero",
-          mobileRender: (record) => <h3 className="font-display text-[1.35rem] leading-none text-foreground">{formatCompactDate(record.date)}</h3>,
+          mobileRender: (record) => <h3 className="font-display text-[1.25rem] leading-none text-foreground">{formatCompactDate(record.date)}</h3>,
         },
         cell: ({ row }) => <p className="font-display text-[1.05rem] text-foreground">{formatCompactDate(row.original.date)}</p>,
       },
@@ -180,8 +172,8 @@ export function RecordManager({
         meta: {
           mobileSlot: "metric",
           mobileLabel: "Weight",
-          mobileCardClassName: "rounded-[1rem] border border-border/70 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3 py-2.5",
-          mobileRender: (record) => <p className="mt-1 font-display text-[1.15rem] leading-tight text-foreground">{formatDecimal(record.weight)} kg</p>,
+          mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
+          mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.weight)} kg</p>,
         },
         cell: ({ row }) => <span className="text-sm text-foreground">{formatDecimal(row.original.weight)} kg</span>,
       },
@@ -191,8 +183,8 @@ export function RecordManager({
         meta: {
           mobileSlot: "metric",
           mobileLabel: "Muscle",
-          mobileCardClassName: "rounded-[1rem] border border-border/70 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3 py-2.5",
-          mobileRender: (record) => <p className="mt-1 font-display text-[1.15rem] leading-tight text-foreground">{formatDecimal(record.muscle)} kg</p>,
+          mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
+          mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.muscle)} kg</p>,
         },
         cell: ({ row }) => <span className="text-sm text-foreground">{formatDecimal(row.original.muscle)} kg</span>,
       },
@@ -202,8 +194,8 @@ export function RecordManager({
         meta: {
           mobileSlot: "metric",
           mobileLabel: "Fat%",
-          mobileCardClassName: "rounded-[1rem] border border-border/70 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3 py-2.5",
-          mobileRender: (record) => <p className="mt-1 font-display text-[1.15rem] leading-tight text-foreground">{formatDecimal(record.fatPercent)}</p>,
+          mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
+          mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.fatPercent)}</p>,
         },
         cell: ({ row }) => <span className="text-sm text-foreground">{formatDecimal(row.original.fatPercent)}</span>,
       },
@@ -215,13 +207,18 @@ export function RecordManager({
         meta: {
           mobileSlot: "trailing",
           mobileRender: (record, isBusy) => (
-            <div className="flex items-center">
-              <Switch
-                checked={record.isIncludedInCharts}
-                disabled={isBusy}
-                onCheckedChange={(checked) => onToggleInclusion(record, checked)}
-              />
-            </div>
+            <Button
+              aria-label={record.isIncludedInCharts ? "Exclude from analysis" : "Include in analysis"}
+              className="size-8"
+              disabled={isBusy}
+              onClick={() => onToggleInclusion(record, !record.isIncludedInCharts)}
+              size="icon"
+              title={record.isIncludedInCharts ? "Included in analysis" : "Excluded from analysis"}
+              type="button"
+              variant="outline"
+            >
+              {record.isIncludedInCharts ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+            </Button>
           ),
         },
         cell: ({ row }) => {
@@ -246,12 +243,12 @@ export function RecordManager({
         meta: {
           mobileSlot: "footer",
           mobileRender: (record, isBusy) => (
-            <div className="flex w-full justify-end gap-2">
-              <Button aria-label="Edit record" className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
-                <PencilLine className="size-4" />
+            <div className="flex items-center gap-1.5">
+              <Button aria-label="Edit record" className="size-8" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+                <PencilLine className="size-3.5" />
               </Button>
-              <Button aria-label="Delete record" className="size-9" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
-                <Trash2 className="size-4" />
+              <Button aria-label="Delete record" className="size-8" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
+                <Trash2 className="size-3.5" />
               </Button>
             </div>
           ),
@@ -297,7 +294,6 @@ export function RecordManager({
   const mobileHeroColumns = getMobileColumns("hero");
   const mobileTrailingColumns = getMobileColumns("trailing");
   const mobileMetricColumns = getMobileColumns("metric");
-  const mobileDetailColumns = getMobileColumns("detail");
   const mobileFooterColumns = getMobileColumns("footer");
   const desktopColumnIds = new Set(["date", "weight", "muscle", "fatPercent", "analysis", "actions"]);
   const desktopCenteredColumnIds = new Set(["analysis", "actions"]);
@@ -315,10 +311,10 @@ export function RecordManager({
         </Button>
       </div>
 
-      <Card className="gap-4 border-white/65 bg-white/88 p-4 sm:p-5">
+      <Card className="gap-4 border-border/60 bg-card/90 p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <Input
-            className="h-10 w-full max-w-[26rem] rounded-[1rem] border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5 shadow-none placeholder:text-[#8092a8] focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
+            className="h-10 w-full max-w-[26rem] rounded-[1rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search date or notes"
             value={searchQuery}
@@ -367,10 +363,10 @@ export function RecordManager({
       {records.length ? (
         filteredRecords.length ? (
           <>
-            <div className="hidden overflow-hidden rounded-[1.5rem] border border-white/65 bg-white/88 shadow-[0_10px_24px_rgba(16,35,63,0.06)] lg:block">
+            <div className="surface-table-shell hidden overflow-hidden rounded-[1.5rem] lg:block">
               <div className="overflow-x-auto">
                 <table className="min-w-full border-collapse text-left">
-                  <thead className="bg-[linear-gradient(180deg,#fbfdff_0%,#f3f8fc_100%)] text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  <thead className="surface-table-head text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <tr key={headerGroup.id}>
                         {headerGroup.headers
@@ -427,7 +423,6 @@ export function RecordManager({
 
                 return (
                   <MobileRecordCard
-                    detailColumns={mobileDetailColumns}
                     footerColumns={mobileFooterColumns}
                     heroColumns={mobileHeroColumns}
                     isBusy={isBusy}
@@ -448,7 +443,7 @@ export function RecordManager({
                 <Button disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()} size="sm" variant="outline">
                   上一頁
                 </Button>
-                <div className="rounded-full border border-white/65 bg-white/84 px-4 py-2 text-sm text-foreground">
+                <div className="rounded-full border border-border/60 bg-card/86 px-4 py-2 text-sm text-foreground">
                   Page {page} / {totalPages}
                 </div>
                 <Button disabled={!table.getCanNextPage()} onClick={() => table.nextPage()} size="sm" variant="outline">
@@ -458,7 +453,7 @@ export function RecordManager({
             </div>
           </>
         ) : (
-          <Card className="items-center gap-2 border-dashed border-border bg-[linear-gradient(180deg,#f8fbfe_0%,#eff5fa_100%)] p-8 text-center">
+          <Card className="surface-state-panel items-center gap-2 p-8 text-center">
             <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">找不到符合條件的紀錄</p>
             <p className="max-w-xl text-sm leading-6 text-muted-foreground">可以調整搜尋關鍵字或篩選條件，重新縮小你要看的資料範圍。</p>
             <Button onClick={resetFilters} variant="outline">
@@ -467,7 +462,7 @@ export function RecordManager({
           </Card>
         )
       ) : (
-        <Card className="items-center gap-2 border-dashed border-border bg-[linear-gradient(180deg,#f8fbfe_0%,#eff5fa_100%)] p-8 text-center">
+        <Card className="surface-state-panel items-center gap-2 p-8 text-center">
           <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">還沒有 InBody 紀錄</p>
           <p className="max-w-xl text-sm leading-6 text-muted-foreground">先建立第一筆紀錄，之後就能切換整體與區域圖表、調整納入分析的資料範圍。</p>
           <Button onClick={onAdd}>新增第一筆資料</Button>
