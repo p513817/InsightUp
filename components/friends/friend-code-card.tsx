@@ -30,7 +30,7 @@ export function FriendCodeCard({ className, description, friendCode, title = "Fr
   }
 
   return (
-    <div className={cn("rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] p-4 backdrop-blur-[4px]", className)}>
+    <div className={cn("surface-soft-card rounded-[1rem] p-4", className)}>
       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{title}</p>
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">

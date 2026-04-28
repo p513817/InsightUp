@@ -173,7 +173,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
 
   if (!chart.points.length) {
     return (
-      <div className="flex min-h-72 items-center justify-center rounded-[1.75rem] border border-dashed border-border bg-[linear-gradient(180deg,rgba(247,251,255,0.78),rgba(229,239,247,0.9))] text-sm text-muted-foreground">
+      <div className="surface-state-panel flex min-h-72 items-center justify-center rounded-[1.75rem] text-sm text-muted-foreground">
         尚無可納入圖表的紀錄。
       </div>
     );
@@ -188,7 +188,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
         const latestValue = getNumericValue(latestPoint?.[metric.key]);
         const previousValue = getNumericValue(previousPoint?.[metric.key]);
         const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
-        const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-[#b85b73]";
+        const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-danger";
         const points = chart.points.map((point) => ({
           date: String(point.date || ""),
           label: String(point.label || ""),
@@ -197,7 +197,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
 
         return (
           <Card
-            className={`dashboard-card gap-3 border-white/60 bg-[linear-gradient(180deg,rgba(247,251,255,0.96),rgba(233,242,248,0.9))] p-4 ${draggingMetricKey === metric.key ? "dashboard-card-dragging" : ""} ${dropTargetMetricKey === metric.key ? "dashboard-card-drop-target" : ""}`}
+            className={`dashboard-card surface-chart-shell gap-3 p-4 ${draggingMetricKey === metric.key ? "dashboard-card-dragging" : ""} ${dropTargetMetricKey === metric.key ? "dashboard-card-drop-target" : ""}`}
             draggable
             key={metric.key}
             onDragEnd={() => {
@@ -261,7 +261,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
               </div>
             </div>
 
-            <div className="h-24 rounded-[1.1rem] border border-white/70 bg-[linear-gradient(180deg,rgba(247,251,255,0.84),rgba(226,238,246,0.96))] px-2 py-1.5 sm:h-28">
+            <div className="surface-chart-shell h-24 rounded-[1.1rem] px-2 py-1.5 sm:h-28">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={points} margin={{ top: 16, right: 8, bottom: 2, left: 8 }}>
                   <YAxis domain={["dataMin - 1", "dataMax + 1"]} hide />
@@ -273,7 +273,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
 
                       const point = payload[0]?.payload as { date?: string; value?: number | null } | undefined;
                       return (
-                        <div className="rounded-xl border border-border bg-white px-3 py-2 shadow-panel">
+                        <div className="surface-tooltip rounded-xl px-3 py-2">
                           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                             {formatChartDate(point?.date)}
                           </p>

@@ -27,12 +27,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
 
   return (
-    <main className="relative overflow-hidden bg-[radial-gradient(circle_at_top,rgba(121,215,195,0.16),transparent_0_24%),linear-gradient(180deg,#f7fbff_0%,#eef5f9_56%,#e8f1f7_100%)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_50%_0%,rgba(28,54,95,0.12),transparent_0_60%)]" />
+    <main className="relative overflow-hidden bg-[radial-gradient(circle_at_top,rgb(var(--accent)/0.16),transparent_0_24%),linear-gradient(180deg,rgb(var(--surface))_0%,rgb(var(--background))_56%,rgb(var(--surface-alt))_100%)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_50%_0%,rgb(var(--primary-strong)/0.12),transparent_0_60%)]" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-        <section className="animate-fade-up w-full max-w-xl rounded-[2rem] border border-[rgba(151,176,198,0.30)] bg-[rgba(255,255,255,0.78)] px-4 py-5 text-center shadow-[0_18px_40px_rgba(16,35,63,0.08)] backdrop-blur-[10px] sm:px-6 sm:py-7">
-          <div className="animate-fade-up-delay-1 mx-auto inline-flex items-center gap-3 rounded-full border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(247,251,255,0.86)_100%)] px-4 py-3 shadow-[0_12px_24px_rgba(16,35,63,0.06)] sm:gap-3.5 sm:px-4.5">
+        <section className="animate-fade-up w-full max-w-xl rounded-[2rem] border border-border/60 bg-card/80 px-4 py-5 text-center shadow-[0_18px_40px_rgba(16,35,63,0.08)] backdrop-blur-[10px] sm:px-6 sm:py-7">
+          <div className="animate-fade-up-delay-1 mx-auto inline-flex items-center gap-3 rounded-full border border-border/60 bg-[linear-gradient(180deg,rgb(var(--card)/0.96)_0%,rgb(var(--surface)/0.88)_100%)] px-4 py-3 shadow-[0_12px_24px_rgba(16,35,63,0.06)] sm:gap-3.5 sm:px-4.5">
             <Image alt="InsightUp" className="size-12 rounded-full sm:size-14" height={56} priority src="/insightup-logo-rmbg.png" width={56} />
             <div className="text-left">
               <p className="font-display text-[1.75rem] leading-none text-foreground sm:text-[2rem]">InsightUp</p>
@@ -40,26 +40,26 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
           </div>
 
-          <div className="animate-fade-up-delay-2 mt-5 flex items-center justify-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[var(--brand-navy-800)] sm:text-[0.76rem]">
-            <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgba(121,215,195,0.25),rgba(28,54,95,0.75))] sm:w-10" />
+          <div className="animate-fade-up-delay-2 mt-5 flex items-center justify-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-primary-strong sm:text-[0.76rem]">
+            <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgb(var(--accent)/0.25),rgb(var(--primary-strong)/0.75))] sm:w-10" />
             <p className="font-display text-center text-[0.82rem] tracking-[0.18em] sm:text-[0.88rem]">See Deeper, Move Upward</p>
-            <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgba(28,54,95,0.75),rgba(121,215,195,0.25))] sm:w-10" />
+            <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgb(var(--primary-strong)/0.75),rgb(var(--accent)/0.25))] sm:w-10" />
           </div>
 
           <LoginSignalBadges />
 
           <div className="animate-fade-up-delay-4 mt-5 grid gap-2.5 sm:max-w-md sm:mx-auto">
-            <GoogleSignInButton className="h-[46px] w-full justify-center rounded-[1.05rem] bg-[linear-gradient(135deg,#274979_0%,#315685_100%)] text-[0.94rem] shadow-[0_8px_16px_rgba(28,54,95,0.10)] hover:brightness-105" label="登入" nextPath="/dashboard" />
+            <GoogleSignInButton className="h-[46px] w-full justify-center rounded-[1.05rem] bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-[0.94rem] shadow-[0_8px_16px_rgba(23,52,93,0.14)] hover:brightness-105" label="登入" nextPath="/dashboard" />
           </div>
 
           {authState === "failed" ? (
-            <div className="mx-auto mt-4 max-w-md rounded-[1.1rem] border border-[rgba(184,91,115,0.32)] bg-[rgba(184,91,115,0.10)] px-4 py-3 text-left text-sm leading-6 text-[#7d4158]">
+            <div className="mx-auto mt-4 max-w-md rounded-[1.1rem] border border-danger/30 bg-danger/10 px-4 py-3 text-left text-sm leading-6 text-danger">
               <p>{authMessage ?? "登入失敗"}</p>
             </div>
           ) : null}
 
           <div className="animate-fade-up-delay-5 mt-3 sm:max-w-md sm:mx-auto">
-            <LoginProductIntroModal triggerClassName="h-11 w-full justify-center rounded-[1.05rem] border-white/70 bg-white/84 text-[0.93rem]" />
+            <LoginProductIntroModal triggerClassName="h-11 w-full justify-center rounded-[1.05rem] border-border/60 bg-card/88 text-[0.93rem]" />
           </div>
         </section>
       </div>

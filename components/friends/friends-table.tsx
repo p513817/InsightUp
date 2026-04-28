@@ -28,7 +28,7 @@ function deltaTone(value: number | null | undefined) {
     return "text-muted-foreground";
   }
 
-  return Number(value) > 0 ? "text-[#245a56]" : "text-[#a34761]";
+  return Number(value) > 0 ? "text-success" : "text-danger";
 }
 
 function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBusy: boolean; onRemove: (friend: FriendSnapshot) => void }) {
@@ -54,14 +54,14 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
   ];
 
   return (
-    <Card className="gap-3.5 border-white/65 bg-white/88 p-4 sm:p-5">
+    <Card className="gap-3.5 border-border/60 bg-card/90 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {friend.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img alt={friend.displayName} className="size-10 rounded-full border border-border object-cover" src={friend.avatarUrl} />
           ) : (
-            <div className="flex size-10 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.32),rgba(28,54,95,0.10))] text-sm font-semibold text-foreground">
+            <div className="surface-avatar-fallback flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground">
               {getUserInitials(friend.displayName)}
             </div>
           )}
@@ -79,7 +79,7 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
 
       <div className="grid grid-cols-3 gap-2">
         {metricItems.map((item) => (
-          <div className="rounded-[1rem] border border-border/70 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3 py-2.5" key={item.label}>
+          <div className="surface-subtle-gradient rounded-[1rem] border border-border/70 px-3 py-2.5" key={item.label}>
             <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
             <p className="mt-1 font-display text-[1rem] leading-tight text-foreground">{item.value}</p>
             <p className={`mt-1 text-[11px] leading-4 ${item.deltaClassName}`}>{item.delta}</p>
@@ -110,7 +110,7 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
 export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTableProps) {
   if (!friends.length) {
     return (
-      <div className="rounded-[1.2rem] border border-dashed border-border/80 bg-white/70 px-4 py-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:rounded-[1.5rem] sm:px-6 sm:py-10">
+      <div className="surface-state-panel rounded-[1.2rem] px-4 py-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:rounded-[1.5rem] sm:px-6 sm:py-10">
         <p className="font-display text-[1.45rem] text-foreground sm:text-2xl">Friend list is empty</p>
         <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">先把朋友的 Friend ID 加進來，這裡就會開始顯示他們最新的 InBody 快照。</p>
       </div>
@@ -119,11 +119,11 @@ export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTablePr
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-[1.2rem] border border-border/70 bg-white/84 shadow-panel lg:block sm:rounded-[1.75rem]">
+      <div className="surface-table-shell hidden overflow-hidden rounded-[1.2rem] lg:block sm:rounded-[1.75rem]">
         <div className="overflow-x-auto">
           <table className="min-w-[47rem] border-collapse text-left sm:min-w-full">
           <thead>
-            <tr className="border-b border-border/70 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            <tr className="surface-table-head border-b border-border/70 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <th className="px-3 py-3 font-medium sm:px-5 sm:py-4">Friend</th>
               <th className="hidden px-4 py-4 font-medium md:table-cell">Friend ID</th>
               <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">Latest Date</th>
@@ -148,7 +148,7 @@ export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTablePr
                         // eslint-disable-next-line @next/next/no-img-element
                         <img alt={friend.displayName} className="size-9 rounded-full border border-border object-cover sm:size-11" src={friend.avatarUrl} />
                       ) : (
-                        <div className="flex size-9 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.32),rgba(28,54,95,0.10))] text-xs font-semibold text-foreground sm:size-11 sm:text-sm">
+                        <div className="surface-avatar-fallback flex size-9 items-center justify-center rounded-full border border-border text-xs font-semibold text-foreground sm:size-11 sm:text-sm">
                           {getUserInitials(friend.displayName)}
                         </div>
                       )}

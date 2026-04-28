@@ -98,10 +98,10 @@ function FieldShell({
     <label className={className}>
       <div className="mb-1 flex items-center gap-2 text-[13px] font-medium text-foreground/92">
         <span>{label}</span>
-        {required ? <span className="text-[#b85b73]">*</span> : null}
+        {required ? <span className="text-danger">*</span> : null}
       </div>
       {children}
-      <p className="mt-0.5 min-h-[0.75rem] text-[11px] leading-3 text-[#b85b73]">{error || " "}</p>
+      <p className="mt-0.5 min-h-[0.75rem] text-[11px] leading-3 text-danger">{error || " "}</p>
     </label>
   );
 }
@@ -110,13 +110,13 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const currentYear = new Date().getFullYear();
   const sectionClassName =
-    "space-y-2.5 rounded-[1.25rem] border border-border/80 bg-[linear-gradient(180deg,#f8fbfe_0%,#eff5fa_100%)] p-4 sm:p-4.5";
+    "surface-muted-gradient space-y-2.5 rounded-[1.25rem] border border-border/80 p-4 sm:p-4.5";
   const controlClassName =
-    "h-10 rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5 shadow-none placeholder:text-[#8092a8] focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "h-10 rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const selectClassName =
-    "flex h-10 w-full rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "flex h-10 w-full rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
-    "min-h-24 rounded-[1.1rem] border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5 py-2.5 shadow-none placeholder:text-[#8092a8] focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "min-h-24 rounded-[1.1rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(recordFormSchema),
     defaultValues: recordToFormValues(initialRecord),
@@ -253,7 +253,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                   </FieldShell>
 
                   <FieldShell label="Include in chart">
-                    <div className="flex h-10 items-center justify-between rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fc_100%)] px-3.5">
+                    <div className="flex h-10 items-center justify-between rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5">
                       <span className="text-sm text-foreground">Keep in chart analysis</span>
                       <Controller
                         control={form.control}
@@ -342,7 +342,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
 
                 <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
                   {SEGMENT_PARTS.map((part) => (
-                    <div className="rounded-[1.2rem] border border-border/70 bg-white/88 p-3" key={part.key}>
+                    <div className="rounded-[1.2rem] border border-border/70 bg-card/88 p-3" key={part.key}>
                       <h4 className="text-sm font-semibold text-foreground">{part.label}</h4>
                       <div className="mt-2.5 grid gap-2.5">
                         <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label="Muscle (kg)">
@@ -359,7 +359,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-border/80 bg-white/96 px-5 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-2 sm:px-6">
+          <div className="shrink-0 border-t border-border/80 bg-card/96 px-5 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-2 sm:px-6">
             <div className="flex flex-wrap justify-end gap-2.5">
               <Button onClick={() => onOpenChange(false)} type="button" variant="outline">
                 取消

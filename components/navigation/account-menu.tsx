@@ -16,7 +16,7 @@ interface AccountMenuProps {
 function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React.ReactNode; label: string; onNavigate: () => void }) {
   return (
     <Link
-      className="flex items-center justify-between rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-[rgba(28,54,95,0.06)]"
+      className="flex items-center justify-between rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-primary/6"
       href={href}
       onClick={onNavigate}
     >
@@ -68,7 +68,7 @@ export function AccountMenu({ user }: AccountMenuProps) {
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="h-auto gap-3 rounded-full border border-white/55 bg-white/72 px-2.5 py-2 shadow-[0_8px_18px_rgba(16,35,63,0.06)] hover:bg-white"
+        className="surface-pill h-auto gap-3 rounded-full px-2.5 py-2 hover:bg-card"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
         variant="ghost"
@@ -77,7 +77,7 @@ export function AccountMenu({ user }: AccountMenuProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img alt={user.name} className="size-10 rounded-full border border-border object-cover sm:size-11" src={user.avatarUrl} />
         ) : (
-          <div className="flex size-10 items-center justify-center rounded-full border border-border bg-[linear-gradient(135deg,rgba(121,215,195,0.42),rgba(28,54,95,0.12))] text-sm font-semibold text-foreground sm:size-11">
+          <div className="surface-avatar-fallback-strong flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground sm:size-11">
             {getUserInitials(user.name)}
           </div>
         )}
@@ -89,8 +89,8 @@ export function AccountMenu({ user }: AccountMenuProps) {
       </Button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-[calc(100%+0.75rem)] z-40 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] border border-white/60 bg-[rgba(255,255,255,0.96)] p-2 shadow-[0_18px_40px_rgba(16,35,63,0.16)] backdrop-blur-sm">
-          <div className="rounded-[1rem] border border-border/60 bg-[linear-gradient(180deg,#ffffff_0%,#f5f9fc_100%)] px-3.5 py-3">
+        <div className="surface-menu absolute right-0 top-[calc(100%+0.75rem)] z-40 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] p-2">
+          <div className="surface-subtle-gradient rounded-[1rem] border border-border/60 px-3.5 py-3">
             <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Account</p>
             <p className="mt-1 text-sm font-semibold text-foreground">{user.name}</p>
             <p className="mt-0.5 break-all text-xs leading-5 text-muted-foreground">{user.email || "Signed in with Google"}</p>
@@ -99,7 +99,7 @@ export function AccountMenu({ user }: AccountMenuProps) {
           <div className="mt-2 space-y-1">
             <MenuLink href="/account" icon={<UserRound className="size-4" />} label="Accounts" onNavigate={() => setIsOpen(false)} />
             <button
-              className="flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-[rgba(184,91,115,0.08)] disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-danger/8 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={isSigningOut}
               onClick={handleSignOut}
               type="button"

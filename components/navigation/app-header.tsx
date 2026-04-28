@@ -19,10 +19,10 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isFriends = pathname === "/friends";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/45 bg-[rgba(237,244,248,0.94)]">
+    <header className="sticky top-0 z-30 border-b border-border/55 bg-background/94 backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-10">
         <div className="flex items-center justify-between gap-3 sm:gap-4">
-          <Link className="flex min-w-0 max-w-full items-center gap-3 rounded-full border border-white/55 bg-white/72 px-3 py-2 shadow-[0_8px_18px_rgba(16,35,63,0.06)]" href="/dashboard">
+          <Link className="surface-pill flex min-w-0 max-w-full items-center gap-3 rounded-full px-3 py-2" href="/dashboard">
             <Image alt="InsightUp" className="size-10 rounded-full sm:size-11" height={44} src="/insightup-logo-rmbg.png" width={44} />
             <div className="min-w-0">
               <p className="truncate font-display text-xl text-foreground">InsightUp</p>
@@ -35,7 +35,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
         </div>
 
-        <div className="grid w-full grid-cols-3 gap-2 rounded-full border border-white/55 bg-white/74 p-1 shadow-[0_8px_18px_rgba(16,35,63,0.06)] sm:inline-flex sm:w-fit sm:self-center">
+        <div className="surface-pill grid w-full grid-cols-3 gap-2 rounded-full p-1 sm:inline-flex sm:w-fit sm:self-center">
           <Button asChild size="sm" variant={isDashboard ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
             <Link href="/dashboard">
               <LayoutDashboard className="size-4" />

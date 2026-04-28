@@ -34,7 +34,7 @@ export function TrendChart({ chart }: TrendChartProps) {
 
   if (!chart.points.length) {
     return (
-      <div className="flex min-h-72 items-center justify-center rounded-[1.5rem] border border-dashed border-border bg-[linear-gradient(180deg,rgba(247,251,255,0.78),rgba(226,238,246,0.94))] text-sm text-muted-foreground">
+      <div className="surface-state-panel flex min-h-72 items-center justify-center rounded-[1.5rem] text-sm text-muted-foreground">
         尚無可納入圖表的紀錄。請先新增資料，或將紀錄標記為納入分析。
       </div>
     );
@@ -59,7 +59,7 @@ export function TrendChart({ chart }: TrendChartProps) {
         })}
       </div>
 
-      <div className="h-[360px] rounded-[1.5rem] border border-white/70 bg-[linear-gradient(180deg,rgba(247,251,255,0.84),rgba(226,238,246,0.96))] p-4">
+      <div className="surface-chart-shell h-[360px] rounded-[1.5rem] p-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chart.points} margin={{ top: 12, right: 18, bottom: 6, left: 0 }}>
             <CartesianGrid stroke="#d7e2ec" strokeDasharray="4 6" vertical={false} />
