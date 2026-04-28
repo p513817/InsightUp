@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Files, LayoutDashboard } from "lucide-react";
+import { Files, LayoutDashboard, UsersRound } from "lucide-react";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
 import type { AppUserSummary } from "@/lib/presentation";
@@ -16,6 +16,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname === "/records" || pathname === "/profile";
+  const isFriends = pathname === "/friends";
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/45 bg-[rgba(237,244,248,0.94)]">
@@ -34,7 +35,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
         </div>
 
-        <div className="grid w-full grid-cols-2 gap-2 rounded-full border border-white/55 bg-white/74 p-1 shadow-[0_8px_18px_rgba(16,35,63,0.06)] sm:inline-flex sm:w-fit sm:self-center">
+        <div className="grid w-full grid-cols-3 gap-2 rounded-full border border-white/55 bg-white/74 p-1 shadow-[0_8px_18px_rgba(16,35,63,0.06)] sm:inline-flex sm:w-fit sm:self-center">
           <Button asChild size="sm" variant={isDashboard ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
             <Link href="/dashboard">
               <LayoutDashboard className="size-4" />
@@ -45,6 +46,12 @@ export function AppHeader({ user }: AppHeaderProps) {
             <Link href="/records">
               <Files className="size-4" />
               Records
+            </Link>
+          </Button>
+          <Button asChild size="sm" variant={isFriends ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
+            <Link href="/friends">
+              <UsersRound className="size-4" />
+              Friends
             </Link>
           </Button>
         </div>

@@ -1,3 +1,5 @@
+import { FriendCodeCard } from "@/components/friends/friend-code-card";
+import { ensureCurrentUserProfile } from "@/lib/friends/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getLatestIncludedRecord, listRecords } from "@/lib/inbody/records";
 import { formatLongDate, getUserInitials, summarizeUser } from "@/lib/presentation";
@@ -13,7 +15,7 @@ export default async function AccountPage() {
   }
 
   const summary = summarizeUser(user);
-  const records = await listRecords(supabase, user.id);
+  const [ownProfile, records] = await Promise.all([ensureCurrentUserProfile(supabase, user), listRecords(supabase, user.id)]);
   const latestIncludedRecord = getLatestIncludedRecord(records);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const coveragePercentage = records.length ? Math.round((includedCount / records.length) * 100) : 0;
@@ -26,7 +28,7 @@ export default async function AccountPage() {
 
         <div className="relative z-10 mx-auto max-w-5xl">
           <div className="rounded-[1.25rem] border border-white/45 bg-[rgba(255,255,255,0.28)] p-3 shadow-[0_6px_14px_rgba(16,35,63,0.035)] backdrop-blur-[6px] sm:rounded-[1.4rem] sm:p-3.5">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_0.8fr_0.8fr_0.9fr_1fr]">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_0.75fr_0.85fr_0.95fr_1.15fr]">
               <div className="rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.34)] p-4 backdrop-blur-[4px]">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Account</p>
                 <div className="mt-3 flex items-start gap-2.5">
@@ -47,25 +49,27 @@ export default async function AccountPage() {
               </div>
 
               <div className="rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] p-4 backdrop-blur-[4px]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Joined</p>
-              <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(summary.createdAt)}</p>
-            </div>
-
-              <div className="rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] p-4 backdrop-blur-[4px]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Records</p>
-              <p className="mt-2 font-display text-2xl text-foreground">{records.length}</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Joined</p>
+                <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(summary.createdAt)}</p>
               </div>
 
               <div className="rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] p-4 backdrop-blur-[4px]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Coverage</p>
-              <p className="mt-2 font-display text-2xl text-foreground">{includedCount}/{records.length || 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{coveragePercentage}% 納入分析</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Records</p>
+                <p className="mt-2 font-display text-2xl text-foreground">{records.length}</p>
               </div>
 
               <div className="rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] p-4 backdrop-blur-[4px]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Latest Included</p>
-              <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(latestIncludedRecord?.date)}</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Coverage</p>
+                <p className="mt-2 font-display text-2xl text-foreground">{includedCount}/{records.length || 0}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{coveragePercentage}% 納入分析</p>
               </div>
+
+              <div className="rounded-[1rem] border border-white/45 bg-[rgba(255,255,255,0.32)] p-4 backdrop-blur-[4px]">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Latest Included</p>
+                <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(latestIncludedRecord?.date)}</p>
+              </div>
+
+              <FriendCodeCard friendCode={ownProfile.friendCode} />
             </div>
           </div>
         </div>
