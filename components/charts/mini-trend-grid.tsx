@@ -36,7 +36,9 @@ function formatDelta(metric: ChartMetric, delta: number | null) {
   return `${delta > 0 ? "+" : delta < 0 ? "-" : ""}${formatted}`;
 }
 
-function MiniChartDot(props: DotProps & { metric: ChartMetric }) {
+type MiniChartDotProps = DotProps & { metric: ChartMetric; payload?: any };
+
+function MiniChartDot(props: MiniChartDotProps) {
   const { cx, cy, payload, metric } = props;
   const value = payload?.value as number | null | undefined;
 
@@ -123,8 +125,8 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const [draggingMetricKey, setDraggingMetricKey] = useState<string | null>(null);
   const [dropTargetMetricKey, setDropTargetMetricKey] = useState<string | null>(null);
-  const saveTimeoutIdRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
-
+  const saveTimeoutIdRef = useRef<number | null>(null);
+  
   useEffect(() => {
     let savedOrder: string[] = [];
     const savedOrderRaw = window.localStorage.getItem(METRIC_ORDER_STORAGE_KEY);
