@@ -1,3 +1,4 @@
+import { z } from "zod";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -118,7 +119,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
   const textareaClassName =
     "min-h-24 rounded-[1.1rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const form = useForm<RecordFormValues>({
-    resolver: zodResolver(recordFormSchema),
+    resolver: zodResolver(recordFormSchema) as any,
     defaultValues: recordToFormValues(initialRecord),
   });
 
