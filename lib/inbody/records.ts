@@ -327,10 +327,7 @@ export function formValuesToRecordInput(values: RecordFormValues): RecordInput {
   return {
     ...values,
     notes: values.notes,
-    segmental: ensureSegmentalData({
-      ...values,
-      segmental: values.segmental,
-    }),
+    segmental: ensureSegmentalData({ ...values, segmental: values.segmental as any }),
   };
 }
 
