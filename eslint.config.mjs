@@ -1,6 +1,7 @@
-import nextVitals from "eslint-config-next/core-web-vitals";
+import nextConfig from 'eslint-config-next'
 
 const config = [
+	...nextConfig,
 	{
 		ignores: [
 			"node_modules/**",
@@ -16,7 +17,6 @@ const config = [
 			"src/**",
 		],
 	},
-	...nextVitals,
 ];
 
 export default config;
