@@ -4,11 +4,11 @@ import { z } from "zod";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,6 +25,8 @@ interface RecordFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: RecordFormValues) => Promise<void>;
 }
+
+type SectionKey = "basic" | "primary" | "additional" | "notes" | "segmental";
 
 function splitDateParts(value: string | null | undefined) {
   if (!value) {
@@ -109,23 +111,48 @@ function FieldShell({
 
 export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }: RecordFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelFeedbackVisible, setIsCancelFeedbackVisible] = useState(false);
+  const [isSubmitFeedbackVisible, setIsSubmitFeedbackVisible] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
+    additional: false,
+    basic: false,
+    notes: false,
+    primary: false,
+    segmental: false,
+  });
   const currentYear = new Date().getFullYear();
   const sectionClassName =
-    "surface-muted-gradient space-y-2.5 rounded-[1.25rem] border border-border/80 p-4 sm:p-4.5";
+    "surface-muted-gradient space-y-2 rounded-[1rem] border border-border/80 p-4";
+  const sectionTitleClassName = "text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground";
   const controlClassName =
-    "h-10 rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "h-10 rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const selectClassName =
-    "flex h-10 w-full rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "flex h-10 w-full rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
-    "min-h-24 rounded-[1.1rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(recordFormSchema) as any,
     defaultValues: recordToFormValues(initialRecord),
   });
+  const watchedValues = form.watch();
 
   useEffect(() => {
     form.reset(recordToFormValues(initialRecord));
   }, [form, initialRecord, open]);
+
+  useEffect(() => {
+    if (!open) {
+      setIsCancelFeedbackVisible(false);
+      setIsSubmitFeedbackVisible(false);
+      setOpenSections({
+        additional: false,
+        basic: false,
+        notes: false,
+        primary: false,
+        segmental: false,
+      });
+    }
+  }, [open]);
 
   async function handleSubmit(values: RecordFormValues) {
     setIsSubmitting(true);
@@ -137,27 +164,90 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
     }
   }
 
+  function triggerFeedback(setter: React.Dispatch<React.SetStateAction<boolean>>) {
+    setter(false);
+    requestAnimationFrame(() => {
+      setter(true);
+    });
+    window.setTimeout(() => {
+      setter(false);
+    }, 220);
+  }
+
+  function handleCancelClick() {
+    triggerFeedback(setIsCancelFeedbackVisible);
+    window.setTimeout(() => {
+      onOpenChange(false);
+    }, 120);
+  }
+
+  function handleSubmitPress() {
+    triggerFeedback(setIsSubmitFeedbackVisible);
+  }
+
+  function toggleSection(section: SectionKey) {
+    setOpenSections((current) => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  }
+
+  function hasValue(value: unknown) {
+    return value !== null && value !== undefined && value !== "";
+  }
+
+  const isBasicComplete = hasValue(watchedValues.date) && hasValue(watchedValues.sourceType);
+  const isPrimaryComplete =
+    hasValue(watchedValues.weight) &&
+    hasValue(watchedValues.muscle) &&
+    hasValue(watchedValues.fat) &&
+    hasValue(watchedValues.fatPercent);
+  const isAdditionalComplete = [
+    watchedValues.height,
+    watchedValues.age,
+    watchedValues.gender !== "unknown" ? watchedValues.gender : null,
+    watchedValues.score,
+    watchedValues.visceralFatLevel,
+    watchedValues.bmr,
+    watchedValues.recommendedCalories,
+  ].some(hasValue);
+  const isNotesComplete = hasValue(watchedValues.notes);
+  const isSegmentalComplete = Object.values(watchedValues.segmental).some((part) => hasValue(part.muscle) || hasValue(part.fat));
+
+  function renderSectionToggle(section: SectionKey, label: string, isComplete: boolean) {
+    return (
+      <button
+        className="flex w-full items-center justify-between gap-3 text-left"
+        onClick={() => toggleSection(section)}
+        type="button"
+      >
+        <span className="flex items-center gap-2">
+          <span className={sectionTitleClassName}>{label}</span>
+          {isComplete ? (
+            <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-500/14 text-emerald-600">
+              <Check className="size-3" />
+            </span>
+          ) : null}
+        </span>
+        <ChevronDown className={openSections[section] ? "size-4 text-muted-foreground transition-transform duration-200 rotate-180" : "size-4 text-muted-foreground transition-transform duration-200"} />
+      </button>
+    );
+  }
+
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-w-4xl p-0">
-        <DialogHeader className="px-5 py-4 sm:px-6 sm:py-4.5">
+      <DialogContent className="h-[min(88vh,46rem)] max-w-4xl p-0 sm:h-[min(88vh,52rem)]" showCloseButton={false}>
+        <DialogHeader className="px-5 py-4 sm:px-6">
           <DialogTitle>{initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄"}</DialogTitle>
-          <DialogDescription>
-            統一在同一個表單裡管理整體指標、segmental 值與 chart inclusion 設定。空白的 segmental 欄位會回退到推導值。
-          </DialogDescription>
         </DialogHeader>
 
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3.5 sm:px-6 sm:py-4">
-            <div className="grid gap-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-3.5 sm:px-6 sm:py-4">
+            <div className="grid gap-3.5">
               <section className={sectionClassName}>
-                <div>
-                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Record Details</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">日期、來源與是否納入圖表分析先在這裡決定。</p>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  <FieldShell error={form.formState.errors.date?.message} label="Date" required>
+                {renderSectionToggle("basic", "基本資料", isBasicComplete)}
+                {openSections.basic ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <FieldShell error={form.formState.errors.date?.message} label="日期" required>
                     <Controller
                       control={form.control}
                       name="date"
@@ -186,7 +276,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                                 onChange={(event) => updateDate({ year: event.target.value })}
                                 value={parts.year}
                               >
-                                <option value="">Year</option>
+                                <option value="">年</option>
                                 {yearOptions.map((optionYear) => (
                                   <option key={optionYear} value={optionYear}>
                                     {optionYear}
@@ -198,7 +288,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                                 onChange={(event) => updateDate({ month: event.target.value })}
                                 value={parts.month}
                               >
-                                <option value="">Month</option>
+                                <option value="">月</option>
                                 {monthOptions.map((optionMonth) => (
                                   <option key={optionMonth} value={optionMonth}>
                                     {optionMonth}
@@ -210,7 +300,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                                 onChange={(event) => updateDate({ day: event.target.value })}
                                 value={parts.day}
                               >
-                                <option value="">Day</option>
+                                <option value="">日</option>
                                 {dayOptions.map((optionDay) => (
                                   <option key={optionDay} value={optionDay}>
                                     {optionDay}
@@ -226,7 +316,7 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                                 type="button"
                                 variant="outline"
                               >
-                                Today
+                                今天
                               </Button>
                               <Button
                                 className="h-8 rounded-full px-3 text-xs"
@@ -234,10 +324,10 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                                 type="button"
                                 variant="outline"
                               >
-                                Yesterday
+                                昨天
                               </Button>
                               <p className="text-xs text-muted-foreground">
-                                {field.value ? field.value.replace(/-/g, "/") : "Choose measurement date"}
+                                {field.value ? field.value.replace(/-/g, "/") : "選擇測量日期"}
                               </p>
                             </div>
                           </div>
@@ -246,16 +336,16 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                     />
                   </FieldShell>
 
-                  <FieldShell error={form.formState.errors.sourceType?.message} label="Source">
+                  <FieldShell error={form.formState.errors.sourceType?.message} label="來源">
                     <select className={selectClassName} {...form.register("sourceType")}>
-                      <option value="manual">Manual entry</option>
-                      <option value="photo_scan">Photo scan review</option>
+                      <option value="manual">手動輸入</option>
+                      <option value="photo_scan">拍照掃描待確認</option>
                     </select>
                   </FieldShell>
 
-                  <FieldShell label="Include in chart">
-                    <div className="flex h-10 items-center justify-between rounded-[1rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5">
-                      <span className="text-sm text-foreground">Keep in chart analysis</span>
+                  <FieldShell label="圖表分析">
+                    <div className="flex h-10 items-center justify-between rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5">
+                      <span className="text-sm text-foreground">納入圖表分析</span>
                       <Controller
                         control={form.control}
                         name="isIncludedInCharts"
@@ -263,110 +353,106 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                       />
                     </div>
                   </FieldShell>
-                </div>
+                </div> : null}
               </section>
 
               <section className={sectionClassName}>
-                <div>
-                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Body Composition</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">核心量測值放一起，輸入時比較接近實際 InBody 閱讀順序。</p>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <FieldShell error={form.formState.errors.weight?.message} label="Weight (kg)" required>
+                {renderSectionToggle("primary", "主要數值", isPrimaryComplete)}
+                {openSections.primary ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <FieldShell error={form.formState.errors.weight?.message} label="體重 (kg)" required>
                     <Input className={controlClassName} placeholder="66.1" step="0.1" type="number" {...form.register("weight")} />
                   </FieldShell>
-                  <FieldShell error={form.formState.errors.muscle?.message} label="Muscle (kg)" required>
+                  <FieldShell error={form.formState.errors.muscle?.message} label="骨骼肌 (kg)" required>
                     <Input className={controlClassName} placeholder="30.5" step="0.1" type="number" {...form.register("muscle")} />
                   </FieldShell>
-                  <FieldShell error={form.formState.errors.fat?.message} label="Fat (kg)" required>
+                  <FieldShell error={form.formState.errors.fat?.message} label="體脂肪 (kg)" required>
                     <Input className={controlClassName} placeholder="11.9" step="0.1" type="number" {...form.register("fat")} />
                   </FieldShell>
-                  <FieldShell error={form.formState.errors.fatPercent?.message} label="Fat Percentage (%)" required>
+                  <FieldShell error={form.formState.errors.fatPercent?.message} label="體脂率 (%)" required>
                     <Input className={controlClassName} placeholder="18.0" step="0.1" type="number" {...form.register("fatPercent")} />
                   </FieldShell>
-                </div>
+                </div> : null}
               </section>
 
               <section className={sectionClassName}>
-                <div>
-                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Additional Metrics</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">補充欄位放在次要區塊，避免主要量測值被稀釋。</p>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  <FieldShell error={form.formState.errors.height?.message} label="Height (cm)">
-                    <Input className={controlClassName} placeholder="170" step="0.1" type="number" {...form.register("height")} />
-                  </FieldShell>
-                  <FieldShell error={form.formState.errors.age?.message} label="Age">
-                    <Input className={controlClassName} placeholder="29" step="1" type="number" {...form.register("age")} />
-                  </FieldShell>
-                  <FieldShell error={form.formState.errors.gender?.message} label="Gender">
-                    <select className={selectClassName} {...form.register("gender")}>
-                      <option value="unknown">Unknown</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </FieldShell>
-                  <FieldShell error={form.formState.errors.score?.message} label="InBody Score">
-                    <Input className={controlClassName} placeholder="81" step="1" type="number" {...form.register("score")} />
-                  </FieldShell>
-                  <FieldShell error={form.formState.errors.visceralFatLevel?.message} label="Visceral Fat Level">
-                    <Input className={controlClassName} placeholder="6" step="1" type="number" {...form.register("visceralFatLevel")} />
-                  </FieldShell>
-                  <FieldShell error={form.formState.errors.bmr?.message} label="BMR (kcal)">
-                    <Input className={controlClassName} placeholder="1508" step="1" type="number" {...form.register("bmr")} />
-                  </FieldShell>
-                  <FieldShell error={form.formState.errors.recommendedCalories?.message} label="Recommended Calories (kcal)">
-                    <Input className={controlClassName} placeholder="2140" step="1" type="number" {...form.register("recommendedCalories")} />
-                  </FieldShell>
-                </div>
+                {renderSectionToggle("additional", "次要欄位", isAdditionalComplete)}
+                {openSections.additional ? (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <FieldShell error={form.formState.errors.height?.message} label="身高 (cm)">
+                      <Input className={controlClassName} placeholder="170" step="0.1" type="number" {...form.register("height")} />
+                    </FieldShell>
+                    <FieldShell error={form.formState.errors.age?.message} label="年齡">
+                      <Input className={controlClassName} placeholder="29" step="1" type="number" {...form.register("age")} />
+                    </FieldShell>
+                    <FieldShell error={form.formState.errors.gender?.message} label="性別">
+                      <select className={selectClassName} {...form.register("gender")}>
+                        <option value="unknown">未知</option>
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                        <option value="other">其他</option>
+                      </select>
+                    </FieldShell>
+                      <FieldShell error={form.formState.errors.score?.message} label="分數">
+                      <Input className={controlClassName} placeholder="81" step="1" type="number" {...form.register("score")} />
+                    </FieldShell>
+                    <FieldShell error={form.formState.errors.visceralFatLevel?.message} label="內臟脂肪等級">
+                      <Input className={controlClassName} placeholder="6" step="1" type="number" {...form.register("visceralFatLevel")} />
+                    </FieldShell>
+                      <FieldShell error={form.formState.errors.bmr?.message} label="基礎代謝率 (kcal)">
+                      <Input className={controlClassName} placeholder="1508" step="1" type="number" {...form.register("bmr")} />
+                    </FieldShell>
+                    <FieldShell error={form.formState.errors.recommendedCalories?.message} label="建議熱量 (kcal)">
+                      <Input className={controlClassName} placeholder="2140" step="1" type="number" {...form.register("recommendedCalories")} />
+                    </FieldShell>
+                  </div>
+                ) : null}
               </section>
 
               <section className={sectionClassName}>
-                <div>
-                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Notes</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">補充測量狀態、含水量或任何需要回頭判讀的背景資訊。</p>
-                </div>
-
-                <FieldShell className="block" error={form.formState.errors.notes?.message} label="Notes">
-                  <Textarea className={textareaClassName} placeholder="Optional note about measurement conditions, hydration, or scan confidence." {...form.register("notes")} />
-                </FieldShell>
-              </section>
-
-              <section className={sectionClassName}>
-                <div>
-                  <h3 className="font-display text-[1.2rem] text-foreground sm:text-[1.3rem]">Segmental Composition</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">只要填肌肉與脂肪數值，其餘比例會沿用推導結果。沒有填的欄位會使用整體數據推估值。</p>
-                </div>
-
-                <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
+                  {renderSectionToggle("segmental", "部位數據", isSegmentalComplete)}
+                  {openSections.segmental ? <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
                   {SEGMENT_PARTS.map((part) => (
-                    <div className="rounded-[1.2rem] border border-border/70 bg-card/88 p-3" key={part.key}>
+                    <div className="grid gap-2.5" key={part.key}>
                       <h4 className="text-sm font-semibold text-foreground">{part.label}</h4>
-                      <div className="mt-2.5 grid gap-2.5">
-                        <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label="Muscle (kg)">
+                      <div className="grid gap-2.5">
+                        <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label="骨骼肌 (kg)">
                           <Input className={controlClassName} step="0.01" type="number" {...form.register(`segmental.${part.key}.muscle` as const)} />
                         </FieldShell>
-                        <FieldShell error={form.formState.errors.segmental?.[part.key]?.fat?.message} label="Fat (kg)">
+                        <FieldShell error={form.formState.errors.segmental?.[part.key]?.fat?.message} label="脂肪 (kg)">
                           <Input className={controlClassName} step="0.01" type="number" {...form.register(`segmental.${part.key}.fat` as const)} />
                         </FieldShell>
                       </div>
                     </div>
                   ))}
-                </div>
+                </div> : null}
+              </section>
+
+              <section className={sectionClassName}>
+                  {renderSectionToggle("notes", "備註", isNotesComplete)}
+                  {openSections.notes ? (
+                  <FieldShell className="block" error={form.formState.errors.notes?.message} label="筆記">
+                    <Textarea className={textareaClassName} placeholder="可補充測量狀態、含水量或其他判讀資訊。" {...form.register("notes")} />
+                  </FieldShell>
+                ) : null}
               </section>
             </div>
           </div>
 
           <div className="shrink-0 border-t border-border/80 bg-card/96 px-5 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-2 sm:px-6">
             <div className="flex flex-wrap justify-end gap-2.5">
-              <Button onClick={() => onOpenChange(false)} type="button" variant="outline">
-                取消
+              <Button className="relative overflow-hidden" onClick={handleCancelClick} type="button" variant="outline">
+                <span
+                  aria-hidden
+                  className={isCancelFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-[0.9rem] bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.3)_0%,rgb(var(--brand-sky-400)/0.18)_34%,transparent_74%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-[0.9rem] bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.3)_0%,rgb(var(--brand-sky-400)/0.18)_34%,transparent_74%)] opacity-0 scale-[0.8] transition duration-200"}
+                />
+                <span className="relative z-10">取消</span>
               </Button>
-              <Button disabled={isSubmitting} type="submit">
-                {isSubmitting ? "儲存中..." : initialRecord ? "更新紀錄" : "建立紀錄"}
+              <Button className="relative overflow-hidden" disabled={isSubmitting} onClick={handleSubmitPress} type="submit">
+                <span
+                  aria-hidden
+                  className={isSubmitFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.24)_34%,transparent_76%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.24)_34%,transparent_76%)] opacity-0 scale-[0.8] transition duration-200"}
+                />
+                <span className="relative z-10">{isSubmitting ? "儲存中..." : initialRecord ? "更新紀錄" : "建立紀錄"}</span>
               </Button>
             </div>
           </div>

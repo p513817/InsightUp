@@ -1,9 +1,9 @@
 export const SEGMENT_PARTS = [
-  { key: "leftArm", label: "Left Arm" },
-  { key: "rightArm", label: "Right Arm" },
-  { key: "trunk", label: "Trunk" },
-  { key: "leftLeg", label: "Left Leg" },
-  { key: "rightLeg", label: "Right Leg" },
+  { key: "leftArm", label: "左手臂" },
+  { key: "rightArm", label: "右手臂" },
+  { key: "trunk", label: "軀幹" },
+  { key: "leftLeg", label: "左腿" },
+  { key: "rightLeg", label: "右腿" },
 ] as const;
 
 export const CHART_VIEWS = [
