@@ -16,14 +16,12 @@ interface AccountMenuProps {
 function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React.ReactNode; label: string; onNavigate: () => void }) {
   return (
     <Link
-      className="flex items-center justify-between rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-primary/6"
+      className="flex items-center gap-2.5 rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-primary/6"
       href={href}
       onClick={onNavigate}
     >
-      <span className="flex items-center gap-2.5">
-        <span className="text-muted-foreground">{icon}</span>
-        <span>{label}</span>
-      </span>
+      <span className="text-muted-foreground">{icon}</span>
+      <span>{label}</span>
     </Link>
   );
 }
@@ -89,25 +87,17 @@ export function AccountMenu({ user }: AccountMenuProps) {
       </Button>
 
       {isOpen ? (
-        <div className="surface-menu absolute right-0 top-[calc(100%+0.75rem)] z-40 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] p-2">
-          <div className="surface-subtle-gradient rounded-[1rem] border border-border/60 px-3.5 py-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Account</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">{user.name}</p>
-            <p className="mt-0.5 break-all text-xs leading-5 text-muted-foreground">{user.email || "Signed in with Google"}</p>
-          </div>
-
+        <div className="surface-menu absolute right-0 top-[calc(100%+0.75rem)] z-40 w-auto min-w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.35rem] p-2">
           <div className="mt-2 space-y-1">
-            <MenuLink href="/account" icon={<UserRound className="size-4" />} label="Accounts" onNavigate={() => setIsOpen(false)} />
+            <MenuLink href="/account" icon={<UserRound className="size-4" />} label="個人資訊" onNavigate={() => setIsOpen(false)} />
             <button
-              className="flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-danger/8 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex w-full items-center gap-2.5 rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-danger/8 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={isSigningOut}
               onClick={handleSignOut}
               type="button"
             >
-              <span className="flex items-center gap-2.5">
-                <span className="text-muted-foreground">{isSigningOut ? <LoaderCircle className="size-4 animate-spin" /> : <LogOut className="size-4" />}</span>
-                <span>{isSigningOut ? "登出中" : "登出"}</span>
-              </span>
+              <span className="text-muted-foreground">{isSigningOut ? <LoaderCircle className="size-4 animate-spin" /> : <LogOut className="size-4" />}</span>
+              <span>{isSigningOut ? "登出中" : "登出"}</span>
             </button>
           </div>
         </div>
