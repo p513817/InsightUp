@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -309,6 +310,11 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
       <DialogContent className="h-[min(88vh,46rem)] max-w-4xl p-0 sm:h-[min(88vh,52rem)]" showCloseButton={false}>
         <DialogHeader className="px-5 py-4 sm:px-6">
           <DialogTitle>{initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄"}</DialogTitle>
+          <DialogDescription>
+            {initialRecord
+              ? "可快速更新主要數值，系統會保留你的圖表納入設定與歷史脈絡。"
+              : "先填寫日期與主要數值（體重、骨骼肌、體脂肪、體脂率），其餘欄位可稍後補充。"}
+          </DialogDescription>
         </DialogHeader>
 
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
