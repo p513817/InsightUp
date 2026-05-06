@@ -85,9 +85,9 @@ export function AppHeader({ user }: AppHeaderProps) {
         </div>
 
         <div className="surface-pill grid w-full grid-cols-3 gap-2 rounded-full p-1 sm:inline-flex sm:w-fit sm:self-center">
-          <NavButton href="/dashboard" label="Dashboard" icon={<LayoutDashboard className="size-4" />} active={isDashboard} />
-          <NavButton href="/records" label="Records" icon={<Files className="size-4" />} active={isRecords} />
-          <NavButton href="/friends" label="Friends" icon={<UsersRound className="size-4" />} active={isFriends} />
+          <NavButton href="/dashboard" label="趨勢" icon={<LayoutDashboard className="size-4" />} active={isDashboard} />
+          <NavButton href="/records" label="紀錄" icon={<Files className="size-4" />} active={isRecords} />
+          <NavButton href="/friends" label="好友" icon={<UsersRound className="size-4" />} active={isFriends} />
         </div>
       </div>
     </header>
