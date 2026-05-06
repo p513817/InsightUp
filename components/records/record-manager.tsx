@@ -120,6 +120,7 @@ export function RecordManager({
   const [inclusionFilter, setInclusionFilter] = useState<"all" | "included" | "excluded">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
+  const [isAddButtonFeedbackVisible, setIsAddButtonFeedbackVisible] = useState(false);
 
   const sortedRecords = useMemo(
     () => [...records].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
@@ -155,9 +156,31 @@ export function RecordManager({
     setPagination((current) => ({ ...current, pageIndex: 0 }));
   }, [searchQuery, inclusionFilter]);
 
+  useEffect(() => {
+    if (!isAddButtonFeedbackVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsAddButtonFeedbackVisible(false);
+    }, 240);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isAddButtonFeedbackVisible]);
+
   function resetFilters() {
     setSearchQuery("");
     setInclusionFilter("all");
+  }
+
+  function handleAddClick() {
+    setIsAddButtonFeedbackVisible(false);
+    requestAnimationFrame(() => {
+      setIsAddButtonFeedbackVisible(true);
+    });
+    onAdd();
   }
 
   function getMobileColumns(slot: NonNullable<ColumnDef<InbodyRecord>["meta"]>["mobileSlot"]) {
@@ -319,9 +342,16 @@ export function RecordManager({
         <p className="text-sm leading-6 text-muted-foreground">
           共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。
         </p>
-        <Button className="self-start sm:self-auto" onClick={onAdd}>
-          <Plus className="size-4" />
-          新增 InBody 紀錄
+        <Button
+          className="relative self-start overflow-hidden sm:self-auto"
+          onClick={handleAddClick}
+        >
+          <span
+            aria-hidden
+            className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
+          />
+          <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-4 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-4 transition-transform duration-200"} />
+          <span className="relative z-10">新增 InBody 紀錄</span>
         </Button>
       </div>
 
