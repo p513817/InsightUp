@@ -24,23 +24,27 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    showCloseButton?: boolean;
+  }
+>(({ className, children, showCloseButton = true, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-border/70 bg-card shadow-panel",
+        "dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-panel",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogClose className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent/18 hover:text-foreground">
-        <X className="size-4" />
-        <span className="sr-only">Close</span>
-      </DialogClose>
+      {showCloseButton ? (
+        <DialogClose className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent/18 hover:text-foreground">
+          <X className="size-4" />
+          <span className="sr-only">Close</span>
+        </DialogClose>
+      ) : null}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
