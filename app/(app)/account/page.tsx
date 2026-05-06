@@ -4,6 +4,44 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listRecords } from "@/lib/inbody/records";
 import { formatLongDate, getUserInitials, summarizeUser } from "@/lib/presentation";
 
+async function getCurrentPlanDisplayName(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string) {
+  const nowIso = new Date().toISOString();
+  const { data: subscription } = await supabase
+    .from("user_subscriptions")
+    .select("plan_code")
+    .eq("user_id", userId)
+    .in("status", ["trialing", "active"])
+    .lte("starts_at", nowIso)
+    .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+    .order("starts_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const targetPlanCode = subscription?.plan_code;
+
+  if (targetPlanCode) {
+    const { data: plan } = await supabase
+      .from("subscription_plans")
+      .select("display_name")
+      .eq("code", targetPlanCode)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (plan?.display_name) {
+      return plan.display_name;
+    }
+  }
+
+  const { data: fallbackPlan } = await supabase
+    .from("subscription_plans")
+    .select("display_name")
+    .eq("is_default", true)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return fallbackPlan?.display_name || "Free";
+}
+
 export default async function AccountPage() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -15,7 +53,11 @@ export default async function AccountPage() {
   }
 
   const summary = summarizeUser(user);
-  const [ownProfile, records] = await Promise.all([ensureCurrentUserProfile(supabase, user), listRecords(supabase, user.id)]);
+  const [ownProfile, records, planDisplayName] = await Promise.all([
+    ensureCurrentUserProfile(supabase, user),
+    listRecords(supabase, user.id),
+    getCurrentPlanDisplayName(supabase, user.id),
+  ]);
 
   return (
     <div>
@@ -24,7 +66,7 @@ export default async function AccountPage() {
         <div className="brand-motion-line brand-motion-line-right" />
 
         <div className="relative z-10 mx-auto max-w-5xl">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_1.15fr]">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_0.7fr_1.15fr]">
               <div className="surface-glass-card rounded-[1rem] p-4">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">帳號</p>
                 <div className="mt-3 flex items-start gap-2.5">
@@ -47,6 +89,11 @@ export default async function AccountPage() {
               <div className="surface-soft-card rounded-[1rem] p-4">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">加入日期</p>
                 <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(summary.createdAt)}</p>
+              </div>
+
+              <div className="surface-soft-card rounded-[1rem] p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">目前等級</p>
+                <p className="mt-2 font-display text-2xl text-foreground">{planDisplayName}</p>
               </div>
 
               <FriendCodeCard friendCode={ownProfile.friendCode} />
