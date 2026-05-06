@@ -2,14 +2,52 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Files, LayoutDashboard, UsersRound } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { Files, LayoutDashboard, Loader2, UsersRound } from "lucide-react";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { AppUserSummary } from "@/lib/presentation";
 
 interface AppHeaderProps {
   user: AppUserSummary;
+}
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  active: boolean;
+};
+
+function NavButton({ href, label, icon, active }: NavItem) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <Button
+      size="sm"
+      variant={active ? "default" : "ghost"}
+      className={cn(
+        "w-full justify-center rounded-full sm:min-w-36",
+        isPending && !active && "opacity-70",
+      )}
+      onClick={() => {
+        if (!active) startTransition(() => router.push(href));
+      }}
+      aria-current={active ? "page" : undefined}
+    >
+      {isPending ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        icon
+      )}
+      <span className={cn("transition-opacity duration-150", isPending && "opacity-60")}>
+        {label}
+      </span>
+    </Button>
+  );
 }
 
 export function AppHeader({ user }: AppHeaderProps) {
@@ -36,24 +74,9 @@ export function AppHeader({ user }: AppHeaderProps) {
         </div>
 
         <div className="surface-pill grid w-full grid-cols-3 gap-2 rounded-full p-1 sm:inline-flex sm:w-fit sm:self-center">
-          <Button asChild size="sm" variant={isDashboard ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
-            <Link href="/dashboard">
-              <LayoutDashboard className="size-4" />
-              Dashboard
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant={isRecords ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
-            <Link href="/records">
-              <Files className="size-4" />
-              Records
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant={isFriends ? "default" : "ghost"} className="w-full justify-center rounded-full sm:min-w-36">
-            <Link href="/friends">
-              <UsersRound className="size-4" />
-              Friends
-            </Link>
-          </Button>
+          <NavButton href="/dashboard" label="Dashboard" icon={<LayoutDashboard className="size-4" />} active={isDashboard} />
+          <NavButton href="/records" label="Records" icon={<Files className="size-4" />} active={isRecords} />
+          <NavButton href="/friends" label="Friends" icon={<UsersRound className="size-4" />} active={isFriends} />
         </div>
       </div>
     </header>
