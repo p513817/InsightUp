@@ -52,6 +52,21 @@
   --chart-calories: var(--brand-amber-500);
 }
 
+@property --gradient-rotation {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotate-gradient {
+  from {
+    --gradient-rotation: 0deg;
+  }
+  to {
+    --gradient-rotation: 360deg;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

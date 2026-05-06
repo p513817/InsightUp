@@ -13,7 +13,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Eye, EyeOff, LoaderCircle, PencilLine, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, PencilLine, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,36 +59,51 @@ function renderMobileColumn(column: MobileRecordColumn, record: InbodyRecord, is
 
 function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metricColumns, footerColumns }: MobileRecordCardProps) {
   return (
-    <Card className="gap-3 border-border/55 bg-card/84 p-4 sm:gap-4 sm:p-6">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0 flex flex-wrap items-center gap-2">
-            {heroColumns.map((column) => (
-              <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
-            ))}
-          </div>
+    <div className="relative isolate overflow-hidden rounded-[1.75rem]">
+      {isBusy ? (
+        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.75rem]">
+          <span
+            className="absolute inset-0 rounded-[1.75rem]"
+            style={{
+              animation: "rotate-gradient 2s linear infinite",
+              background:
+                "repeating-conic-gradient(from var(--gradient-rotation), rgb(var(--brand-sky-50) / 0) 0deg, rgb(var(--brand-sky-50) / 0) 145deg, rgb(var(--brand-mint-500) / 0.4) 155deg, rgb(var(--brand-navy-700) / 1) 160deg, rgb(var(--brand-navy-700) / 1) 195deg, rgb(var(--brand-mint-500) / 0.4) 205deg, rgb(var(--brand-sky-50) / 0) 215deg, rgb(var(--brand-sky-50) / 0) 360deg)",
+            }}
+          />
+          <span className="absolute inset-[1.5px] rounded-[calc(1.75rem-1.5px)]" style={{ background: "rgb(var(--background))" }} />
+        </span>
+      ) : null}
 
-          <div className="flex shrink-0 items-center gap-1.5">
-            {trailingColumns.map((column) => (
-              <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
-            ))}
-            {footerColumns.map((column) => (
-              <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
-            ))}
-            {isBusy ? <LoaderCircle className="size-4 animate-spin text-muted-foreground" /> : null}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
-          {metricColumns.map((column) => (
-            <div className={column.columnDef.meta?.mobileCardClassName} key={column.id}>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{column.columnDef.meta?.mobileLabel}</p>
-              {renderMobileColumn(column, record, isBusy)}
+      <Card className="relative z-10 gap-3 border-border/55 bg-card/84 p-4 sm:gap-4 sm:p-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex flex-wrap items-center gap-2">
+              {heroColumns.map((column) => (
+                <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
+              ))}
             </div>
-          ))}
+
+            <div className="flex shrink-0 items-center gap-1.5">
+              {trailingColumns.map((column) => (
+                <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
+              ))}
+              {footerColumns.map((column) => (
+                <div key={column.id}>{renderMobileColumn(column, record, isBusy)}</div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+            {metricColumns.map((column) => (
+              <div className={column.columnDef.meta?.mobileCardClassName} key={column.id}>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{column.columnDef.meta?.mobileLabel}</p>
+                {renderMobileColumn(column, record, isBusy)}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
@@ -259,7 +274,6 @@ export function RecordManager({
 
           return (
             <div className="flex items-center justify-end gap-2">
-              {isBusy ? <LoaderCircle className="size-4 animate-spin text-muted-foreground" /> : null}
               <Button aria-label="Edit record" className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
                 <PencilLine className="size-4" />
               </Button>
