@@ -18,6 +18,10 @@ interface MiniTrendGridProps {
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
 const SAVE_ORDER_DEBOUNCE_MS = 260;
 
+function getMetricOrderStorageKey(view: ChartPayload["view"]) {
+  return view === "overall" ? METRIC_ORDER_STORAGE_KEY : `${METRIC_ORDER_STORAGE_KEY}.${view}`;
+}
+
 function getNumericValue(value: string | number | null | undefined) {
   if (value == null || value === "") {
     return null;
@@ -129,7 +133,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
   
   useEffect(() => {
     let savedOrder: string[] = [];
-    const savedOrderRaw = window.localStorage.getItem(METRIC_ORDER_STORAGE_KEY);
+    const savedOrderRaw = window.localStorage.getItem(getMetricOrderStorageKey(chart.view));
 
     if (savedOrderRaw) {
       try {
@@ -139,12 +143,12 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
       }
     }
 
-    const preferredOrder = initialMetricOrder.length ? initialMetricOrder : savedOrder;
+    const preferredOrder = chart.view === "overall" && initialMetricOrder.length ? initialMetricOrder : savedOrder;
     const nextMetrics = sortMetricsBySavedOrder(chart.metrics, preferredOrder);
 
     setOrderedMetrics(nextMetrics);
-    window.localStorage.setItem(METRIC_ORDER_STORAGE_KEY, JSON.stringify(nextMetrics.map((metric) => metric.key)));
-  }, [chart.metrics, initialMetricOrder]);
+    window.localStorage.setItem(getMetricOrderStorageKey(chart.view), JSON.stringify(nextMetrics.map((metric) => metric.key)));
+  }, [chart.metrics, chart.view, initialMetricOrder]);
 
   useEffect(() => {
     return () => {
@@ -158,7 +162,11 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
     setOrderedMetrics(nextMetrics);
 
     const nextMetricOrder = nextMetrics.map((metric) => metric.key);
-    window.localStorage.setItem(METRIC_ORDER_STORAGE_KEY, JSON.stringify(nextMetricOrder));
+    window.localStorage.setItem(getMetricOrderStorageKey(chart.view), JSON.stringify(nextMetricOrder));
+
+    if (chart.view !== "overall") {
+      return;
+    }
 
     if (saveTimeoutIdRef.current) {
       window.clearTimeout(saveTimeoutIdRef.current);

@@ -82,4 +82,37 @@ describe("inbody record helpers", () => {
     expect(chart.points).toHaveLength(1);
     expect(chart.points[0]?.weight).toBe(66.1);
   });
+
+  it("builds segmental chart payload for a selected body part", () => {
+    const segmental = createSegmentalDataFromRecord({ muscle: 30.5, fat: 11.9, fatPercent: 18 });
+    const records: InbodyRecord[] = [
+      {
+        id: "a",
+        userId: "u1",
+        date: "2026-01-01",
+        height: 165,
+        age: 29,
+        gender: "male",
+        score: 81,
+        weight: 66.1,
+        muscle: 30.5,
+        fat: 11.9,
+        fatPercent: 18,
+        visceralFatLevel: 6,
+        bmr: 1508,
+        recommendedCalories: 2140,
+        isIncludedInCharts: true,
+        sourceType: "manual",
+        notes: null,
+        segmental,
+      },
+    ];
+
+    const chart = buildChartPayload(records, "leftArm");
+
+    expect(chart.view).toBe("leftArm");
+    expect(chart.metrics.map((metric) => metric.key)).toEqual(["muscle", "fat", "muscleRatio", "fatRatio"]);
+    expect(chart.points[0]?.muscle).toBe(segmental.leftArm.muscle);
+    expect(chart.points[0]?.fatRatio).toBe(segmental.leftArm.fatRatio);
+  });
 });
