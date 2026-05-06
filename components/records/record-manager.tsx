@@ -197,7 +197,7 @@ export function RecordManager({
       {
         accessorKey: "date",
         id: "date",
-        header: "Date",
+        header: "日期",
         meta: {
           mobileSlot: "hero",
           mobileRender: (record) => <h3 className="font-display text-[1.25rem] leading-none text-foreground">{formatCompactDate(record.date)}</h3>,
@@ -206,10 +206,10 @@ export function RecordManager({
       },
       {
         accessorKey: "weight",
-        header: "Weight",
+        header: "體重",
         meta: {
           mobileSlot: "metric",
-          mobileLabel: "Weight",
+          mobileLabel: "體重",
           mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
           mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.weight)} kg</p>,
         },
@@ -217,10 +217,10 @@ export function RecordManager({
       },
       {
         accessorKey: "muscle",
-        header: "Muscle",
+        header: "骨骼肌",
         meta: {
           mobileSlot: "metric",
-          mobileLabel: "Muscle",
+          mobileLabel: "骨骼肌",
           mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
           mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.muscle)} kg</p>,
         },
@@ -228,10 +228,10 @@ export function RecordManager({
       },
       {
         accessorKey: "fatPercent",
-        header: "Fat%",
+        header: "體脂率",
         meta: {
           mobileSlot: "metric",
-          mobileLabel: "Fat%",
+          mobileLabel: "體脂率",
           mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
           mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.fatPercent)}</p>,
         },
@@ -239,19 +239,19 @@ export function RecordManager({
       },
       {
         id: "analysis",
-        header: () => <div className="w-full text-center">Analysis</div>,
+        header: () => <div className="w-full text-center">分析</div>,
         accessorFn: (record) => record.isIncludedInCharts,
         enableSorting: false,
         meta: {
           mobileSlot: "trailing",
           mobileRender: (record, isBusy) => (
             <Button
-              aria-label={record.isIncludedInCharts ? "Exclude from analysis" : "Include in analysis"}
+              aria-label={record.isIncludedInCharts ? "排除出圖表分析" : "納入圖表分析"}
               className="size-8"
               disabled={isBusy}
               onClick={() => onToggleInclusion(record, !record.isIncludedInCharts)}
               size="icon"
-              title={record.isIncludedInCharts ? "Included in analysis" : "Excluded from analysis"}
+              title={record.isIncludedInCharts ? "已納入圖表分析" : "已排除出圖表分析"}
               type="button"
               variant="outline"
             >
@@ -276,16 +276,16 @@ export function RecordManager({
       },
       {
         id: "actions",
-        header: () => <div className="w-full text-center">Actions</div>,
+        header: () => <div className="w-full text-center">操作</div>,
         enableSorting: false,
         meta: {
           mobileSlot: "footer",
           mobileRender: (record, isBusy) => (
             <div className="flex items-center gap-1.5">
-              <Button aria-label="Edit record" className="size-8" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+              <Button aria-label="編輯紀錄" className="size-8" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
                 <PencilLine className="size-3.5" />
               </Button>
-              <Button aria-label="Delete record" className="size-8" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
+              <Button aria-label="刪除紀錄" className="size-8" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
                 <Trash2 className="size-3.5" />
               </Button>
             </div>
@@ -297,10 +297,10 @@ export function RecordManager({
 
           return (
             <div className="flex items-center justify-end gap-2">
-              <Button aria-label="Edit record" className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+              <Button aria-label="編輯紀錄" className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
                 <PencilLine className="size-4" />
               </Button>
-              <Button aria-label="Delete record" className="size-9" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
+              <Button aria-label="刪除紀錄" className="size-9" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
                 <Trash2 className="size-4" />
               </Button>
             </div>
@@ -360,15 +360,15 @@ export function RecordManager({
           <Input
             className="h-10 w-full max-w-[26rem] rounded-[1rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search date or notes"
+            placeholder="搜尋日期或備註"
             value={searchQuery}
           />
 
           <div className="flex flex-wrap items-center gap-2">
             {[
-              { value: "all", label: "All" },
-              { value: "included", label: "In" },
-              { value: "excluded", label: "Out" },
+              { value: "all", label: "全部" },
+              { value: "included", label: "納入" },
+              { value: "excluded", label: "排除" },
             ].map((option) => {
               const isActive = inclusionFilter === option.value;
 
@@ -388,7 +388,7 @@ export function RecordManager({
 
             {hasActiveFilters ? (
               <Button onClick={resetFilters} size="sm" type="button" variant="ghost">
-                Reset
+                重設
               </Button>
             ) : null}
           </div>

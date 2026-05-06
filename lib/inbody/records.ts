@@ -41,22 +41,51 @@ const RECORD_SELECT = `
   )
 `;
 
+const METRIC_LABEL_MAP: Record<
+  | "weight"
+  | "muscle"
+  | "fat"
+  | "fatPercent"
+  | "score"
+  | "visceralFatLevel"
+  | "bmr"
+  | "recommendedCalories"
+  | "muscleRatio"
+  | "fatRatio",
+  string
+> = {
+  weight: "體重",
+  muscle: "骨骼肌",
+  fat: "體脂肪",
+  fatPercent: "體脂率",
+  score: "InBody 分數",
+  visceralFatLevel: "內臟脂肪",
+  bmr: "基礎代謝率",
+  recommendedCalories: "建議熱量",
+  muscleRatio: "肌肉比例",
+  fatRatio: "脂肪比例",
+};
+
+function getMetricLabel(metricKey: keyof typeof METRIC_LABEL_MAP) {
+  return METRIC_LABEL_MAP[metricKey];
+}
+
 const OVERALL_METRICS: ChartMetric[] = [
-  { key: "weight", label: "Weight", color: "#1c365f", unit: "kg", axis: "mass" },
-  { key: "muscle", label: "Muscle", color: "#3d7bb2", unit: "kg", axis: "mass" },
-  { key: "fat", label: "Fat", color: "#b56878", unit: "kg", axis: "mass" },
-  { key: "fatPercent", label: "Fat %", color: "#8a659f", unit: "%", axis: "ratio" },
-  { key: "score", label: "InBody Score", color: "#79d7c3", unit: "pt", axis: "ratio" },
-  { key: "visceralFatLevel", label: "Visceral Fat", color: "#5e88a7", unit: "lvl", axis: "ratio" },
-  { key: "bmr", label: "BMR", color: "#71839a", unit: "kcal", axis: "ratio" },
-  { key: "recommendedCalories", label: "Calories", color: "#4d67a8", unit: "kcal", axis: "ratio" },
+  { key: "weight", label: getMetricLabel("weight"), color: "#1c365f", unit: "kg", axis: "mass" },
+  { key: "muscle", label: getMetricLabel("muscle"), color: "#3d7bb2", unit: "kg", axis: "mass" },
+  { key: "fat", label: getMetricLabel("fat"), color: "#b56878", unit: "kg", axis: "mass" },
+  { key: "fatPercent", label: getMetricLabel("fatPercent"), color: "#8a659f", unit: "%", axis: "ratio" },
+  { key: "score", label: getMetricLabel("score"), color: "#79d7c3", unit: "pt", axis: "ratio" },
+  { key: "visceralFatLevel", label: getMetricLabel("visceralFatLevel"), color: "#5e88a7", unit: "lvl", axis: "ratio" },
+  { key: "bmr", label: getMetricLabel("bmr"), color: "#71839a", unit: "kcal", axis: "ratio" },
+  { key: "recommendedCalories", label: getMetricLabel("recommendedCalories"), color: "#4d67a8", unit: "kcal", axis: "ratio" },
 ];
 
 const SEGMENTAL_METRICS: ChartMetric[] = [
-  { key: "muscle", label: "Muscle", color: "#3d7bb2", unit: "kg", axis: "mass" },
-  { key: "fat", label: "Fat", color: "#b56878", unit: "kg", axis: "mass" },
-  { key: "muscleRatio", label: "Muscle Ratio", color: "#79d7c3", unit: "%", axis: "ratio" },
-  { key: "fatRatio", label: "Fat Ratio", color: "#8a659f", unit: "%", axis: "ratio" },
+  { key: "muscle", label: getMetricLabel("muscle"), color: "#3d7bb2", unit: "kg", axis: "mass" },
+  { key: "fat", label: getMetricLabel("fat"), color: "#b56878", unit: "kg", axis: "mass" },
+  { key: "muscleRatio", label: getMetricLabel("muscleRatio"), color: "#79d7c3", unit: "%", axis: "ratio" },
+  { key: "fatRatio", label: getMetricLabel("fatRatio"), color: "#8a659f", unit: "%", axis: "ratio" },
 ];
 
 export function createSegmentalDataFromRecord(record: Partial<RecordInput>): SegmentMap {
