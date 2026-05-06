@@ -31,7 +31,7 @@ InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 
 5. 填入 Supabase URL、anon key 與 `NEXT_PUBLIC_SITE_URL`。
 6. 在 Supabase 套用 `infra/supabase/migrations/20260422_001_init.sql` 與 `infra/supabase/migrations/20260424_001_dashboard_preferences.sql`。
 7. 執行 `pnpm install`。
-8. 執行 `pnpm dev`。
+8. 執行 `pnpm dev --port 5500`。
 9. 開啟 `http://127.0.0.1:3000`。
 
 ## 常用指令
