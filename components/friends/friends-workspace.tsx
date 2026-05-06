@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddFriendDialog } from "@/components/friends/add-friend-dialog";
 import { FriendsTable } from "@/components/friends/friends-table";
+import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { Button } from "@/components/ui/button";
 import type { FriendSnapshot } from "@/lib/friends/types";
 import { formatLongDate } from "@/lib/presentation";
@@ -87,20 +88,22 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
     <div className="space-y-5 sm:space-y-8">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl space-y-4 sm:space-y-5">
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.2fr_0.9fr_0.9fr]">
-              <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
+          <StatsScrollbarRow
+            className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.2fr_0.9fr_0.9fr]"
+          >
+            <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Network</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{friends.length}</p>
             </div>
-              <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Snapshots</p>
-                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{activeSnapshots}/{friends.length || 0}</p>
-              </div>
-              <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Freshest</p>
-                <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatLongDate(freshestFriend?.latestRecordedAt)}</p>
-              </div>
-          </div>
+            <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Snapshots</p>
+              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{activeSnapshots}/{friends.length || 0}</p>
+            </div>
+            <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Freshest</p>
+              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatLongDate(freshestFriend?.latestRecordedAt)}</p>
+            </div>
+          </StatsScrollbarRow>
         </div>
       </section>
 

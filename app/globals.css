@@ -75,6 +75,52 @@ html {
   scroll-behavior: smooth;
 }
 
+.stats-scrollbar {
+  padding-bottom: 0.9rem;
+  --stats-scrollbar-track: linear-gradient(90deg, rgb(var(--brand-sky-400) / 0.12), rgb(var(--brand-sky-500) / 0.24), rgb(var(--brand-sky-400) / 0.12));
+  --stats-scrollbar-thumb: linear-gradient(90deg, rgb(var(--brand-sky-400) / 0.7), rgb(var(--brand-slate-500) / 0.5), rgb(var(--brand-sky-400) / 0.7));
+  --stats-scrollbar-thumb-hover: linear-gradient(90deg, rgb(var(--brand-sky-400) / 0.82), rgb(var(--brand-slate-500) / 0.62), rgb(var(--brand-sky-400) / 0.82));
+  scrollbar-color: transparent transparent;
+  scrollbar-width: thin;
+}
+
+.stats-scrollbar[data-scrollbar-visible="true"] {
+  scrollbar-color: rgb(var(--brand-slate-500) / 0.5) rgb(var(--brand-sky-400) / 0.18);
+}
+
+.stats-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.stats-scrollbar::-webkit-scrollbar-track {
+  margin: 0 33%;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 180ms ease, opacity 180ms ease;
+  opacity: 0;
+}
+
+.stats-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 180ms ease, opacity 180ms ease;
+  opacity: 0;
+}
+
+.stats-scrollbar[data-scrollbar-visible="true"]::-webkit-scrollbar-track {
+  background: var(--stats-scrollbar-track);
+  opacity: 1;
+}
+
+.stats-scrollbar[data-scrollbar-visible="true"]::-webkit-scrollbar-thumb {
+  background: var(--stats-scrollbar-thumb);
+  opacity: 1;
+}
+
+.stats-scrollbar[data-scrollbar-visible="true"]::-webkit-scrollbar-thumb:hover {
+  background: var(--stats-scrollbar-thumb-hover);
+}
+
 body {
   margin: 0;
   min-height: 100vh;

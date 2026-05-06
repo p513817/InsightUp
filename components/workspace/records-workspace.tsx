@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
-import { buildChartPayload, getLatestIncludedRecord } from "@/lib/inbody/records";
+import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
+import { buildChartPayload } from "@/lib/inbody/records";
 import { type RecordFormValues } from "@/lib/inbody/schema";
 import { type InbodyRecord } from "@/lib/inbody/types";
 import { formatCompactDate, formatLongDate } from "@/lib/presentation";
@@ -45,7 +46,6 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
 
   const chart = buildChartPayload(records, "overall");
   const latestRecord = records.at(-1);
-  const latestIncludedRecord = getLatestIncludedRecord(records);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
 
@@ -137,7 +137,9 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
     <div className="space-y-8">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl">
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]">
+          <StatsScrollbarRow
+            className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]"
+          >
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Latest Record</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
@@ -153,7 +155,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Excluded</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{excludedCount}</p>
             </div>
-          </div>
+          </StatsScrollbarRow>
         </div>
       </section>
 
