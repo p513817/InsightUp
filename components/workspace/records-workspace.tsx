@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
+import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
 import { Button } from "@/components/ui/button";
@@ -127,31 +128,34 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
 
   if (mode === "dashboard") {
     return (
-      <div className="space-y-4 sm:space-y-5">
-        <section className="space-y-3">
-          <div className="stats-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {CHART_VIEWS.map((view) => {
-              const active = selectedChartView === view.key;
-              const label = view.key === "overall" ? "整體" : view.label;
+      <>
+        <div className="space-y-4 sm:space-y-5">
+          <section className="space-y-3">
+            <div className="stats-scrollbar flex gap-2 overflow-x-auto pb-1">
+              {CHART_VIEWS.map((view) => {
+                const active = selectedChartView === view.key;
+                const label = view.key === "overall" ? "整體" : view.label;
 
-              return (
-                <Button
-                  aria-pressed={active}
-                  className="min-w-16 shrink-0 hover:translate-y-0 active:scale-100"
-                  key={view.key}
-                  onClick={() => setSelectedChartView(view.key)}
-                  size="sm"
-                  type="button"
-                  variant={active ? "default" : "outline"}
-                >
-                  {label}
-                </Button>
-              );
-            })}
-          </div>
-          <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
-        </section>
-      </div>
+                return (
+                  <Button
+                    aria-pressed={active}
+                    className="min-w-16 shrink-0 hover:translate-y-0 active:scale-100"
+                    key={view.key}
+                    onClick={() => setSelectedChartView(view.key)}
+                    size="sm"
+                    type="button"
+                    variant={active ? "default" : "outline"}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
+            </div>
+            <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
+          </section>
+        </div>
+        <TrendSummaryFab />
+      </>
     );
   }
 
