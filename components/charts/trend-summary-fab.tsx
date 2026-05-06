@@ -9,18 +9,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 interface TrendSummaryResponse {
   summary: string;
   generatedAt: string;
+  modelName?: string | null;
   provider: "gemini" | "cache";
   reused: boolean;
   requestDate: string;
   message?: string;
 }
 
-function getProviderLabel(provider: TrendSummaryResponse["provider"], reused: boolean) {
-  if (provider === "gemini") {
-    return "來源：Gemini";
-  }
-
-  return reused ? "來源：今日快取摘要" : "來源：快取摘要";
+function getProviderLabel(provider: TrendSummaryResponse["provider"], reused: boolean, modelName?: string | null) {
+  const baseLabel = provider === "gemini" ? "來源：Gemini" : reused ? "來源：今日快取摘要" : "來源：快取摘要";
+  return modelName ? `${baseLabel} · ${modelName}` : baseLabel;
 }
 
 export function TrendSummaryFab() {
@@ -56,7 +54,7 @@ export function TrendSummaryFab() {
       setSummary(data.summary);
       setRequestDate(data.requestDate);
       setIsReused(data.reused);
-      setProviderLabel(getProviderLabel(data.provider, data.reused));
+      setProviderLabel(getProviderLabel(data.provider, data.reused, data.modelName));
       setOpen(true);
 
       if (data.message) {
