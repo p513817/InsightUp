@@ -1,7 +1,7 @@
 import { FriendCodeCard } from "@/components/friends/friend-code-card";
 import { ensureCurrentUserProfile } from "@/lib/friends/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getLatestIncludedRecord, listRecords } from "@/lib/inbody/records";
+import { listRecords } from "@/lib/inbody/records";
 import { formatLongDate, getUserInitials, summarizeUser } from "@/lib/presentation";
 
 export default async function AccountPage() {
@@ -16,9 +16,6 @@ export default async function AccountPage() {
 
   const summary = summarizeUser(user);
   const [ownProfile, records] = await Promise.all([ensureCurrentUserProfile(supabase, user), listRecords(supabase, user.id)]);
-  const latestIncludedRecord = getLatestIncludedRecord(records);
-  const includedCount = records.filter((record) => record.isIncludedInCharts).length;
-  const coveragePercentage = records.length ? Math.round((includedCount / records.length) * 100) : 0;
 
   return (
     <div>
@@ -27,9 +24,9 @@ export default async function AccountPage() {
         <div className="brand-motion-line brand-motion-line-right" />
 
         <div className="relative z-10 mx-auto max-w-5xl">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_0.75fr_0.85fr_0.95fr_1.15fr]">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_1.15fr]">
               <div className="surface-glass-card rounded-[1rem] p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Account</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">帳號</p>
                 <div className="mt-3 flex items-start gap-2.5">
                   {summary.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -48,24 +45,8 @@ export default async function AccountPage() {
               </div>
 
               <div className="surface-soft-card rounded-[1rem] p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Joined</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">加入日期</p>
                 <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(summary.createdAt)}</p>
-              </div>
-
-              <div className="surface-soft-card rounded-[1rem] p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Records</p>
-                <p className="mt-2 font-display text-2xl text-foreground">{records.length}</p>
-              </div>
-
-              <div className="surface-soft-card rounded-[1rem] p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Coverage</p>
-                <p className="mt-2 font-display text-2xl text-foreground">{includedCount}/{records.length || 0}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{coveragePercentage}% 納入分析</p>
-              </div>
-
-              <div className="surface-soft-card rounded-[1rem] p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Latest Included</p>
-                <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(latestIncludedRecord?.date)}</p>
               </div>
 
               <FriendCodeCard friendCode={ownProfile.friendCode} />
