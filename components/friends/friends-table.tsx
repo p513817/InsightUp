@@ -34,19 +34,19 @@ function deltaTone(value: number | null | undefined) {
 function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBusy: boolean; onRemove: (friend: FriendSnapshot) => void }) {
   const metricItems = [
     {
-      label: "Weight",
+      label: "體重",
       value: formatDecimal(friend.latestWeight),
       delta: formatDelta(friend.latestWeightDelta),
       deltaClassName: deltaTone(friend.latestWeightDelta),
     },
     {
-      label: "Muscle",
+      label: "骨骼肌",
       value: formatDecimal(friend.latestMuscle),
       delta: formatDelta(friend.latestMuscleDelta),
       deltaClassName: deltaTone(friend.latestMuscleDelta),
     },
     {
-      label: "Fat%",
+      label: "體脂率",
       value: formatDecimal(friend.latestFatPercent),
       delta: formatDelta(friend.latestFatPercentDelta),
       deltaClassName: deltaTone(friend.latestFatPercentDelta),
@@ -68,7 +68,7 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
 
           <div className="min-w-0">
             <p className="truncate font-display text-[1.08rem] leading-none text-foreground">{friend.displayName}</p>
-            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">Latest {formatLongDate(friend.latestRecordedAt)}</p>
+            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">最新 {formatLongDate(friend.latestRecordedAt)}</p>
           </div>
         </div>
 
@@ -89,16 +89,16 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
 
       <div className="flex items-start justify-between gap-3 text-xs text-muted-foreground">
         <div className="space-y-1 leading-5">
-          <p>Friend ID: <span className="font-mono text-[11px] text-foreground">{friend.friendCode}</span></p>
-          <p>Source: <span className="text-foreground">{friend.latestSourceType ? formatSourceType(friend.latestSourceType) : "-"}</span></p>
+          <p>好友編號: <span className="font-mono text-[11px] text-foreground">{friend.friendCode}</span></p>
+          <p>來源: <span className="text-foreground">{friend.latestSourceType ? formatSourceType(friend.latestSourceType) : "-"}</span></p>
         </div>
         <div className="space-y-1 text-right leading-5">
           <p>
-            Fat: <span className="text-foreground">{formatDecimal(friend.latestFat)}</span>
+            體脂肪: <span className="text-foreground">{formatDecimal(friend.latestFat)}</span>
             <span className={`ml-1 ${deltaTone(friend.latestFatDelta)}`}>{formatDelta(friend.latestFatDelta)}</span>
           </p>
           <p>
-            Score: <span className="text-foreground">{formatDecimal(friend.latestScore)}</span>
+            分數: <span className="text-foreground">{formatDecimal(friend.latestScore)}</span>
             <span className={`ml-1 ${deltaTone(friend.latestScoreDelta)}`}>{formatDelta(friend.latestScoreDelta)}</span>
           </p>
         </div>
@@ -111,8 +111,8 @@ export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTablePr
   if (!friends.length) {
     return (
       <div className="surface-state-panel rounded-[1.2rem] px-4 py-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:rounded-[1.5rem] sm:px-6 sm:py-10">
-        <p className="font-display text-[1.45rem] text-foreground sm:text-2xl">Friend list is empty</p>
-        <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">先把朋友的 Friend ID 加進來，這裡就會開始顯示他們最新的 InBody 快照。</p>
+        <p className="font-display text-[1.45rem] text-foreground sm:text-2xl">好友清單為空</p>
+        <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">先把朋友的好友編號加進來，這裡就會開始顯示他們最新的 InBody 快照。</p>
       </div>
     );
   }
@@ -124,16 +124,16 @@ export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTablePr
           <table className="min-w-[47rem] border-collapse text-left sm:min-w-full">
           <thead>
             <tr className="surface-table-head border-b border-border/70 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              <th className="px-3 py-3 font-medium sm:px-5 sm:py-4">Friend</th>
-              <th className="hidden px-4 py-4 font-medium md:table-cell">Friend ID</th>
-              <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">Latest Date</th>
-              <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">Weight</th>
-              <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">Muscle</th>
-              <th className="hidden px-4 py-4 font-medium lg:table-cell">Fat</th>
-              <th className="hidden px-4 py-4 font-medium lg:table-cell">Fat %</th>
-              <th className="hidden px-4 py-4 font-medium xl:table-cell">Score</th>
-              <th className="hidden px-4 py-4 font-medium xl:table-cell">Source</th>
-              <th className="px-3 py-3 text-right font-medium sm:px-5 sm:py-4">Action</th>
+              <th className="px-3 py-3 font-medium sm:px-5 sm:py-4">好友</th>
+              <th className="hidden px-4 py-4 font-medium md:table-cell">好友編號</th>
+              <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">最新日期</th>
+              <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">體重</th>
+              <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">骨骼肌</th>
+              <th className="hidden px-4 py-4 font-medium lg:table-cell">體脂肪</th>
+              <th className="hidden px-4 py-4 font-medium lg:table-cell">體脂率</th>
+              <th className="hidden px-4 py-4 font-medium xl:table-cell">分數</th>
+              <th className="hidden px-4 py-4 font-medium xl:table-cell">來源</th>
+              <th className="px-3 py-3 text-right font-medium sm:px-5 sm:py-4">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -155,7 +155,7 @@ export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTablePr
 
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground sm:text-base">{friend.displayName}</p>
-                        <p className="text-[11px] leading-4 text-muted-foreground sm:text-xs">Added {formatLongDate(friend.linkedAt)}</p>
+                        <p className="text-[11px] leading-4 text-muted-foreground sm:text-xs">新增於 {formatLongDate(friend.linkedAt)}</p>
                       </div>
                     </div>
                   </td>
@@ -170,7 +170,7 @@ export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTablePr
                   <td className="px-3 py-3 text-right sm:px-5 sm:py-4">
                     <Button className="h-8 px-2.5 text-[11px] sm:h-9 sm:px-4 sm:text-xs" disabled={isBusy} onClick={() => onRemove(friend)} size="sm" type="button" variant="ghost">
                       {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                      Remove
+                      移除
                     </Button>
                   </td>
                 </tr>
