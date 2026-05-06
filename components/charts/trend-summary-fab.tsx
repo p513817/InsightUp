@@ -7,12 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TrendSummaryResponse {
-  summary: string;
-  generatedAt: string;
+  summary: string | null;
+  generatedAt: string | null;
   modelName?: string | null;
   provider: "gemini" | "cache";
   reused: boolean;
   requestDate: string;
+  usageCount?: number;
+  dailyLimit?: number | null;
+  planCode?: string;
+  canGenerate?: boolean;
   message?: string;
 }
 
@@ -23,18 +27,63 @@ function getProviderLabel(provider: TrendSummaryResponse["provider"], reused: bo
 
 export function TrendSummaryFab() {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [requestDate, setRequestDate] = useState<string | null>(null);
   const [isReused, setIsReused] = useState(false);
+  const [canGenerate, setCanGenerate] = useState(true);
+  const [usageBadge, setUsageBadge] = useState<string | null>(null);
   const [providerLabel, setProviderLabel] = useState<string | null>(null);
 
-  async function fetchSummary() {
-    if (loading) {
+  function applySummaryResponse(data: TrendSummaryResponse) {
+    setSummary(data.summary);
+    setRequestDate(data.requestDate);
+    setIsReused(data.reused);
+    setCanGenerate(data.canGenerate ?? true);
+    setUsageBadge(`使用次數 ${data.usageCount ?? 0} / ${data.dailyLimit == null ? "∞" : data.dailyLimit}`);
+    setProviderLabel(getProviderLabel(data.provider, data.reused, data.modelName));
+  }
+
+  async function openSummary() {
+    if (loadingSummary || generating) {
       return;
     }
 
-    setLoading(true);
+    setLoadingSummary(true);
+    setOpen(true);
+
+    try {
+      const response = await fetch("/api/trend-summary", {
+        method: "GET",
+      });
+
+      const payload = (await response.json().catch(() => null)) as TrendSummaryResponse | { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "無法產生摘要，請稍後再試。");
+      }
+
+      const data = payload as TrendSummaryResponse;
+      applySummaryResponse(data);
+
+      if (data.message) {
+        toast.message(data.message);
+      }
+    } catch (error) {
+      setOpen(false);
+      toast.error(error instanceof Error ? error.message : "無法產生摘要，請稍後再試。");
+    } finally {
+      setLoadingSummary(false);
+    }
+  }
+
+  async function regenerateSummary() {
+    if (generating || !canGenerate) {
+      return;
+    }
+
+    setGenerating(true);
 
     try {
       const response = await fetch("/api/trend-summary", {
@@ -51,21 +100,15 @@ export function TrendSummaryFab() {
       }
 
       const data = payload as TrendSummaryResponse;
-      setSummary(data.summary);
-      setRequestDate(data.requestDate);
-      setIsReused(data.reused);
-      setProviderLabel(getProviderLabel(data.provider, data.reused, data.modelName));
-      setOpen(true);
+      applySummaryResponse(data);
 
       if (data.message) {
         toast.message(data.message);
-      } else if (data.reused) {
-        toast.message("今天已使用過一次，顯示今日摘要。");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法產生摘要，請稍後再試。");
     } finally {
-      setLoading(false);
+      setGenerating(false);
     }
   }
 
@@ -76,11 +119,11 @@ export function TrendSummaryFab() {
           <Button
             aria-label="詢問 AI 趨勢摘要"
             className="h-12 rounded-full px-4 shadow-panel sm:h-14 sm:px-5"
-            disabled={loading}
-            onClick={fetchSummary}
+            disabled={loadingSummary || generating}
+            onClick={openSummary}
             type="button"
           >
-            {loading ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            {loadingSummary ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             <span className="font-medium">AI 趨勢建議</span>
           </Button>
         </div>
@@ -97,14 +140,29 @@ export function TrendSummaryFab() {
 
           <div className="space-y-4 px-6 pb-6 pt-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="surface-soft-card rounded-full px-3 py-1 text-xs font-medium text-muted-foreground">使用次數 1 / 1</span>
+              {usageBadge ? (
+                <span className="surface-soft-card rounded-full px-3 py-1 text-xs font-medium text-muted-foreground">{usageBadge}</span>
+              ) : null}
               {providerLabel ? (
                 <span className="surface-pill rounded-full px-3 py-1 text-xs font-medium text-foreground">{providerLabel}</span>
               ) : null}
             </div>
-            <p className="surface-subtle-gradient rounded-2xl border border-border/70 px-4 py-4 text-[0.95rem] leading-8 text-foreground">
-              {summary || "目前尚無摘要內容。"}
-            </p>
+            <div className="surface-subtle-gradient rounded-2xl border border-border/70 px-4 py-4 text-[0.95rem] leading-8 text-foreground">
+              {loadingSummary ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <LoaderCircle className="size-4 animate-spin" />
+                  讀取最新摘要中...
+                </div>
+              ) : (
+                <p>{summary || "目前尚無摘要內容，點擊下方按鈕即可生成最新摘要。"}</p>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <Button disabled={loadingSummary || generating || !canGenerate} onClick={regenerateSummary} type="button">
+                {generating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                <span>{summary ? "重新生成摘要" : "生成摘要"}</span>
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

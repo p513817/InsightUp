@@ -25,8 +25,7 @@ class TrendSummaryProviderError extends Error {
   }
 }
 
-const TREND_SUMMARY_DAILY_BYPASS_EMAILS = new Set(["p513817@gmail.com"]);
-const GEMINI_ROTATION_MODELS = [
+const DEFAULT_GEMINI_ROTATION_MODELS = [
   "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.5-pro",
@@ -34,8 +33,19 @@ const GEMINI_ROTATION_MODELS = [
   "gemini-3-flash-preview",
 ] as const;
 
-function canBypassDailyLimit(email: string | null | undefined) {
-  return Boolean(email && TREND_SUMMARY_DAILY_BYPASS_EMAILS.has(email.toLowerCase()));
+interface TrendSummaryEntitlement {
+  planCode: string;
+  dailyLimit: number | null;
+  config: Record<string, unknown>;
+}
+
+interface TrendSummaryRow {
+  summary_text: string;
+  created_at: string;
+  model_name: string | null;
+  request_date: string;
+  usage_count: number;
+  last_generated_at: string | null;
 }
 
 function normalizeSummaryText(text: string) {
@@ -56,6 +66,88 @@ function getGeminiApiKey() {
   }
 
   return apiKey;
+}
+
+function parseEntitlementConfig(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {} as Record<string, unknown>;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getModelPool(config: Record<string, unknown>) {
+  const configuredPool = Array.isArray(config.model_pool)
+    ? config.model_pool.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+
+  if (!configuredPool.length) {
+    return [...DEFAULT_GEMINI_ROTATION_MODELS];
+  }
+
+  return config.allow_rotation === false ? [configuredPool[0]] : configuredPool;
+}
+
+async function resolveTrendSummaryEntitlement(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
+  const { data, error } = await supabase.rpc("resolve_my_feature_entitlement", {
+    input_feature: "trend_summary",
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { plan_code?: string | null; daily_limit?: number | null; config?: unknown }
+    | null
+    | undefined;
+
+  return {
+    planCode: row?.plan_code || "free",
+    dailyLimit: typeof row?.daily_limit === "number" ? row.daily_limit : 1,
+    config: parseEntitlementConfig(row?.config),
+  } satisfies TrendSummaryEntitlement;
+}
+
+async function getLatestTrendSummaryRow(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("llm_trend_daily_summaries")
+    .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
+    .eq("user_id", userId)
+    .eq("feature_key", "trend_summary")
+    .order("request_date", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as TrendSummaryRow | null;
+}
+
+async function getTodayTrendSummaryRow(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+  requestDate: string,
+) {
+  const { data, error } = await supabase
+    .from("llm_trend_daily_summaries")
+    .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
+    .eq("user_id", userId)
+    .eq("feature_key", "trend_summary")
+    .eq("request_date", requestDate)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as TrendSummaryRow | null;
 }
 
 function shouldRotateModel(code: TrendSummaryProviderError["code"]) {
@@ -104,11 +196,11 @@ function mapGeminiError(error: unknown, model: string) {
   return new TrendSummaryProviderError(errorMessage.slice(0, 400), "provider_error", model);
 }
 
-async function generateSummaryWithGemini(prompt: string) {
+async function generateSummaryWithGemini(prompt: string, modelPool: string[]) {
   const client = new GoogleGenAI({ apiKey: getGeminiApiKey() });
   let lastError: TrendSummaryProviderError | null = null;
 
-  for (const model of GEMINI_ROTATION_MODELS) {
+  for (const model of modelPool) {
     try {
       const response = await client.models.generateContent({
         model,
@@ -139,43 +231,84 @@ async function generateSummaryWithGemini(prompt: string) {
   throw lastError ?? new TrendSummaryProviderError("Gemini rotation exhausted", "provider_error");
 }
 
-export async function POST() {
+async function getAuthenticatedContext() {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return { supabase, user };
+}
+
+export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { supabase, user } = await getAuthenticatedContext();
 
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const requestDate = getTodayTaipeiDate();
-    const bypassDailyLimit = canBypassDailyLimit(user.email);
+    const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
-    if (!bypassDailyLimit) {
-      const { data: existing, error: existingError } = await supabase
-        .from("llm_trend_daily_summaries")
-        .select("summary_text, created_at, model_name")
-        .eq("user_id", user.id)
-        .eq("request_date", requestDate)
-        .maybeSingle();
+    if (entitlement.dailyLimit === 0) {
+      return NextResponse.json({ message: "目前方案尚未開放 AI 趨勢摘要。" }, { status: 403 });
+    }
 
-      if (existingError) {
-        return NextResponse.json({ message: "Failed to check daily usage." }, { status: 500 });
-      }
+    const latestSummary = await getLatestTrendSummaryRow(supabase, user.id);
+    const todaySummary = await getTodayTrendSummaryRow(supabase, user.id, requestDate);
 
-      if (existing?.summary_text) {
-        return NextResponse.json({
-          summary: existing.summary_text,
-          generatedAt: existing.created_at,
-          modelName: existing.model_name,
-          provider: "cache",
-          reused: true,
-          requestDate,
-          message: "今天已使用過一次，回傳今日既有摘要。",
-        });
-      }
+    return NextResponse.json({
+      summary: latestSummary?.summary_text ?? null,
+      generatedAt: latestSummary?.last_generated_at ?? latestSummary?.created_at ?? null,
+      modelName: latestSummary?.model_name ?? null,
+      provider: latestSummary ? "cache" : "gemini",
+      reused: Boolean(latestSummary),
+      requestDate: latestSummary?.request_date ?? requestDate,
+      usageCount: todaySummary?.usage_count ?? 0,
+      dailyLimit: entitlement.dailyLimit,
+      planCode: entitlement.planCode,
+      canGenerate: entitlement.dailyLimit == null || (todaySummary?.usage_count ?? 0) < entitlement.dailyLimit,
+      message: latestSummary ? undefined : "目前還沒有摘要，點擊重新生成即可建立最新摘要。",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected server error";
+    return NextResponse.json({ message: message.slice(0, 300) }, { status: 500 });
+  }
+}
+
+export async function POST() {
+  try {
+    const { supabase, user } = await getAuthenticatedContext();
+
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const requestDate = getTodayTaipeiDate();
+    const entitlement = await resolveTrendSummaryEntitlement(supabase);
+
+    if (entitlement.dailyLimit === 0) {
+      return NextResponse.json({ message: "目前方案尚未開放 AI 趨勢摘要。" }, { status: 403 });
+    }
+
+    const todaySummary = await getTodayTrendSummaryRow(supabase, user.id, requestDate);
+    const currentUsageCount = todaySummary?.usage_count ?? 0;
+
+    if (entitlement.dailyLimit != null && currentUsageCount >= entitlement.dailyLimit) {
+      return NextResponse.json({
+        summary: todaySummary?.summary_text ?? null,
+        generatedAt: todaySummary?.last_generated_at ?? todaySummary?.created_at ?? null,
+        modelName: todaySummary?.model_name ?? null,
+        provider: "cache",
+        reused: true,
+        requestDate,
+        usageCount: currentUsageCount,
+        dailyLimit: entitlement.dailyLimit,
+        planCode: entitlement.planCode,
+        canGenerate: false,
+        message: "今天已達使用上限，請明天再試。",
+      });
     }
 
     const records = await listRecentRecordsForSummary(supabase, user.id);
@@ -185,41 +318,26 @@ export async function POST() {
     }
 
     const prompt = buildGeminiPrompt(records);
-    const geminiResult = await generateSummaryWithGemini(prompt);
+    const geminiResult = await generateSummaryWithGemini(prompt, getModelPool(entitlement.config));
     const summary = normalizeSummaryText(geminiResult.text);
+    const nextUsageCount = currentUsageCount + 1;
 
-    if (!bypassDailyLimit) {
-      const { error: insertError } = await supabase.from("llm_trend_daily_summaries").insert({
+    const { error: upsertError } = await supabase.from("llm_trend_daily_summaries").upsert(
+      {
         user_id: user.id,
+        feature_key: "trend_summary",
         request_date: requestDate,
         summary_text: summary,
         model_name: geminiResult.model,
         source_record_count: records.length,
-      });
+        usage_count: nextUsageCount,
+        last_generated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,feature_key,request_date" },
+    );
 
-      if (insertError) {
-        // If a race condition occurs, fallback to the row created by the concurrent request.
-        const { data: fallback } = await supabase
-          .from("llm_trend_daily_summaries")
-          .select("summary_text, created_at, model_name")
-          .eq("user_id", user.id)
-          .eq("request_date", requestDate)
-          .maybeSingle();
-
-        if (fallback?.summary_text) {
-          return NextResponse.json({
-            summary: fallback.summary_text,
-            generatedAt: fallback.created_at,
-            modelName: fallback.model_name,
-            provider: "cache",
-            reused: true,
-            requestDate,
-            message: "今天已使用過一次，回傳今日既有摘要。",
-          });
-        }
-
-        return NextResponse.json({ message: "Failed to persist summary." }, { status: 500 });
-      }
+    if (upsertError) {
+      return NextResponse.json({ message: "Failed to persist summary." }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -228,7 +346,10 @@ export async function POST() {
       modelName: geminiResult.model,
       provider: "gemini",
       reused: false,
-      message: bypassDailyLimit ? "開發者帳號已略過每日一次限制。" : undefined,
+      usageCount: nextUsageCount,
+      dailyLimit: entitlement.dailyLimit,
+      planCode: entitlement.planCode,
+      canGenerate: entitlement.dailyLimit == null || nextUsageCount < entitlement.dailyLimit,
       requestDate,
     });
   } catch (error) {
