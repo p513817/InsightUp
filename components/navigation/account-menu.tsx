@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LoaderCircle, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, LoaderCircle, LogOut, Mail, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AppUserSummary } from "@/lib/presentation";
@@ -12,6 +12,11 @@ import { getUserInitials } from "@/lib/presentation";
 interface AccountMenuProps {
   user: AppUserSummary;
 }
+
+const FEEDBACK_EMAIL = "p513817@gmail.com";
+const FEEDBACK_SUBJECT = "[InsightUp] 產品問題回報 / 功能建議";
+const FEEDBACK_BODY = "請描述：\n1) 問題或建議\n2) 發生頁面與操作步驟\n3) 期望結果\n4) 畫面截圖（可選）";
+const FEEDBACK_MAILTO = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(FEEDBACK_SUBJECT)}&body=${encodeURIComponent(FEEDBACK_BODY)}`;
 
 function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React.ReactNode; label: string; onNavigate: () => void }) {
   return (
@@ -90,6 +95,16 @@ export function AccountMenu({ user }: AccountMenuProps) {
         <div className="surface-menu absolute right-0 top-[calc(100%+0.75rem)] z-40 w-auto min-w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.35rem] p-2">
           <div className="mt-2 space-y-1">
             <MenuLink href="/account" icon={<UserRound className="size-4" />} label="個人資訊" onNavigate={() => setIsOpen(false)} />
+            <a
+              className="flex cursor-pointer items-center gap-2.5 rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-primary/6"
+              href={FEEDBACK_MAILTO}
+              onClick={() => setIsOpen(false)}
+            >
+              <span className="text-muted-foreground">
+                <Mail className="size-4" />
+              </span>
+              <span>問題回饋</span>
+            </a>
             <button
               className="flex w-full items-center gap-2.5 rounded-[1rem] px-3 py-2.5 text-sm text-foreground transition hover:bg-danger/8 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={isSigningOut}
