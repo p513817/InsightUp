@@ -141,18 +141,18 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
             className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]"
           >
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Latest Record</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">最新紀錄</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
                 <span className="sm:hidden">{formatCompactDate(latestRecord?.date)}</span>
                 <span className="hidden sm:inline">{formatLongDate(latestRecord?.date)}</span>
               </p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">已納入分析</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{includedCount}/{records.length || 0}</p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Excluded</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">已排除</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{excludedCount}</p>
             </div>
           </StatsScrollbarRow>
