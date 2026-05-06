@@ -2,7 +2,7 @@ import { z } from "zod";
 "use client";
 
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, type Path, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { SEGMENT_PARTS, type InbodyRecord } from "@/lib/inbody/types";
 interface RecordFormDialogProps {
   open: boolean;
   initialRecord?: InbodyRecord | null;
+  latestRecordForAutofill?: InbodyRecord | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: RecordFormValues) => Promise<void>;
 }
@@ -109,7 +110,76 @@ function FieldShell({
   );
 }
 
-export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }: RecordFormDialogProps) {
+function SelectShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      {children}
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}
+
+function NumberInputWithAdjust({
+  className,
+  form,
+  name,
+  placeholder,
+  step,
+}: {
+  className: string;
+  form: ReturnType<typeof useForm<RecordFormValues>>;
+  name: Path<RecordFormValues>;
+  placeholder?: string;
+  step: number;
+}) {
+  const precision = String(step).includes(".") ? String(step).split(".")[1].length : 0;
+
+  function adjustValue(direction: -1 | 1) {
+    const currentValue = form.getValues(name);
+    const base = typeof currentValue === "number" ? currentValue : 0;
+    const adjusted = Number((base + direction * step).toFixed(precision));
+    form.setValue(name, adjusted as never, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+      <Input className={className} placeholder={placeholder} step={step} type="number" {...form.register(name)} />
+      <div className="flex items-center gap-1">
+        <Button aria-label="減少數值" className="size-8 rounded-[0.8rem]" onClick={() => adjustValue(-1)} size="icon" type="button" variant="outline">
+          -
+        </Button>
+        <Button aria-label="增加數值" className="size-8 rounded-[0.8rem]" onClick={() => adjustValue(1)} size="icon" type="button" variant="outline">
+          +
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function buildDialogInitialValues(initialRecord?: InbodyRecord | null, latestRecordForAutofill?: InbodyRecord | null) {
+  if (initialRecord) {
+    return recordToFormValues(initialRecord);
+  }
+
+  const baseValues = recordToFormValues(null);
+  if (!latestRecordForAutofill) {
+    return baseValues;
+  }
+
+  const latestValues = recordToFormValues(latestRecordForAutofill);
+
+  return {
+    ...latestValues,
+    date: baseValues.date,
+    notes: baseValues.notes,
+  };
+}
+
+export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill, onOpenChange, onSubmit }: RecordFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelFeedbackVisible, setIsCancelFeedbackVisible] = useState(false);
   const [isSubmitFeedbackVisible, setIsSubmitFeedbackVisible] = useState(false);
@@ -127,18 +197,18 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
   const controlClassName =
     "h-10 rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const selectClassName =
-    "flex h-10 w-full rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "flex h-10 w-full appearance-none rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 pr-9 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
     "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(recordFormSchema) as any,
-    defaultValues: recordToFormValues(initialRecord),
+    defaultValues: buildDialogInitialValues(initialRecord, latestRecordForAutofill),
   });
   const watchedValues = form.watch();
 
   useEffect(() => {
-    form.reset(recordToFormValues(initialRecord));
-  }, [form, initialRecord, open]);
+    form.reset(buildDialogInitialValues(initialRecord, latestRecordForAutofill));
+  }, [form, initialRecord, latestRecordForAutofill, open]);
 
   useEffect(() => {
     if (!open) {
@@ -271,42 +341,48 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                         return (
                           <div className="space-y-2">
                             <div className="grid grid-cols-3 gap-2">
-                              <select
-                                className={selectClassName}
-                                onChange={(event) => updateDate({ year: event.target.value })}
-                                value={parts.year}
-                              >
-                                <option value="">年</option>
-                                {yearOptions.map((optionYear) => (
-                                  <option key={optionYear} value={optionYear}>
-                                    {optionYear}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
-                                className={selectClassName}
-                                onChange={(event) => updateDate({ month: event.target.value })}
-                                value={parts.month}
-                              >
-                                <option value="">月</option>
-                                {monthOptions.map((optionMonth) => (
-                                  <option key={optionMonth} value={optionMonth}>
-                                    {optionMonth}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
-                                className={selectClassName}
-                                onChange={(event) => updateDate({ day: event.target.value })}
-                                value={parts.day}
-                              >
-                                <option value="">日</option>
-                                {dayOptions.map((optionDay) => (
-                                  <option key={optionDay} value={optionDay}>
-                                    {optionDay}
-                                  </option>
-                                ))}
-                              </select>
+                              <SelectShell>
+                                <select
+                                  className={selectClassName}
+                                  onChange={(event) => updateDate({ year: event.target.value })}
+                                  value={parts.year}
+                                >
+                                  <option value="">年</option>
+                                  {yearOptions.map((optionYear) => (
+                                    <option key={optionYear} value={optionYear}>
+                                      {optionYear}
+                                    </option>
+                                  ))}
+                                </select>
+                              </SelectShell>
+                              <SelectShell>
+                                <select
+                                  className={selectClassName}
+                                  onChange={(event) => updateDate({ month: event.target.value })}
+                                  value={parts.month}
+                                >
+                                  <option value="">月</option>
+                                  {monthOptions.map((optionMonth) => (
+                                    <option key={optionMonth} value={optionMonth}>
+                                      {optionMonth}
+                                    </option>
+                                  ))}
+                                </select>
+                              </SelectShell>
+                              <SelectShell>
+                                <select
+                                  className={selectClassName}
+                                  onChange={(event) => updateDate({ day: event.target.value })}
+                                  value={parts.day}
+                                >
+                                  <option value="">日</option>
+                                  {dayOptions.map((optionDay) => (
+                                    <option key={optionDay} value={optionDay}>
+                                      {optionDay}
+                                    </option>
+                                  ))}
+                                </select>
+                              </SelectShell>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
@@ -337,10 +413,12 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                   </FieldShell>
 
                   <FieldShell error={form.formState.errors.sourceType?.message} label="來源">
-                    <select className={selectClassName} {...form.register("sourceType")}>
-                      <option value="manual">手動輸入</option>
-                      <option value="photo_scan">拍照掃描待確認</option>
-                    </select>
+                    <SelectShell>
+                      <select className={selectClassName} {...form.register("sourceType")}>
+                        <option value="manual">手動輸入</option>
+                        <option value="photo_scan">拍照掃描待確認</option>
+                      </select>
+                    </SelectShell>
                   </FieldShell>
 
                   <FieldShell label="圖表分析">
@@ -360,16 +438,16 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                 {renderSectionToggle("primary", "主要數值", isPrimaryComplete)}
                 {openSections.primary ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   <FieldShell error={form.formState.errors.weight?.message} label="體重 (kg)" required>
-                    <Input className={controlClassName} placeholder="66.1" step="0.1" type="number" {...form.register("weight")} />
+                    <NumberInputWithAdjust className={controlClassName} form={form} name="weight" placeholder="66.1" step={0.1} />
                   </FieldShell>
                   <FieldShell error={form.formState.errors.muscle?.message} label="骨骼肌 (kg)" required>
-                    <Input className={controlClassName} placeholder="30.5" step="0.1" type="number" {...form.register("muscle")} />
+                    <NumberInputWithAdjust className={controlClassName} form={form} name="muscle" placeholder="30.5" step={0.1} />
                   </FieldShell>
                   <FieldShell error={form.formState.errors.fat?.message} label="體脂肪 (kg)" required>
-                    <Input className={controlClassName} placeholder="11.9" step="0.1" type="number" {...form.register("fat")} />
+                    <NumberInputWithAdjust className={controlClassName} form={form} name="fat" placeholder="11.9" step={0.1} />
                   </FieldShell>
                   <FieldShell error={form.formState.errors.fatPercent?.message} label="體脂率 (%)" required>
-                    <Input className={controlClassName} placeholder="18.0" step="0.1" type="number" {...form.register("fatPercent")} />
+                    <NumberInputWithAdjust className={controlClassName} form={form} name="fatPercent" placeholder="18.0" step={0.1} />
                   </FieldShell>
                 </div> : null}
               </section>
@@ -379,30 +457,32 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                 {openSections.additional ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <FieldShell error={form.formState.errors.height?.message} label="身高 (cm)">
-                      <Input className={controlClassName} placeholder="170" step="0.1" type="number" {...form.register("height")} />
+                      <NumberInputWithAdjust className={controlClassName} form={form} name="height" placeholder="170" step={0.1} />
                     </FieldShell>
                     <FieldShell error={form.formState.errors.age?.message} label="年齡">
-                      <Input className={controlClassName} placeholder="29" step="1" type="number" {...form.register("age")} />
+                      <NumberInputWithAdjust className={controlClassName} form={form} name="age" placeholder="29" step={1} />
                     </FieldShell>
                     <FieldShell error={form.formState.errors.gender?.message} label="性別">
-                      <select className={selectClassName} {...form.register("gender")}>
-                        <option value="unknown">未知</option>
-                        <option value="male">男性</option>
-                        <option value="female">女性</option>
-                        <option value="other">其他</option>
-                      </select>
+                      <SelectShell>
+                        <select className={selectClassName} {...form.register("gender")}>
+                          <option value="unknown">未知</option>
+                          <option value="male">男性</option>
+                          <option value="female">女性</option>
+                          <option value="other">其他</option>
+                        </select>
+                      </SelectShell>
                     </FieldShell>
                       <FieldShell error={form.formState.errors.score?.message} label="分數">
-                      <Input className={controlClassName} placeholder="81" step="1" type="number" {...form.register("score")} />
+                      <NumberInputWithAdjust className={controlClassName} form={form} name="score" placeholder="81" step={1} />
                     </FieldShell>
                     <FieldShell error={form.formState.errors.visceralFatLevel?.message} label="內臟脂肪等級">
-                      <Input className={controlClassName} placeholder="6" step="1" type="number" {...form.register("visceralFatLevel")} />
+                      <NumberInputWithAdjust className={controlClassName} form={form} name="visceralFatLevel" placeholder="6" step={1} />
                     </FieldShell>
                       <FieldShell error={form.formState.errors.bmr?.message} label="基礎代謝率 (kcal)">
-                      <Input className={controlClassName} placeholder="1508" step="1" type="number" {...form.register("bmr")} />
+                      <NumberInputWithAdjust className={controlClassName} form={form} name="bmr" placeholder="1508" step={1} />
                     </FieldShell>
                     <FieldShell error={form.formState.errors.recommendedCalories?.message} label="建議熱量 (kcal)">
-                      <Input className={controlClassName} placeholder="2140" step="1" type="number" {...form.register("recommendedCalories")} />
+                      <NumberInputWithAdjust className={controlClassName} form={form} name="recommendedCalories" placeholder="2140" step={1} />
                     </FieldShell>
                   </div>
                 ) : null}
@@ -416,10 +496,10 @@ export function RecordFormDialog({ open, initialRecord, onOpenChange, onSubmit }
                       <h4 className="text-sm font-semibold text-foreground">{part.label}</h4>
                       <div className="grid gap-2.5">
                         <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label="骨骼肌 (kg)">
-                          <Input className={controlClassName} step="0.01" type="number" {...form.register(`segmental.${part.key}.muscle` as const)} />
+                          <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.muscle` as const} step={0.01} />
                         </FieldShell>
                         <FieldShell error={form.formState.errors.segmental?.[part.key]?.fat?.message} label="脂肪 (kg)">
-                          <Input className={controlClassName} step="0.01" type="number" {...form.register(`segmental.${part.key}.fat` as const)} />
+                          <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.fat` as const} step={0.01} />
                         </FieldShell>
                       </div>
                     </div>
