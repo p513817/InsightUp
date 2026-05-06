@@ -171,6 +171,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
 
       <RecordFormDialog
         initialRecord={editingRecord}
+        latestRecordForAutofill={latestRecord}
         onOpenChange={(nextOpen) => {
           setDialogOpen(nextOpen);
           if (!nextOpen) {
