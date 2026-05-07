@@ -15,6 +15,7 @@
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000`
+   - `GEMINI_API_KEY`
 5. 執行 `pnpm install`。
 6. 執行 `pnpm dev`。
 7. 用瀏覽器開啟 `http://127.0.0.1:3000`。
@@ -35,6 +36,8 @@
 4. 可把記錄排除出圖表，但仍留在記錄清單。
 5. 可刪除記錄，並從主畫面隱藏。
 6. 圖表可切換 `Overall` 與各部位視角。
+7. Dashboard 的 `AI 趨勢建議` 可先讀到最新摘要，並可手動重新生成。
+8. 個人資訊頁可看到目前方案等級。
 
 ## Supabase SQL
 
@@ -42,6 +45,10 @@
 
 - `infra/supabase/migrations/20260422_001_init.sql`
 - `infra/supabase/migrations/20260424_001_dashboard_preferences.sql`
+- `infra/supabase/migrations/20260424_002_friends.sql`
+- `infra/supabase/migrations/20260506_001_llm_trend_daily_summaries.sql`
+- `infra/supabase/migrations/20260506_002_add_model_name_to_llm_trend_daily_summaries.sql`
+- `infra/supabase/migrations/20260506_003_llm_feature_entitlements.sql`
 
 如果你已經跑過第一支 migration，但打開 dashboard 時看到 `PGRST205` / `Could not find the table 'public.user_dashboard_preferences' in the schema cache`，代表第二支 migration 還沒套用到目前這個 Supabase 專案。
 

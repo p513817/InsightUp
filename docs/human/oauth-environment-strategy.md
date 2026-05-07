@@ -34,12 +34,12 @@ NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 
 不要在同一輪 OAuth 流程中混用 `localhost` 和 `127.0.0.1`。
 
-### Fly.io 正式環境
+### Vercel 正式環境
 
-Fly secret 或 deploy env
+Vercel Environment Variables
 
 ```env
-NEXT_PUBLIC_SITE_URL=https://your-app.fly.dev
+NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
 ## Supabase Allowed Redirect URLs
@@ -48,7 +48,7 @@ NEXT_PUBLIC_SITE_URL=https://your-app.fly.dev
 
 - `http://127.0.0.1:3000/auth/callback`
 - `http://localhost:3000/auth/callback`
-- `https://your-app.fly.dev/auth/callback`
+- `https://your-app.vercel.app/auth/callback`
 - 你的自訂網域 callback，如果有的話
 
 ## 為什麼這樣比較好
