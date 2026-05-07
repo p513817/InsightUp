@@ -56,7 +56,7 @@ Tasks:
 - Add stronger smoke-test checklists
 - Refine deployment docs and secret handling
 - Keep package/toolchain versions explicit
-- Reduce config drift between local and Fly environments
+- Reduce config drift between local and Vercel environments
 
 Definition of done:
 
@@ -64,22 +64,22 @@ Definition of done:
 - Deploy steps match the actual repository layout
 - Auth flow works consistently in local and production
 
-## Phase 3: Fly.io Deployment
+## Phase 3: Vercel Deployment
 
 Goal:
 
-- Keep the single service deployment production-ready on Fly.io
+- Keep the single service deployment production-ready on Vercel
 
 Tasks:
 
-- Maintain Docker and Fly configuration
-- Configure environment variables and secrets
-- Set up production domains
+- Maintain Vercel project configuration and environment variables
+- Keep production domains and callback URLs aligned
 - Verify login redirect configuration
+- Confirm route handlers and server-side auth flows behave correctly in production
 
 Definition of done:
 
-- The app is deployed on Fly
+- The app is deployed on Vercel
 - Auth flow works in production
 - Record CRUD and charts work in production
 
@@ -169,7 +169,7 @@ If an agent needs a clear implementation order, use this:
 2. Record CRUD
 3. Chart inclusion flag
 4. Operational hardening
-5. Fly deployment structure
+5. Vercel deployment structure
 6. Record management UX
 7. Photo scan
 8. Scan review and quality handling

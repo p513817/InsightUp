@@ -8,6 +8,10 @@ The schema uses the normalized model:
 
 - `public.inbody_records`
 - `public.inbody_segments`
+- `public.llm_trend_daily_summaries`
+- `public.subscription_plans`
+- `public.plan_feature_entitlements`
+- `public.user_subscriptions`
 
 This is better than keeping all segmental values in one JSON column because:
 
@@ -46,6 +50,40 @@ Supported `part_key` values:
 - `trunk`
 - `leftLeg`
 - `rightLeg`
+
+## `public.llm_trend_daily_summaries`
+
+Stores the latest AI trend summary for a user, feature, and request date.
+
+Important columns:
+
+- `user_id`: owner of the summary
+- `feature_key`: feature namespace, currently `trend_summary`
+- `request_date`: the local business date used for daily usage limits
+- `summary_text`: latest generated summary body
+- `model_name`: Gemini model used for the latest generation
+- `usage_count`: same-day regenerate consumption count
+- `last_generated_at`: timestamp of the latest successful generation
+
+Current product behavior:
+
+- `GET /api/trend-summary` reads the latest cached summary first
+- `POST /api/trend-summary` is the explicit regenerate path
+- the uniqueness boundary is `(user_id, feature_key, request_date)`
+
+## `public.subscription_plans`, `public.plan_feature_entitlements`, `public.user_subscriptions`
+
+These tables define plan-driven access to AI and future paid features.
+
+Responsibilities:
+
+- `public.subscription_plans`: plan catalog such as `free` and future paid tiers
+- `public.plan_feature_entitlements`: per-plan feature settings like `daily_limit` and `model_pool`
+- `public.user_subscriptions`: active or trial plan assignment per user
+
+Recommended access path:
+
+- use `public.resolve_my_feature_entitlement(input_feature)` for app-facing entitlement resolution instead of duplicating plan logic in route handlers
 
 ## Product Rules Reflected In Schema
 
