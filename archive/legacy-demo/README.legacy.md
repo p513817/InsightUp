@@ -100,13 +100,13 @@ Expected behavior:
 
 ## Deployment Direction
 
-The current direction is to host both frontend and backend on Fly.io.
+This archived demo previously discussed a split hosted deployment, but it no longer reflects the active product direction.
 
-Recommended long-term shape:
+Historical note:
 
-- Frontend app on Fly.io
-- Backend API on Fly.io
-- Supabase for authentication and database
+- The active InsightUp app now lives at the repository root as a single Next.js deployment.
+- Supabase remains the source of authentication and database state.
+- This archive is kept only for UI/history reference, not as an operations or deployment template.
 
 ## Near-Term Build Priorities
 
@@ -114,4 +114,4 @@ Recommended long-term shape:
 2. Add a record-level inclusion flag for chart participation.
 3. Add edit and delete flows for records.
 4. Add photo scan ingestion with review-before-save.
-5. Split the project into web and API services for Fly.io deployment.
+5. Treat any deployment notes in this archive as historical context only.

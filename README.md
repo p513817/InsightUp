@@ -4,10 +4,12 @@ InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 
 
 ## 目前版本重點
 
-- 單一 Next.js App Router 專案，可直接部署到 Fly.io
+- 單一 Next.js App Router 專案，目前以 Vercel 作為正式部署目標
 - Supabase Auth + Supabase 資料庫
 - 可新增、編輯、刪除 InBody 紀錄
 - 可將紀錄保留在歷史中，但排除出圖表分析
+- 支援 AI 趨勢摘要，會先讀取最新摘要，再由使用者決定是否重新生成
+- AI 使用次數與模型池由 Supabase entitlement 資料控制
 - 中文 UI、英文 Agent 文件、中文操作文件
 - 舊版靜態 demo 已歸檔到 `archive/legacy-demo/`
 
@@ -28,10 +30,10 @@ InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 
 2. 執行 `corepack enable`。
 3. 執行 `corepack prepare pnpm@10.6.5 --activate`。
 4. 複製 `.env.example` 成 `.env.local`。
-5. 填入 Supabase URL、anon key 與 `NEXT_PUBLIC_SITE_URL`。
-6. 在 Supabase 套用 `infra/supabase/migrations/20260422_001_init.sql` 與 `infra/supabase/migrations/20260424_001_dashboard_preferences.sql`。
+5. 填入 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`NEXT_PUBLIC_SITE_URL`、`GEMINI_API_KEY`。
+6. 在 Supabase 依序套用 `infra/supabase/migrations/20260422_001_init.sql`、`infra/supabase/migrations/20260424_001_dashboard_preferences.sql`、`infra/supabase/migrations/20260424_002_friends.sql`、`infra/supabase/migrations/20260506_001_llm_trend_daily_summaries.sql`、`infra/supabase/migrations/20260506_002_add_model_name_to_llm_trend_daily_summaries.sql`、`infra/supabase/migrations/20260506_003_llm_feature_entitlements.sql`。
 7. 執行 `pnpm install`。
-8. 執行 `pnpm dev --port 5500`。
+8. 執行 `pnpm dev`。
 9. 開啟 `http://127.0.0.1:3000`。
 
 ## 常用指令
@@ -46,7 +48,7 @@ InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 
 
 - 中文本地開發與測試：`docs/human/local-development.md`
 - 中文 OAuth 環境策略：`docs/human/oauth-environment-strategy.md`
-- 中文 Fly.io 部署：`docs/human/fly-deployment.md`
+- 中文 Vercel 部署：`docs/human/vercel-deployment.md`
 - 中文產品使用說明：`docs/human/usage-guide.md`
 - 英文 Agent 開發說明：`docs/agent/developer-guide.md`
 - 英文架構總覽：`docs/agent/architecture.md`
@@ -59,15 +61,16 @@ InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 
 
 應用程式會用 `NEXT_PUBLIC_SITE_URL` 或目前來源網域組出 `/auth/callback`，所以開發與正式環境只需要：
 
-- 在 `.env.local` / Fly secrets 設定對應的 site URL
+- 在 `.env.local` / Vercel Environment Variables 設定對應的 site URL
 - 在 Supabase Auth 的 Allowed Redirect URLs 加入本地與正式網域
 
 ## 部署摘要
 
-專案已包含：
+目前正式部署建議使用 Vercel，至少需要設定：
 
-- `Dockerfile`
-- `fly.toml`
-- `output: "standalone"` 的 Next.js 設定
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL`
+- `GEMINI_API_KEY`
 
-第一次部署前，記得把 `fly.toml` 內的 `app` 名稱改成你自己的 Fly app 名稱。
+`.env.example` 已包含目前開發與 Vercel 部署需要的基本環境變數範例。
