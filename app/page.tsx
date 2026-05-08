@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { LogoAnimated } from "@/components/auth/logo-animated";
 import { LoginProductIntroModal } from "@/components/auth/login-product-intro-modal";
 import { LoginSignalBadges } from "@/components/auth/login-signal-badges";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -33,7 +33,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <div className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <section className="animate-fade-up w-full max-w-xl rounded-[2rem] border border-border/60 bg-card/80 px-4 py-5 text-center shadow-[0_18px_40px_rgba(16,35,63,0.08)] backdrop-blur-[10px] sm:px-6 sm:py-7">
           <div className="animate-fade-up-delay-1 mx-auto inline-flex items-center gap-3 rounded-full border border-border/60 bg-[linear-gradient(180deg,rgb(var(--card)/0.96)_0%,rgb(var(--surface)/0.88)_100%)] px-4 py-3 shadow-[0_12px_24px_rgba(16,35,63,0.06)] sm:gap-3.5 sm:px-4.5">
-            <Image alt="InsightUp" className="size-12 rounded-full sm:size-14" height={56} priority src="/insightup-logo-rmbg.png" width={56} />
+            <LogoAnimated className="size-14 rounded-full sm:size-16" size={64} />
             <div className="text-left">
               <p className="font-display text-[1.75rem] leading-none text-foreground sm:text-[2rem]">InsightUp</p>
               <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground sm:text-[11px]">InBody tracker</p>
