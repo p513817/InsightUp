@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
@@ -46,11 +47,38 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
   const [busyRecordId, setBusyRecordId] = useState<string | null>(null);
   const [selectedChartView, setSelectedChartView] = useState<ChartViewKey>("overall");
+  const [isChartViewMenuOpen, setIsChartViewMenuOpen] = useState(false);
+  const chartViewMenuRef = useRef<HTMLDivElement>(null);
 
   const chart = buildChartPayload(records, selectedChartView);
   const latestRecord = records.at(-1);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
+  const selectedChartViewLabel = selectedChartView === "overall"
+    ? "整體"
+    : CHART_VIEWS.find((view) => view.key === selectedChartView)?.label || "整體";
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!chartViewMenuRef.current?.contains(event.target as Node)) {
+        setIsChartViewMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsChartViewMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   async function handleSave(values: RecordFormValues) {
     try {
@@ -131,28 +159,72 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
       <>
         <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
           <section className="space-y-3">
-            <div className="stats-scrollbar flex gap-2 overflow-x-auto pb-1">
-              {CHART_VIEWS.map((view) => {
-                const active = selectedChartView === view.key;
-                const label = view.key === "overall" ? "整體" : view.label;
+            <div className="sticky z-20 -mx-2 px-2 pt-1" style={{ top: "calc(var(--app-header-offset, 0px) + 0.5rem)" }}>
+              <div className="hidden rounded-[1rem] p-1.5 sm:block sm:surface-menu">
+                <div className="grid grid-cols-6 gap-1.5">
+                  {CHART_VIEWS.map((view) => {
+                    const active = selectedChartView === view.key;
+                    const label = view.key === "overall" ? "整體" : view.label;
 
-                return (
-                  <Button
-                    aria-pressed={active}
-                    className="min-w-16 shrink-0 hover:translate-y-0 active:scale-100"
-                    key={view.key}
-                    onClick={() => setSelectedChartView(view.key)}
-                    size="sm"
-                    type="button"
-                    variant={active ? "default" : "outline"}
-                  >
-                    {label}
-                  </Button>
-                );
-              })}
+                    return (
+                      <Button
+                        aria-pressed={active}
+                        className="h-8 w-full rounded-full px-1.5 text-[11px] hover:translate-y-0 active:scale-100"
+                        key={view.key}
+                        onClick={() => setSelectedChartView(view.key)}
+                        size="sm"
+                        type="button"
+                        variant={active ? "default" : "outline"}
+                      >
+                        {label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
             <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
           </section>
+        </div>
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:hidden" ref={chartViewMenuRef}>
+          {isChartViewMenuOpen ? (
+            <div className="surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(8.25rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-0.5">
+              <div className="grid grid-cols-1 gap-1.5">
+                {CHART_VIEWS.map((view) => {
+                  const active = selectedChartView === view.key;
+                  const label = view.key === "overall" ? "整體" : view.label;
+
+                  return (
+                    <Button
+                      aria-pressed={active}
+                      className="h-8 w-full rounded-full px-0.5 text-sm hover:translate-y-0 active:scale-100"
+                      key={view.key}
+                      onClick={() => {
+                        setSelectedChartView(view.key);
+                        setIsChartViewMenuOpen(false);
+                      }}
+                      size="sm"
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <Button
+            aria-expanded={isChartViewMenuOpen}
+            aria-haspopup="menu"
+            className="h-10 rounded-full px-3.5 shadow-panel"
+            onClick={() => setIsChartViewMenuOpen((current) => !current)}
+            type="button"
+          >
+            <span className="truncate text-sm font-medium">部位: {selectedChartViewLabel}</span>
+            <ChevronDown className={`size-4 text-primary-foreground transition ${isChartViewMenuOpen ? "rotate-180" : ""}`} />
+          </Button>
         </div>
         <TrendSummaryFab />
       </>
