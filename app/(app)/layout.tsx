@@ -19,7 +19,14 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
   return (
     <div className="min-h-screen">
       <AppHeader user={summarizeUser(user)} />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pt-4 pb-8 lg:px-10 lg:pt-5 lg:pb-10">{children}</main>
+      <main
+        className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pt-4 pb-8 lg:px-10 lg:pt-5 lg:pb-10"
+        style={{
+          minHeight: "calc(100vh - var(--app-header-offset, 0px))",
+        }}
+      >
+        {children}
+      </main>
     </div>
   );
 }
