@@ -224,14 +224,14 @@ export function TrendSummaryFab() {
       {!open ? (
         <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7">
           <Button
-            aria-label="詢問 AI 趨勢摘要"
-            className="h-12 rounded-full px-4 shadow-panel sm:h-14 sm:px-5"
+            aria-label="查看 AI 趨勢摘要"
+            className="h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
             disabled={loadingSummary || generating}
             onClick={openSummary}
             type="button"
           >
-            {loadingSummary ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            <span className="font-medium">AI 趨勢建議</span>
+            {loadingSummary ? <LoaderCircle className="size-3.5 animate-spin text-primary-foreground" /> : <Sparkles className="size-3.5 text-primary-foreground" />}
+            <span className="text-sm font-medium">趨勢摘要</span>
           </Button>
         </div>
       ) : null}
@@ -337,8 +337,7 @@ export function TrendSummaryFab() {
                 type="button"
                 className="h-10"
               >
-                {generating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                <span>{summary ? "重新生成" : "生成摘要"}</span>
+                <span>{generating ? (summary ? "重新生成中..." : "生成中...") : summary ? "重新生成" : "生成摘要"}</span>
               </Button>
             </div>
           </div>
