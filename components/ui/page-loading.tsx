@@ -1,6 +1,12 @@
-export function PageLoading() {
+import { cn } from "@/lib/utils";
+
+interface PageLoadingProps {
+  className?: string;
+}
+
+export function PageLoading({ className }: PageLoadingProps) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-8">
+    <div className={cn("flex min-h-[60vh] flex-col items-center justify-center gap-8", className)}>
       {/* Ring stack */}
       <div className="relative h-20 w-20">
         {/* Ambient glow behind everything */}

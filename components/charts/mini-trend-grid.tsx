@@ -7,6 +7,7 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
 import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/presentation";
 
@@ -126,10 +127,27 @@ async function persistMetricOrder(metricOrder: string[]) {
 }
 
 export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridProps) {
+  const [isChartReady, setIsChartReady] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const [draggingMetricKey, setDraggingMetricKey] = useState<string | null>(null);
   const [dropTargetMetricKey, setDropTargetMetricKey] = useState<string | null>(null);
   const saveTimeoutIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let firstFrame = 0;
+    let secondFrame = 0;
+
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        setIsChartReady(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+    };
+  }, []);
   
   useEffect(() => {
     let savedOrder: string[] = [];
@@ -179,6 +197,10 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
         });
       });
     }, SAVE_ORDER_DEBOUNCE_MS);
+  }
+
+  if (!isChartReady) {
+    return <PageLoading className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />;
   }
 
   if (!chart.points.length) {
