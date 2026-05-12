@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LoaderCircle, LogOut, Mail, UserRound } from "lucide-react";
@@ -12,7 +12,17 @@ import { getUserInitials } from "@/lib/presentation";
 interface AccountMenuProps {
   user: AppUserSummary;
   compact?: boolean;
+  collapseProgress?: number;
 }
+
+type AccountMenuStyle = CSSProperties & {
+  "--account-gap": string;
+  "--account-px": string;
+  "--account-py": string;
+  "--account-avatar-size": string;
+  "--account-text-width": string;
+  "--account-text-opacity": number;
+};
 
 const FEEDBACK_EMAIL = "p513817@gmail.com";
 const FEEDBACK_SUBJECT = "[InsightUp] 產品問題回報 / 功能建議";
@@ -32,12 +42,22 @@ function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React
   );
 }
 
-export function AccountMenu({ user, compact = false }: AccountMenuProps) {
+export function AccountMenu({ user, compact = false, collapseProgress = compact ? 1 : 0 }: AccountMenuProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const progress = Math.min(Math.max(collapseProgress, 0), 1);
+  const expandedProgress = 1 - progress;
+  const menuStyle = {
+    "--account-gap": `${0.375 + expandedProgress * 0.375}rem`,
+    "--account-px": `${0.375 + expandedProgress * 0.25}rem`,
+    "--account-py": `${0.25 + expandedProgress * 0.25}rem`,
+    "--account-avatar-size": `${2 + expandedProgress * 0.75}rem`,
+    "--account-text-width": `${11 * expandedProgress}rem`,
+    "--account-text-opacity": expandedProgress,
+  } satisfies AccountMenuStyle;
 
   useEffect(() => {
     setImageFailed(false);
@@ -73,11 +93,11 @@ export function AccountMenu({ user, compact = false }: AccountMenuProps) {
   }
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative" ref={containerRef} style={menuStyle}>
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className={compact ? "surface-pill h-auto gap-1.5 rounded-full px-1.5 py-1 hover:bg-card" : "surface-pill h-auto gap-3 rounded-full px-2.5 py-2 hover:bg-card"}
+        className="surface-pill h-auto gap-[var(--account-gap)] rounded-full px-[var(--account-px)] py-[var(--account-py)] hover:bg-card"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
         variant="ghost"
@@ -86,20 +106,20 @@ export function AccountMenu({ user, compact = false }: AccountMenuProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt={user.name}
-            className={compact ? "size-8 rounded-full border border-border object-cover" : "size-10 rounded-full border border-border object-cover sm:size-11"}
+            className="size-[var(--account-avatar-size)] rounded-full border border-border object-cover"
             onError={() => setImageFailed(true)}
             src={user.avatarUrl}
           />
         ) : (
-          <div className={compact ? "surface-avatar-fallback-strong flex size-8 items-center justify-center rounded-full border border-border text-xs font-semibold text-foreground" : "surface-avatar-fallback-strong flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground sm:size-11"}>
+          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full border border-border text-xs font-semibold text-foreground sm:text-sm">
             {getUserInitials(user.name)}
           </div>
         )}
-        <div className={compact ? "hidden" : "hidden min-w-0 text-right md:block"}>
+        <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] md:block">
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
         </div>
-        <ChevronDown className={`${compact ? "size-3" : "size-4"} text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`size-4 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
       </Button>
 
       {isOpen ? (
