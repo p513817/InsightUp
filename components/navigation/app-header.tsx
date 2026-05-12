@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { LogoAnimated } from "@/components/auth/logo-animated";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type CSSProperties, useEffect, useRef, useState, useTransition } from "react";
@@ -14,15 +14,16 @@ interface AppHeaderProps {
   user: AppUserSummary;
 }
 
-const COLLAPSE_DISTANCE = 180;
+const COLLAPSE_AT = 96;
+const EXPAND_AT = 24;
 
 type HeaderStyle = CSSProperties & {
   "--account-zone-width": string;
   "--brand-gap": string;
   "--brand-padding": string;
   "--brand-text-width": string;
-  "--collapsed-nav-width": string;
   "--collapsed-nav-opacity": number;
+  "--collapsed-nav-width": string;
   "--expanded-nav-height": string;
   "--expanded-nav-opacity": number;
   "--header-expanded-opacity": number;
@@ -40,14 +41,6 @@ type NavItem = {
   compact?: boolean;
   tabIndex?: number;
 };
-
-function clamp(value: number, min = 0, max = 1) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function easeInOut(value: number) {
-  return value * value * (3 - 2 * value);
-}
 
 function NavButton({ href, label, icon, active, compact = false, tabIndex }: NavItem) {
   const router = useRouter();
@@ -114,40 +107,42 @@ function NavCluster({
 
 export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
-  const [progress, setProgress] = useState(0);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname === "/records" || pathname === "/profile";
   const isFriends = pathname === "/friends";
-  const visualProgress = easeInOut(progress);
-  const expandedProgress = 1 - visualProgress;
-  const collapsedNavOpacity = clamp((visualProgress - 0.24) / 0.56);
-  const expandedNavOpacity = clamp((0.86 - visualProgress) / 0.56);
-  const useCollapsedNav = progress >= 0.56;
+  const expandedProgress = isCollapsed ? 0 : 1;
+  const useCollapsedNav = isCollapsed;
   const headerStyle = {
     "--account-zone-width": `${3.25 + expandedProgress * 10.5}rem`,
     "--brand-gap": `${0.75 * expandedProgress}rem`,
     "--brand-padding": `${0.375 + expandedProgress * 0.125}rem`,
     "--brand-text-width": `${12 * expandedProgress}rem`,
-    "--collapsed-nav-width": `${9 * clamp((visualProgress - 0.2) / 0.6)}rem`,
-    "--collapsed-nav-opacity": collapsedNavOpacity,
+    "--collapsed-nav-opacity": isCollapsed ? 1 : 0,
+    "--collapsed-nav-width": isCollapsed ? "9rem" : "0rem",
     "--expanded-nav-height": `${2.75 * expandedProgress}rem`,
-    "--expanded-nav-opacity": expandedNavOpacity,
+    "--expanded-nav-opacity": isCollapsed ? 0 : 1,
     "--header-expanded-opacity": expandedProgress,
     "--header-py": `${0.625 + expandedProgress * 0.375}rem`,
     "--header-row-gap": `${1 * expandedProgress}rem`,
     "--header-row-height": `${3.25 + expandedProgress * 0.5}rem`,
     "--logo-size": `${2 + expandedProgress * 0.75}rem`,
-    boxShadow: `0 ${Math.round(8 * visualProgress)}px ${Math.round(22 * visualProgress)}px rgba(16, 35, 63, ${0.035 + 0.055 * visualProgress})`,
+    boxShadow: isCollapsed ? "0 8px 22px rgba(16, 35, 63, 0.09)" : "0 0 0 rgba(16, 35, 63, 0)",
   } satisfies HeaderStyle;
 
   useEffect(() => {
     let animationFrame = 0;
 
-    function updateProgress() {
+    function updateCollapsedState() {
       animationFrame = 0;
-      const nextProgress = clamp(window.scrollY / COLLAPSE_DISTANCE);
-      setProgress((current) => (Math.abs(current - nextProgress) < 0.005 ? current : nextProgress));
+      setIsCollapsed((current) => {
+        if (current) {
+          return window.scrollY > EXPAND_AT;
+        }
+
+        return window.scrollY >= COLLAPSE_AT;
+      });
     }
 
     function handleScroll() {
@@ -155,17 +150,20 @@ export function AppHeader({ user }: AppHeaderProps) {
         return;
       }
 
-      animationFrame = window.requestAnimationFrame(updateProgress);
+      animationFrame = window.requestAnimationFrame(updateCollapsedState);
     }
 
-    handleScroll();
+    updateCollapsedState();
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", updateCollapsedState);
+
     return () => {
       if (animationFrame) {
         window.cancelAnimationFrame(animationFrame);
       }
 
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", updateCollapsedState);
     };
   }, []);
 
@@ -200,13 +198,13 @@ export function AppHeader({ user }: AppHeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/55 bg-background/94 backdrop-blur-sm" ref={headerRef} style={headerStyle}>
-      <div className="mx-auto w-full max-w-6xl px-4 py-[var(--header-py)] sm:px-6 lg:px-10">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-y-[var(--header-row-gap)]">
-          <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-start">
-            <Link className="surface-pill flex min-w-0 max-w-full items-center gap-[var(--brand-gap)] rounded-full p-[var(--brand-padding)]" href="/dashboard">
-              <Image alt="InsightUp" className="size-[var(--logo-size)] rounded-full" height={44} src="/insightup-logo-rmbg.png" width={44} />
-              <div className="min-w-0 max-w-[var(--brand-text-width)] overflow-hidden opacity-[var(--header-expanded-opacity)]">
+    <header className="sticky top-0 z-30 border-b border-border/55 bg-background/94 backdrop-blur-sm transition-[box-shadow] duration-500 ease-out" ref={headerRef} style={headerStyle}>
+      <div className="mx-auto w-full max-w-6xl px-4 py-[var(--header-py)] transition-[padding] duration-500 ease-out sm:px-6 lg:px-10">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-y-[var(--header-row-gap)] transition-[gap] duration-500 ease-out">
+          <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-start transition-[height] duration-500 ease-out">
+            <Link className="surface-pill flex min-w-0 max-w-full items-center gap-[var(--brand-gap)] rounded-full p-[var(--brand-padding)] transition-[gap,padding] duration-500 ease-out" href="/dashboard">
+              <LogoAnimated className="size-[var(--logo-size)] rounded-full transition-[height,width] duration-500 ease-out" size={44} />
+              <div className="min-w-0 max-w-[var(--brand-text-width)] overflow-hidden opacity-[var(--header-expanded-opacity)] transition-[max-width,opacity] duration-500 ease-out">
                 <p className="truncate font-display text-xl text-foreground">InsightUp</p>
                 <p className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground sm:block">InBody tracker</p>
               </div>
@@ -216,23 +214,23 @@ export function AppHeader({ user }: AppHeaderProps) {
           <div
             aria-hidden={!useCollapsedNav}
             className={cn(
-              "flex h-[var(--header-row-height)] w-[var(--collapsed-nav-width)] items-center justify-center overflow-hidden opacity-[var(--collapsed-nav-opacity)] transition-opacity duration-150",
+              "flex h-[var(--header-row-height)] w-[var(--collapsed-nav-width)] items-center justify-center overflow-hidden opacity-[var(--collapsed-nav-opacity)] transition-[height,width,opacity] duration-500 ease-out",
               useCollapsedNav ? "pointer-events-auto" : "pointer-events-none",
             )}
           >
             <NavCluster activeTabIndex={useCollapsedNav ? 0 : -1} compact isDashboard={isDashboard} isFriends={isFriends} isRecords={isRecords} />
           </div>
 
-          <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-end">
-            <div className="flex w-[var(--account-zone-width)] justify-end">
-              <AccountMenu collapseProgress={visualProgress} user={user} />
+          <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-end transition-[height] duration-500 ease-out">
+            <div className="flex w-[var(--account-zone-width)] justify-end transition-[width] duration-500 ease-out">
+              <AccountMenu collapseProgress={isCollapsed ? 1 : 0} user={user} />
             </div>
           </div>
 
           <div
             aria-hidden={useCollapsedNav}
             className={cn(
-              "col-span-3 flex h-[var(--expanded-nav-height)] min-w-0 justify-center overflow-hidden opacity-[var(--expanded-nav-opacity)] transition-opacity duration-150",
+              "col-span-3 flex h-[var(--expanded-nav-height)] min-w-0 justify-center overflow-hidden opacity-[var(--expanded-nav-opacity)] transition-[height,opacity] duration-500 ease-out",
               useCollapsedNav ? "pointer-events-none" : "pointer-events-auto",
             )}
           >

@@ -99,7 +99,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="surface-pill h-auto gap-[var(--account-gap)] rounded-full px-[var(--account-px)] py-[var(--account-py)] hover:bg-card"
+        className="surface-pill h-auto gap-[var(--account-gap)] rounded-full px-[var(--account-px)] py-[var(--account-py)] transition-[gap,padding,background-color] duration-500 ease-out hover:bg-card"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
         variant="ghost"
@@ -108,20 +108,20 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt={user.name}
-            className="size-[var(--account-avatar-size)] rounded-full object-cover"
+            className="size-[var(--account-avatar-size)] rounded-full object-cover transition-[height,width] duration-500 ease-out"
             onError={() => setImageFailed(true)}
             src={user.avatarUrl}
           />
         ) : (
-          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full text-xs font-semibold text-foreground sm:text-sm">
+          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full text-xs font-semibold text-foreground transition-[height,width] duration-500 ease-out sm:text-sm">
             {getUserInitials(user.name)}
           </div>
         )}
-        <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] md:block">
+        <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] transition-[max-width,opacity] duration-500 ease-out md:block">
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
         </div>
-        <span className="flex w-[var(--account-chevron-width)] shrink-0 overflow-hidden opacity-[var(--account-text-opacity)]">
+        <span className="flex w-[var(--account-chevron-width)] shrink-0 overflow-hidden opacity-[var(--account-text-opacity)] transition-[width,opacity] duration-500 ease-out">
           <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
         </span>
       </Button>
