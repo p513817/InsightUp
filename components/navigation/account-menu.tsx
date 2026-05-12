@@ -77,7 +77,7 @@ export function AccountMenu({ user, compact = false }: AccountMenuProps) {
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className={compact ? "surface-pill h-auto gap-2 rounded-full px-2 py-1.5 hover:bg-card" : "surface-pill h-auto gap-3 rounded-full px-2.5 py-2 hover:bg-card"}
+        className={compact ? "surface-pill h-auto gap-1.5 rounded-full px-1.5 py-1 hover:bg-card" : "surface-pill h-auto gap-3 rounded-full px-2.5 py-2 hover:bg-card"}
         onClick={() => setIsOpen((current) => !current)}
         type="button"
         variant="ghost"
@@ -86,12 +86,12 @@ export function AccountMenu({ user, compact = false }: AccountMenuProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt={user.name}
-            className={compact ? "size-9 rounded-full border border-border object-cover" : "size-10 rounded-full border border-border object-cover sm:size-11"}
+            className={compact ? "size-8 rounded-full border border-border object-cover" : "size-10 rounded-full border border-border object-cover sm:size-11"}
             onError={() => setImageFailed(true)}
             src={user.avatarUrl}
           />
         ) : (
-          <div className={compact ? "surface-avatar-fallback-strong flex size-9 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground" : "surface-avatar-fallback-strong flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground sm:size-11"}>
+          <div className={compact ? "surface-avatar-fallback-strong flex size-8 items-center justify-center rounded-full border border-border text-xs font-semibold text-foreground" : "surface-avatar-fallback-strong flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground sm:size-11"}>
             {getUserInitials(user.name)}
           </div>
         )}
@@ -99,7 +99,7 @@ export function AccountMenu({ user, compact = false }: AccountMenuProps) {
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
         </div>
-        <ChevronDown className={`${compact ? "size-3.5" : "size-4"} text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`${compact ? "size-3" : "size-4"} text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
       </Button>
 
       {isOpen ? (
