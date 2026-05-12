@@ -59,14 +59,14 @@ function renderSectionToggle(
   const Icon = section.icon;
   return (
     <button
-      className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left transition-colors duration-150 hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      className="flex w-full items-center justify-between gap-3 text-left"
       onClick={onToggle}
       type="button"
       aria-expanded={isOpen}
     >
       <span className="flex items-center gap-2">
         <Icon className="size-4 text-muted-foreground" />
-        <span className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">{section.title}</span>
+        <span className="text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{section.title}</span>
       </span>
       <ChevronDown
         className={`size-4 text-muted-foreground transition-transform duration-200 ${
@@ -237,12 +237,12 @@ export function TrendSummaryFab() {
       ) : null}
 
       <Dialog onOpenChange={setOpen} open={open}>
-        <DialogContent className="flex h-[min(88vh,46rem)] max-w-2xl flex-col p-0 sm:h-[min(88vh,52rem)]" showCloseButton={false}>
-          <DialogHeader className="shrink-0 px-5 py-4 sm:px-6">
+        <DialogContent className="flex h-[min(88vh,46rem)] max-w-4xl flex-col p-0 sm:h-[min(88vh,52rem)]" showCloseButton={false}>
+          <DialogHeader className="shrink-0 border-b-0 px-5 py-4 pb-2 sm:px-6">
             <DialogTitle className="text-[1.65rem] leading-tight">近期 5 筆趨勢摘要</DialogTitle>
           </DialogHeader>
 
-          <div className="shrink-0 border-b border-border/30 px-5 pt-2 pb-3 sm:px-6">
+          <div className="shrink-0 border-b border-border/80 px-5 pt-2 pb-3 sm:px-6">
             <div className="flex flex-wrap items-center gap-2">
               {requestDate ? (
                 <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 text-xs font-medium text-foreground">{requestDate}</span>
@@ -294,7 +294,7 @@ export function TrendSummaryFab() {
                   }
 
                   return (
-                    <section key={section.key} className="rounded-[1rem] border border-border/80 bg-surface-muted-gradient p-3">
+                    <section key={section.key} className="surface-muted-gradient rounded-[1rem] border border-border/80 p-4">
                       {renderSectionToggle(section, openSections[section.key], () => toggleSection(section.key), hasContent)}
 
                       {openSections[section.key] ? (
@@ -320,7 +320,7 @@ export function TrendSummaryFab() {
             )}
           </div>
 
-          <div className="shrink-0 border-t border-border/30 px-5 py-4 sm:px-6">
+          <div className="shrink-0 border-t border-border/80 bg-card/96 px-5 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-2 sm:px-6">
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
