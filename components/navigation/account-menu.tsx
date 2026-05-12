@@ -11,6 +11,7 @@ import { getUserInitials } from "@/lib/presentation";
 
 interface AccountMenuProps {
   user: AppUserSummary;
+  compact?: boolean;
 }
 
 const FEEDBACK_EMAIL = "p513817@gmail.com";
@@ -31,11 +32,16 @@ function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React
   );
 }
 
-export function AccountMenu({ user }: AccountMenuProps) {
+export function AccountMenu({ user, compact = false }: AccountMenuProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [user.avatarUrl]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -71,24 +77,29 @@ export function AccountMenu({ user }: AccountMenuProps) {
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="surface-pill h-auto gap-3 rounded-full px-2.5 py-2 hover:bg-card"
+        className={compact ? "surface-pill h-auto gap-2 rounded-full px-2 py-1.5 hover:bg-card" : "surface-pill h-auto gap-3 rounded-full px-2.5 py-2 hover:bg-card"}
         onClick={() => setIsOpen((current) => !current)}
         type="button"
         variant="ghost"
       >
-        {user.avatarUrl ? (
+        {user.avatarUrl && !imageFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img alt={user.name} className="size-10 rounded-full border border-border object-cover sm:size-11" src={user.avatarUrl} />
+          <img
+            alt={user.name}
+            className={compact ? "size-9 rounded-full border border-border object-cover" : "size-10 rounded-full border border-border object-cover sm:size-11"}
+            onError={() => setImageFailed(true)}
+            src={user.avatarUrl}
+          />
         ) : (
-          <div className="surface-avatar-fallback-strong flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground sm:size-11">
+          <div className={compact ? "surface-avatar-fallback-strong flex size-9 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground" : "surface-avatar-fallback-strong flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground sm:size-11"}>
             {getUserInitials(user.name)}
           </div>
         )}
-        <div className="hidden min-w-0 text-right md:block">
+        <div className={compact ? "hidden" : "hidden min-w-0 text-right md:block"}>
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
         </div>
-        <ChevronDown className={`size-4 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`${compact ? "size-3.5" : "size-4"} text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
       </Button>
 
       {isOpen ? (
