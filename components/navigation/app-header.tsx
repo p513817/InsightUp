@@ -203,7 +203,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-y-[var(--header-row-gap)] transition-[gap] duration-500 ease-out">
           <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-start transition-[height] duration-500 ease-out">
             <Link className="surface-pill flex min-w-0 max-w-full items-center gap-[var(--brand-gap)] rounded-full p-[var(--brand-padding)] transition-[gap,padding] duration-500 ease-out" href="/dashboard">
-              <LogoAnimated className="size-[var(--logo-size)] rounded-full transition-[height,width] duration-500 ease-out" size={44} />
+              <LogoAnimated className="size-[var(--logo-size)] rounded-full transition-[height,width] duration-500 ease-out" playOnce size={44} />
               <div className="min-w-0 max-w-[var(--brand-text-width)] overflow-hidden opacity-[var(--header-expanded-opacity)] transition-[max-width,opacity] duration-500 ease-out">
                 <p className="truncate font-display text-xl text-foreground">InsightUp</p>
                 <p className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground sm:block">InBody tracker</p>
