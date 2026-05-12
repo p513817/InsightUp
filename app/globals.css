@@ -311,6 +311,29 @@ body.dialog-overlay-no-blur .dialog-overlay {
   .surface-avatar-fallback-strong {
     background: linear-gradient(135deg, rgb(var(--accent) / 0.42), rgb(var(--primary-strong) / 0.12));
   }
+
+  .ai-trend-fab {
+    position: relative;
+    isolation: isolate;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, transform 180ms ease;
+  }
+
+  .ai-trend-fab::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    border: 1px solid rgba(24, 155, 140, 0.18);
+    opacity: 0.72;
+    pointer-events: none;
+    transition: opacity 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .ai-trend-fab:hover::after,
+  .ai-trend-fab:focus-visible::after {
+    border-color: rgba(24, 155, 140, 0.34);
+    box-shadow: 0 0 0 1px rgba(24, 155, 140, 0.08);
+  }
 }
 
 .brand-motion-line {
