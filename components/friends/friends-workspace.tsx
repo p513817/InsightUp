@@ -85,7 +85,7 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
   }
 
   return (
-    <div className="space-y-5 sm:space-y-8">
+    <div className="space-y-3 sm:space-y-8">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl space-y-4 sm:space-y-5">
           <StatsScrollbarRow

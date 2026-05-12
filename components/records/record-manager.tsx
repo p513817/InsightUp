@@ -337,7 +337,7 @@ export function RecordManager({
   const hasActiveFilters = searchQuery.trim().length > 0 || inclusionFilter !== "all";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5 sm:space-y-3">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-6 text-muted-foreground">
           共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。

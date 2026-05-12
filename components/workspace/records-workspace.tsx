@@ -236,7 +236,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3 sm:space-y-8">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl">
           <StatsScrollbarRow
