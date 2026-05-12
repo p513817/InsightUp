@@ -14,8 +14,8 @@ interface AppHeaderProps {
   user: AppUserSummary;
 }
 
-const COLLAPSE_AT = 96;
-const EXPAND_AT = 24;
+const COLLAPSE_AT = 128;
+const EXPAND_AT = 4;
 
 type HeaderStyle = CSSProperties & {
   "--account-zone-width": string;
