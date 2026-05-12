@@ -114,7 +114,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isFriends = pathname === "/friends";
   const expandedProgress = isCollapsed ? 0 : 1;
   const useCollapsedNav = isCollapsed;
-  const headerStyle = {
+  const headerStyle: HeaderStyle = {
     "--account-zone-width": `${3.25 + expandedProgress * 10.5}rem`,
     "--brand-gap": `${0.75 * expandedProgress}rem`,
     "--brand-padding": `${0.375 + expandedProgress * 0.125}rem`,
@@ -129,7 +129,7 @@ export function AppHeader({ user }: AppHeaderProps) {
     "--header-row-height": `${3.25 + expandedProgress * 0.5}rem`,
     "--logo-size": `${2 + expandedProgress * 0.75}rem`,
     boxShadow: isCollapsed ? "0 8px 22px rgba(16, 35, 63, 0.09)" : "0 0 0 rgba(16, 35, 63, 0)",
-  } satisfies HeaderStyle;
+  };
 
   useEffect(() => {
     let animationFrame = 0;

@@ -51,7 +51,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
   const [imageFailed, setImageFailed] = useState(false);
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
   const expandedProgress = 1 - progress;
-  const menuStyle = {
+  const menuStyle: AccountMenuStyle = {
     "--account-gap": `${0.75 * expandedProgress}rem`,
     "--account-px": `${0.375 + expandedProgress * 0.25}rem`,
     "--account-py": `${0.375 + expandedProgress * 0.125}rem`,
@@ -59,7 +59,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
     "--account-chevron-width": `${1 * expandedProgress}rem`,
     "--account-text-width": `${11 * expandedProgress}rem`,
     "--account-text-opacity": expandedProgress,
-  } satisfies AccountMenuStyle;
+  };
 
   useEffect(() => {
     setImageFailed(false);
