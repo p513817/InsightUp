@@ -129,7 +129,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   if (mode === "dashboard") {
     return (
       <>
-        <div className="space-y-4 sm:space-y-5">
+        <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
           <section className="space-y-3">
             <div className="stats-scrollbar flex gap-2 overflow-x-auto pb-1">
               {CHART_VIEWS.map((view) => {

@@ -48,14 +48,82 @@ interface TrendSummaryRow {
   last_generated_at: string | null;
 }
 
-function normalizeSummaryText(text: string) {
-  const singleLine = text.replace(/\s+/g, " ").trim();
+interface StructuredTrendSummary {
+  overview: string;
+  keyChanges: string[];
+  actionPlan: string[];
+  watchouts: string[];
+}
 
-  if (singleLine.length <= 120) {
-    return singleLine;
+function normalizePlainText(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function stripJsonFence(text: string) {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced ? fenced[1].trim() : trimmed;
+}
+
+function toStringArray(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
   }
 
-  return `${singleLine.slice(0, 120).trimEnd()}...`;
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => normalizePlainText(item))
+    .filter((item) => item.length > 0);
+}
+
+function parseStructuredSummaryText(text: string) {
+  try {
+    const parsed = JSON.parse(stripJsonFence(text)) as Record<string, unknown>;
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+
+    const overviewRaw = parsed.overview;
+    const overview = typeof overviewRaw === "string" ? normalizePlainText(overviewRaw) : "";
+    const keyChanges = toStringArray(parsed.keyChanges);
+    const actionPlan = toStringArray(parsed.actionPlan);
+    const watchouts = toStringArray(parsed.watchouts);
+
+    if (!overview && keyChanges.length === 0 && actionPlan.length === 0 && watchouts.length === 0) {
+      return null;
+    }
+
+    return {
+      overview: overview || keyChanges[0] || actionPlan[0] || watchouts[0] || "",
+      keyChanges,
+      actionPlan,
+      watchouts,
+    } satisfies StructuredTrendSummary;
+  } catch {
+    return null;
+  }
+}
+
+function decodeStoredStructuredSummary(summaryText: string) {
+  const structured = parseStructuredSummaryText(summaryText);
+
+  if (structured) {
+    return structured;
+  }
+
+  return {
+    overview: normalizePlainText(summaryText),
+    keyChanges: [],
+    actionPlan: [],
+    watchouts: [],
+  } satisfies StructuredTrendSummary;
+}
+
+function toLegacySummaryText(structured: StructuredTrendSummary) {
+  return [structured.overview, ...structured.keyChanges, ...structured.actionPlan, ...structured.watchouts]
+    .filter((line) => line.length > 0)
+    .join(" ");
 }
 
 function getGeminiApiKey() {
@@ -206,7 +274,7 @@ async function generateSummaryWithGemini(prompt: string, modelPool: string[]) {
         model,
         contents: prompt,
         config: {
-          maxOutputTokens: 220,
+          maxOutputTokens: 2048,
           temperature: 0.4,
         },
       });
@@ -255,11 +323,15 @@ export async function GET() {
       return NextResponse.json({ message: "目前方案尚未開放 AI 趨勢摘要。" }, { status: 403 });
     }
 
-    const latestSummary = await getLatestTrendSummaryRow(supabase, user.id);
-    const todaySummary = await getTodayTrendSummaryRow(supabase, user.id, requestDate);
+    const [latestSummary, todaySummary] = await Promise.all([
+      getLatestTrendSummaryRow(supabase, user.id),
+      getTodayTrendSummaryRow(supabase, user.id, requestDate),
+    ]);
+    const structuredSummary = latestSummary?.summary_text ? decodeStoredStructuredSummary(latestSummary.summary_text) : null;
 
     return NextResponse.json({
-      summary: latestSummary?.summary_text ?? null,
+      summary: structuredSummary ? toLegacySummaryText(structuredSummary) : null,
+      structuredSummary,
       generatedAt: latestSummary?.last_generated_at ?? latestSummary?.created_at ?? null,
       modelName: latestSummary?.model_name ?? null,
       provider: latestSummary ? "cache" : "gemini",
@@ -296,8 +368,11 @@ export async function POST() {
     const currentUsageCount = todaySummary?.usage_count ?? 0;
 
     if (entitlement.dailyLimit != null && currentUsageCount >= entitlement.dailyLimit) {
+      const structuredSummary = todaySummary?.summary_text ? decodeStoredStructuredSummary(todaySummary.summary_text) : null;
+
       return NextResponse.json({
-        summary: todaySummary?.summary_text ?? null,
+        summary: structuredSummary ? toLegacySummaryText(structuredSummary) : null,
+        structuredSummary,
         generatedAt: todaySummary?.last_generated_at ?? todaySummary?.created_at ?? null,
         modelName: todaySummary?.model_name ?? null,
         provider: "cache",
@@ -319,7 +394,14 @@ export async function POST() {
 
     const prompt = buildGeminiPrompt(records);
     const geminiResult = await generateSummaryWithGemini(prompt, getModelPool(entitlement.config));
-    const summary = normalizeSummaryText(geminiResult.text);
+    const structuredSummary = parseStructuredSummaryText(geminiResult.text);
+
+    if (!structuredSummary) {
+      throw new TrendSummaryProviderError("Gemini returned invalid structured summary", "empty_response", geminiResult.model);
+    }
+
+    const summary = toLegacySummaryText(structuredSummary);
+    const storedSummary = JSON.stringify(structuredSummary);
     const nextUsageCount = currentUsageCount + 1;
 
     const { error: upsertError } = await supabase.from("llm_trend_daily_summaries").upsert(
@@ -327,7 +409,7 @@ export async function POST() {
         user_id: user.id,
         feature_key: "trend_summary",
         request_date: requestDate,
-        summary_text: summary,
+        summary_text: storedSummary,
         model_name: geminiResult.model,
         source_record_count: records.length,
         usage_count: nextUsageCount,
@@ -342,6 +424,7 @@ export async function POST() {
 
     return NextResponse.json({
       summary,
+      structuredSummary,
       generatedAt: new Date().toISOString(),
       modelName: geminiResult.model,
       provider: "gemini",

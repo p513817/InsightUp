@@ -225,6 +225,16 @@ textarea {
   box-shadow: 0 18px 40px rgba(16, 35, 63, 0.16);
 }
 
+body.dialog-overlay-no-blur .dialog-overlay {
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay {
+    backdrop-filter: none;
+  }
+}
+
 @layer components {
   .surface-glass-panel {
     border: 1px solid rgb(var(--border) / 0.55);
