@@ -14,7 +14,7 @@ interface AppHeaderProps {
   user: AppUserSummary;
 }
 
-const COLLAPSE_DISTANCE = 140;
+const COLLAPSE_DISTANCE = 180;
 
 type HeaderStyle = CSSProperties & {
   "--account-zone-width": string;
@@ -43,6 +43,10 @@ type NavItem = {
 
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(Math.max(value, min), max);
+}
+
+function easeInOut(value: number) {
+  return value * value * (3 - 2 * value);
 }
 
 function NavButton({ href, label, icon, active, compact = false, tabIndex }: NavItem) {
@@ -115,16 +119,17 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname === "/records" || pathname === "/profile";
   const isFriends = pathname === "/friends";
-  const expandedProgress = 1 - progress;
-  const collapsedNavOpacity = clamp((progress - 0.28) / 0.52);
-  const expandedNavOpacity = clamp((0.82 - progress) / 0.52);
+  const visualProgress = easeInOut(progress);
+  const expandedProgress = 1 - visualProgress;
+  const collapsedNavOpacity = clamp((visualProgress - 0.24) / 0.56);
+  const expandedNavOpacity = clamp((0.86 - visualProgress) / 0.56);
   const useCollapsedNav = progress >= 0.56;
   const headerStyle = {
     "--account-zone-width": `${3.25 + expandedProgress * 10.5}rem`,
     "--brand-gap": `${0.75 * expandedProgress}rem`,
     "--brand-padding": `${0.375 + expandedProgress * 0.125}rem`,
     "--brand-text-width": `${12 * expandedProgress}rem`,
-    "--collapsed-nav-width": `${9 * collapsedNavOpacity}rem`,
+    "--collapsed-nav-width": `${9 * clamp((visualProgress - 0.2) / 0.6)}rem`,
     "--collapsed-nav-opacity": collapsedNavOpacity,
     "--expanded-nav-height": `${2.75 * expandedProgress}rem`,
     "--expanded-nav-opacity": expandedNavOpacity,
@@ -133,6 +138,7 @@ export function AppHeader({ user }: AppHeaderProps) {
     "--header-row-gap": `${1 * expandedProgress}rem`,
     "--header-row-height": `${3.25 + expandedProgress * 0.5}rem`,
     "--logo-size": `${2 + expandedProgress * 0.75}rem`,
+    boxShadow: `0 ${Math.round(8 * visualProgress)}px ${Math.round(22 * visualProgress)}px rgba(16, 35, 63, ${0.035 + 0.055 * visualProgress})`,
   } satisfies HeaderStyle;
 
   useEffect(() => {
@@ -141,7 +147,7 @@ export function AppHeader({ user }: AppHeaderProps) {
     function updateProgress() {
       animationFrame = 0;
       const nextProgress = clamp(window.scrollY / COLLAPSE_DISTANCE);
-      setProgress((current) => (Math.abs(current - nextProgress) < 0.01 ? current : nextProgress));
+      setProgress((current) => (Math.abs(current - nextProgress) < 0.005 ? current : nextProgress));
     }
 
     function handleScroll() {
@@ -219,7 +225,7 @@ export function AppHeader({ user }: AppHeaderProps) {
 
           <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-end">
             <div className="flex w-[var(--account-zone-width)] justify-end">
-              <AccountMenu collapseProgress={progress} user={user} />
+              <AccountMenu collapseProgress={visualProgress} user={user} />
             </div>
           </div>
 

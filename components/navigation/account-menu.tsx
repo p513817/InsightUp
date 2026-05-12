@@ -20,6 +20,7 @@ type AccountMenuStyle = CSSProperties & {
   "--account-px": string;
   "--account-py": string;
   "--account-avatar-size": string;
+  "--account-chevron-width": string;
   "--account-text-width": string;
   "--account-text-opacity": number;
 };
@@ -51,10 +52,11 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
   const expandedProgress = 1 - progress;
   const menuStyle = {
-    "--account-gap": `${0.375 + expandedProgress * 0.375}rem`,
+    "--account-gap": `${0.75 * expandedProgress}rem`,
     "--account-px": `${0.375 + expandedProgress * 0.25}rem`,
-    "--account-py": `${0.25 + expandedProgress * 0.25}rem`,
+    "--account-py": `${0.375 + expandedProgress * 0.125}rem`,
     "--account-avatar-size": `${2 + expandedProgress * 0.75}rem`,
+    "--account-chevron-width": `${1 * expandedProgress}rem`,
     "--account-text-width": `${11 * expandedProgress}rem`,
     "--account-text-opacity": expandedProgress,
   } satisfies AccountMenuStyle;
@@ -106,12 +108,12 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt={user.name}
-            className="size-[var(--account-avatar-size)] rounded-full border border-border object-cover"
+            className="size-[var(--account-avatar-size)] rounded-full object-cover"
             onError={() => setImageFailed(true)}
             src={user.avatarUrl}
           />
         ) : (
-          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full border border-border text-xs font-semibold text-foreground sm:text-sm">
+          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full text-xs font-semibold text-foreground sm:text-sm">
             {getUserInitials(user.name)}
           </div>
         )}
@@ -119,7 +121,9 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
         </div>
-        <ChevronDown className={`size-4 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
+        <span className="flex w-[var(--account-chevron-width)] shrink-0 overflow-hidden opacity-[var(--account-text-opacity)]">
+          <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
+        </span>
       </Button>
 
       {isOpen ? (
