@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
@@ -188,27 +188,31 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
         </div>
         <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:hidden" ref={chartViewMenuRef}>
           {isChartViewMenuOpen ? (
-            <div className="surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(8.25rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-0.5">
-              <div className="grid grid-cols-1 gap-1.5">
+            <div className="surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(10.5rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5">
+              <div className="grid grid-cols-1 gap-0.5" role="menu">
                 {CHART_VIEWS.map((view) => {
                   const active = selectedChartView === view.key;
                   const label = view.key === "overall" ? "整體" : view.label;
 
                   return (
-                    <Button
+                    <button
                       aria-pressed={active}
-                      className="h-8 w-full rounded-full px-0.5 text-sm hover:translate-y-0 active:scale-100"
+                      className={`flex h-11 w-full items-center justify-between rounded-[0.8rem] px-3 text-left text-sm font-semibold transition active:scale-[0.98] ${
+                        active
+                          ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+                          : "text-foreground hover:bg-primary/7"
+                      }`}
                       key={view.key}
                       onClick={() => {
                         setSelectedChartView(view.key);
                         setIsChartViewMenuOpen(false);
                       }}
-                      size="sm"
+                      role="menuitemradio"
                       type="button"
-                      variant={active ? "default" : "outline"}
                     >
-                      {label}
-                    </Button>
+                      <span className="truncate">{label}</span>
+                      <Check className={`size-4 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
+                    </button>
                   );
                 })}
               </div>
