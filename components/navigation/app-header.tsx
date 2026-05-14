@@ -52,8 +52,8 @@ function NavButton({ href, label, icon, active, compact = false, tabIndex }: Nav
       aria-current={active ? "page" : undefined}
       aria-label={label}
       className={cn(
-        "relative isolate shrink-0 justify-center overflow-hidden rounded-full",
-        compact ? "size-9 gap-0 px-0 sm:size-10" : "h-9 w-full sm:h-10 sm:min-w-36",
+        "relative isolate shrink-0 justify-center overflow-hidden rounded-full shadow-none hover:translate-y-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[inset_0_0_0_2px_rgb(var(--brand-sky-50)/0.78)]",
+        compact ? "size-9 gap-0 px-0" : "h-9 w-full",
         showPendingBorder && "border border-transparent text-foreground",
       )}
       onClick={() => {
@@ -97,7 +97,7 @@ function NavCluster({
   isRecords: boolean;
 }) {
   return (
-    <div className={cn("surface-pill rounded-full p-1", compact ? "inline-flex h-11 items-center gap-1" : "grid h-11 w-full grid-cols-3 gap-2 sm:inline-flex sm:w-fit")}>
+    <div className={cn("surface-pill rounded-full p-1", compact ? "inline-flex h-11 items-center gap-1" : "grid h-11 w-full grid-cols-3 gap-2")}>
       <NavButton compact={compact} href="/dashboard" label="趨勢" icon={<LayoutDashboard className="size-4" />} active={isDashboard} tabIndex={activeTabIndex} />
       <NavButton compact={compact} href="/records" label="紀錄" icon={<Files className="size-4" />} active={isRecords} tabIndex={activeTabIndex} />
       <NavButton compact={compact} href="/friends" label="好友" icon={<UsersRound className="size-4" />} active={isFriends} tabIndex={activeTabIndex} />
@@ -115,7 +115,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const expandedProgress = isCollapsed ? 0 : 1;
   const useCollapsedNav = isCollapsed;
   const headerStyle: HeaderStyle = {
-    "--account-zone-width": `${3.25 + expandedProgress * 10.5}rem`,
+    "--account-zone-width": `${3.25 + expandedProgress * 1.75}rem`,
     "--brand-gap": `${0.75 * expandedProgress}rem`,
     "--brand-padding": `${0.375 + expandedProgress * 0.125}rem`,
     "--brand-text-width": `${12 * expandedProgress}rem`,
@@ -199,14 +199,14 @@ export function AppHeader({ user }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/55 bg-background/94 backdrop-blur-sm transition-[box-shadow] duration-500 ease-out" ref={headerRef} style={headerStyle}>
-      <div className="mx-auto w-full max-w-6xl px-4 py-[var(--header-py)] transition-[padding] duration-500 ease-out sm:px-6 lg:px-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-[var(--header-py)] transition-[padding] duration-500 ease-out sm:px-6 lg:px-8">
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-y-[var(--header-row-gap)] transition-[gap] duration-500 ease-out">
           <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-start transition-[height] duration-500 ease-out">
             <Link className="surface-pill flex min-w-0 max-w-full items-center gap-[var(--brand-gap)] rounded-full p-[var(--brand-padding)] transition-[gap,padding] duration-500 ease-out" href="/dashboard">
               <LogoAnimated className="size-[var(--logo-size)] rounded-full transition-[height,width] duration-500 ease-out" playOnce size={44} />
               <div className="min-w-0 max-w-[var(--brand-text-width)] overflow-hidden opacity-[var(--header-expanded-opacity)] transition-[max-width,opacity] duration-500 ease-out">
                 <p className="truncate font-display text-xl text-foreground">InsightUp</p>
-                <p className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground sm:block">InBody tracker</p>
+                <p className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground">InBody tracker</p>
               </div>
             </Link>
           </div>

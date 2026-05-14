@@ -159,34 +159,10 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
       <>
         <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
           <section className="space-y-3">
-            <div className="sticky z-20 -mx-2 px-2 pt-1" style={{ top: "calc(var(--app-header-offset, 0px) + 0.5rem)" }}>
-              <div className="hidden rounded-[1rem] p-1.5 sm:block sm:surface-menu">
-                <div className="grid grid-cols-6 gap-1.5">
-                  {CHART_VIEWS.map((view) => {
-                    const active = selectedChartView === view.key;
-                    const label = view.key === "overall" ? "整體" : view.label;
-
-                    return (
-                      <Button
-                        aria-pressed={active}
-                        className="h-8 w-full rounded-full px-1.5 text-[11px] hover:translate-y-0 active:scale-100"
-                        key={view.key}
-                        onClick={() => setSelectedChartView(view.key)}
-                        size="sm"
-                        type="button"
-                        variant={active ? "default" : "outline"}
-                      >
-                        {label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
             <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
           </section>
         </div>
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:hidden" ref={chartViewMenuRef}>
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:bottom-7 sm:left-7" ref={chartViewMenuRef}>
           {isChartViewMenuOpen ? (
             <div className="surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(10.5rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5">
               <div className="grid grid-cols-1 gap-0.5" role="menu">
@@ -222,7 +198,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
           <Button
             aria-expanded={isChartViewMenuOpen}
             aria-haspopup="menu"
-            className="h-10 rounded-full px-3.5 shadow-panel"
+            className="h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
             onClick={() => setIsChartViewMenuOpen((current) => !current)}
             type="button"
           >

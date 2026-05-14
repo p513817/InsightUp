@@ -50,7 +50,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
-  const expandedProgress = 1 - progress;
+  const expandedProgress = compact ? 0 : 1 - progress;
   const menuStyle: AccountMenuStyle = {
     "--account-gap": `${0.75 * expandedProgress}rem`,
     "--account-px": `${0.375 + expandedProgress * 0.25}rem`,
@@ -113,11 +113,11 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
             src={user.avatarUrl}
           />
         ) : (
-          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full text-xs font-semibold text-foreground transition-[height,width] duration-500 ease-out sm:text-sm">
+          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full text-xs font-semibold text-foreground transition-[height,width] duration-500 ease-out">
             {getUserInitials(user.name)}
           </div>
         )}
-        <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] transition-[max-width,opacity] duration-500 ease-out md:block">
+        <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] transition-[max-width,opacity] duration-500 ease-out">
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
         </div>
