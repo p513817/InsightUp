@@ -356,7 +356,7 @@ export function formValuesToRecordInput(values: RecordFormValues): RecordInput {
   return {
     ...values,
     notes: values.notes,
-    segmental: ensureSegmentalData({ ...values, segmental: values.segmental as any }),
+    segmental: ensureSegmentalData({ ...values, segmental: values.segmental as Partial<RecordInput["segmental"]> }),
   };
 }
 
@@ -381,22 +381,32 @@ export function recordToFormValues(record?: InbodyRecord | null): RecordFormValu
       leftArm: {
         muscle: record?.segmental.leftArm.muscle ?? null,
         fat: record?.segmental.leftArm.fat ?? null,
+        muscleRatio: record?.segmental.leftArm.muscleRatio ?? null,
+        fatRatio: record?.segmental.leftArm.fatRatio ?? null,
       },
       rightArm: {
         muscle: record?.segmental.rightArm.muscle ?? null,
         fat: record?.segmental.rightArm.fat ?? null,
+        muscleRatio: record?.segmental.rightArm.muscleRatio ?? null,
+        fatRatio: record?.segmental.rightArm.fatRatio ?? null,
       },
       trunk: {
         muscle: record?.segmental.trunk.muscle ?? null,
         fat: record?.segmental.trunk.fat ?? null,
+        muscleRatio: record?.segmental.trunk.muscleRatio ?? null,
+        fatRatio: record?.segmental.trunk.fatRatio ?? null,
       },
       leftLeg: {
         muscle: record?.segmental.leftLeg.muscle ?? null,
         fat: record?.segmental.leftLeg.fat ?? null,
+        muscleRatio: record?.segmental.leftLeg.muscleRatio ?? null,
+        fatRatio: record?.segmental.leftLeg.fatRatio ?? null,
       },
       rightLeg: {
         muscle: record?.segmental.rightLeg.muscle ?? null,
         fat: record?.segmental.rightLeg.fat ?? null,
+        muscleRatio: record?.segmental.rightLeg.muscleRatio ?? null,
+        fatRatio: record?.segmental.rightLeg.fatRatio ?? null,
       },
     },
   };

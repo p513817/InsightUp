@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { recordToFormValues } from "@/lib/inbody/records";
-import { recordFormSchema, type RecordFormValues } from "@/lib/inbody/schema";
+import { recordDraftSchema, recordFormSchema, type RecordDraftValues, type RecordFormValues } from "@/lib/inbody/schema";
 import { SEGMENT_PARTS, type InbodyRecord } from "@/lib/inbody/types";
 
 interface RecordFormDialogProps {
