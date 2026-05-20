@@ -139,8 +139,14 @@ export function createSegmentalDataFromRecord(record: Partial<RecordInput>): Seg
   };
 }
 
-export function ensureSegmentalData(record: Partial<RecordInput> & { segmental?: Partial<SegmentMap> | null }): SegmentMap {
-  const fallback = createSegmentalDataFromRecord(record);
+export function ensureSegmentalData(
+  record: Omit<Partial<RecordInput>, "segmental"> & { segmental?: Partial<SegmentMap> | null },
+): SegmentMap {
+  const fallback = createSegmentalDataFromRecord({
+    muscle: record.muscle,
+    fat: record.fat,
+    fatPercent: record.fatPercent,
+  });
 
   return SEGMENT_PARTS.reduce((acc, part) => {
     const segment = record.segmental?.[part.key];
@@ -356,7 +362,7 @@ export function formValuesToRecordInput(values: RecordFormValues): RecordInput {
   return {
     ...values,
     notes: values.notes,
-    segmental: ensureSegmentalData({ ...values, segmental: values.segmental as Partial<RecordInput["segmental"]> }),
+    segmental: ensureSegmentalData({ ...values, segmental: values.segmental }),
   };
 }
 

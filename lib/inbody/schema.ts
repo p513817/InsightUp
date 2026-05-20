@@ -115,5 +115,7 @@ export const recordFormSchema = z
     }
   });
 
-export type RecordDraftValues = z.infer<typeof recordDraftSchema>;
-export type RecordFormValues = z.infer<typeof recordFormSchema>;
+export type RecordDraftValues = z.output<typeof recordDraftSchema>;
+export type RecordDraftInputValues = z.input<typeof recordDraftSchema>;
+export type RecordFormValues = z.output<typeof recordFormSchema>;
+export type RecordFormInputValues = z.input<typeof recordFormSchema>;

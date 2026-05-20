@@ -3,7 +3,7 @@
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch } from "lucide-react";
-import { Controller, type Path, useForm } from "react-hook-form";
+import { Controller, type Path, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,7 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { recordToFormValues } from "@/lib/inbody/records";
-import { recordDraftSchema, recordFormSchema, type RecordDraftValues, type RecordFormValues } from "@/lib/inbody/schema";
+import {
+  recordDraftSchema,
+  recordFormSchema,
+  type RecordDraftInputValues,
+  type RecordDraftValues,
+  type RecordFormInputValues,
+  type RecordFormValues,
+} from "@/lib/inbody/schema";
 import { SEGMENT_PARTS, type InbodyRecord } from "@/lib/inbody/types";
 
 interface RecordFormDialogProps {
@@ -105,11 +112,14 @@ function getRelativeDateValue(offsetDays = 0) {
   ].join("-");
 }
 
-function buildDialogInitialValues(initialRecord?: InbodyRecord | null) {
+function buildDialogInitialValues(initialRecord?: InbodyRecord | null): RecordFormInputValues {
   return recordToFormValues(initialRecord ?? null);
 }
 
-function buildPreviousRecordValues(current: RecordFormValues, latestRecordForAutofill?: InbodyRecord | null): RecordFormValues | null {
+function buildPreviousRecordValues(
+  current: RecordFormInputValues,
+  latestRecordForAutofill?: InbodyRecord | null,
+): RecordFormInputValues | null {
   if (!latestRecordForAutofill) {
     return null;
   }
@@ -143,7 +153,11 @@ function buildScanNote(summary: StructuredSummary | null | undefined, uncertaint
   return lines.length > 0 ? lines.join("\n") : null;
 }
 
-function mergeDraftIntoForm(current: RecordFormValues, draft: RecordDraftValues, scanNote: string | null): RecordFormValues {
+function mergeDraftIntoForm(
+  current: RecordFormInputValues,
+  draft: RecordDraftInputValues | RecordDraftValues,
+  scanNote: string | null,
+): RecordFormInputValues {
   const parsedDraft = recordDraftSchema.parse(draft);
 
   return {
@@ -272,8 +286,8 @@ function NumberInputWithAdjust({
   step,
 }: {
   className: string;
-  form: ReturnType<typeof useForm<RecordFormValues>>;
-  name: Path<RecordFormValues>;
+  form: UseFormReturn<RecordFormInputValues, unknown, RecordFormValues>;
+  name: Path<RecordFormInputValues>;
   placeholder?: string;
   step: number;
 }) {
@@ -368,7 +382,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     "flex h-10 w-full appearance-none rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 pr-9 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
     "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
-  const form = useForm<RecordFormValues>({
+  const form = useForm<RecordFormInputValues, unknown, RecordFormValues>({
     resolver: zodResolver(recordFormSchema),
     defaultValues: buildDialogInitialValues(initialRecord),
   });
