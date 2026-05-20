@@ -1,37 +1,15 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import {
+  LlmProviderError,
+  decodeStoredStructuredSummary,
+  generateText,
+  getModelPool,
+  parseEntitlementConfig,
+  parseStructuredSummaryText,
+  toLegacySummaryText,
+} from "@/lib/llms";
 import { buildGeminiPrompt, getTodayTaipeiDate, listRecentRecordsForSummary } from "@/lib/inbody/trend-summary";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-class TrendSummaryProviderError extends Error {
-  constructor(
-    message: string,
-    readonly code:
-      | "missing_key"
-      | "quota"
-      | "invalid_request"
-      | "authentication"
-      | "permission_denied"
-      | "not_found"
-      | "empty_response"
-      | "internal"
-      | "unavailable"
-      | "timeout"
-      | "provider_error",
-    readonly model?: string,
-  ) {
-    super(message);
-    this.name = "TrendSummaryProviderError";
-  }
-}
-
-const DEFAULT_GEMINI_ROTATION_MODELS = [
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-flash",
-  "gemini-2.5-pro",
-  "gemini-3.1-flash-lite-preview",
-  "gemini-3-flash-preview",
-] as const;
 
 interface TrendSummaryEntitlement {
   planCode: string;
@@ -46,114 +24,6 @@ interface TrendSummaryRow {
   request_date: string;
   usage_count: number;
   last_generated_at: string | null;
-}
-
-interface StructuredTrendSummary {
-  overview: string;
-  keyChanges: string[];
-  actionPlan: string[];
-  watchouts: string[];
-}
-
-function normalizePlainText(text: string) {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-function stripJsonFence(text: string) {
-  const trimmed = text.trim();
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return fenced ? fenced[1].trim() : trimmed;
-}
-
-function toStringArray(value: unknown) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => normalizePlainText(item))
-    .filter((item) => item.length > 0);
-}
-
-function parseStructuredSummaryText(text: string) {
-  try {
-    const parsed = JSON.parse(stripJsonFence(text)) as Record<string, unknown>;
-
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return null;
-    }
-
-    const overviewRaw = parsed.overview;
-    const overview = typeof overviewRaw === "string" ? normalizePlainText(overviewRaw) : "";
-    const keyChanges = toStringArray(parsed.keyChanges);
-    const actionPlan = toStringArray(parsed.actionPlan);
-    const watchouts = toStringArray(parsed.watchouts);
-
-    if (!overview && keyChanges.length === 0 && actionPlan.length === 0 && watchouts.length === 0) {
-      return null;
-    }
-
-    return {
-      overview: overview || keyChanges[0] || actionPlan[0] || watchouts[0] || "",
-      keyChanges,
-      actionPlan,
-      watchouts,
-    } satisfies StructuredTrendSummary;
-  } catch {
-    return null;
-  }
-}
-
-function decodeStoredStructuredSummary(summaryText: string) {
-  const structured = parseStructuredSummaryText(summaryText);
-
-  if (structured) {
-    return structured;
-  }
-
-  return {
-    overview: normalizePlainText(summaryText),
-    keyChanges: [],
-    actionPlan: [],
-    watchouts: [],
-  } satisfies StructuredTrendSummary;
-}
-
-function toLegacySummaryText(structured: StructuredTrendSummary) {
-  return [structured.overview, ...structured.keyChanges, ...structured.actionPlan, ...structured.watchouts]
-    .filter((line) => line.length > 0)
-    .join(" ");
-}
-
-function getGeminiApiKey() {
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new TrendSummaryProviderError("Missing environment variable: GEMINI_API_KEY", "missing_key");
-  }
-
-  return apiKey;
-}
-
-function parseEntitlementConfig(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {} as Record<string, unknown>;
-  }
-
-  return value as Record<string, unknown>;
-}
-
-function getModelPool(config: Record<string, unknown>) {
-  const configuredPool = Array.isArray(config.model_pool)
-    ? config.model_pool.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-    : [];
-
-  if (!configuredPool.length) {
-    return [...DEFAULT_GEMINI_ROTATION_MODELS];
-  }
-
-  return config.allow_rotation === false ? [configuredPool[0]] : configuredPool;
 }
 
 async function resolveTrendSummaryEntitlement(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
@@ -218,87 +88,6 @@ async function getTodayTrendSummaryRow(
   return data as TrendSummaryRow | null;
 }
 
-function shouldRotateModel(code: TrendSummaryProviderError["code"]) {
-  return code === "quota" || code === "internal" || code === "unavailable" || code === "timeout" || code === "not_found";
-}
-
-function mapGeminiError(error: unknown, model: string) {
-  if (error instanceof TrendSummaryProviderError) {
-    return error;
-  }
-
-  const errorMessage = error instanceof Error ? error.message : String(error);
-
-  if (/401|unauthenticated|api key not valid|invalid api key|reported as leaked/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "authentication", model);
-  }
-
-  if (/403|permission_denied|permission denied|doesn't have the required permissions/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "permission_denied", model);
-  }
-
-  if (/404|not_found|model .* not found|requested resource wasn't found/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "not_found", model);
-  }
-
-  if (/429|quota|rate limit|resource exhausted|quota exceeded/i.test(errorMessage)) {
-    return new TrendSummaryProviderError("Gemini quota exceeded", "quota", model);
-  }
-
-  if (/400|invalid_argument|request too large|failed_precondition|free tier is not available/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "invalid_request", model);
-  }
-
-  if (/500|internal/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "internal", model);
-  }
-
-  if (/503|unavailable|overloaded|capacity/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "unavailable", model);
-  }
-
-  if (/504|deadline_exceeded|deadline exceeded|timeout/i.test(errorMessage)) {
-    return new TrendSummaryProviderError(errorMessage.slice(0, 400), "timeout", model);
-  }
-
-  return new TrendSummaryProviderError(errorMessage.slice(0, 400), "provider_error", model);
-}
-
-async function generateSummaryWithGemini(prompt: string, modelPool: string[]) {
-  const client = new GoogleGenAI({ apiKey: getGeminiApiKey() });
-  let lastError: TrendSummaryProviderError | null = null;
-
-  for (const model of modelPool) {
-    try {
-      const response = await client.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          maxOutputTokens: 2048,
-          temperature: 0.4,
-        },
-      });
-
-      const text = response.text?.trim();
-
-      if (!text) {
-        throw new TrendSummaryProviderError("Gemini returned empty summary", "empty_response", model);
-      }
-
-      return { text, model };
-    } catch (error) {
-      const mappedError = mapGeminiError(error, model);
-      lastError = mappedError;
-
-      if (!shouldRotateModel(mappedError.code)) {
-        throw mappedError;
-      }
-    }
-  }
-
-  throw lastError ?? new TrendSummaryProviderError("Gemini rotation exhausted", "provider_error");
-}
-
 async function getAuthenticatedContext() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -306,6 +95,50 @@ async function getAuthenticatedContext() {
   } = await supabase.auth.getUser();
 
   return { supabase, user };
+}
+
+function mapLlmErrorResponse(error: LlmProviderError) {
+  if (error.code === "missing_key") {
+    return NextResponse.json({ message: "缺少 GEMINI_API_KEY。", code: error.code }, { status: 500 });
+  }
+
+  if (error.code === "authentication") {
+    return NextResponse.json({ message: "Gemini API key 無效。", code: error.code, modelName: error.model }, { status: 401 });
+  }
+
+  if (error.code === "permission_denied") {
+    return NextResponse.json({ message: "Gemini API key 沒有權限。", code: error.code, modelName: error.model }, { status: 403 });
+  }
+
+  if (error.code === "invalid_request") {
+    return NextResponse.json({ message: "Gemini 拒絕這次請求內容。", code: error.code, modelName: error.model }, { status: 400 });
+  }
+
+  if (error.code === "not_found") {
+    return NextResponse.json({ message: "找不到設定的 Gemini 模型。", code: error.code, modelName: error.model }, { status: 404 });
+  }
+
+  if (error.code === "quota") {
+    return NextResponse.json({ message: "Gemini 額度已用盡。", code: error.code, modelName: error.model }, { status: 429 });
+  }
+
+  if (error.code === "empty_response") {
+    return NextResponse.json({ message: "Gemini 回傳了空白內容。", code: error.code, modelName: error.model }, { status: 502 });
+  }
+
+  if (error.code === "internal") {
+    return NextResponse.json({ message: "Gemini 內部錯誤。", code: error.code, modelName: error.model }, { status: 500 });
+  }
+
+  if (error.code === "unavailable") {
+    return NextResponse.json({ message: "Gemini 暫時無法使用。", code: error.code, modelName: error.model }, { status: 503 });
+  }
+
+  if (error.code === "timeout") {
+    return NextResponse.json({ message: "Gemini 請求逾時。", code: error.code, modelName: error.model }, { status: 504 });
+  }
+
+  return NextResponse.json({ message: "Gemini 請求失敗。", code: error.code, modelName: error.model }, { status: 502 });
 }
 
 export async function GET() {
@@ -320,7 +153,7 @@ export async function GET() {
     const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
     if (entitlement.dailyLimit === 0) {
-      return NextResponse.json({ message: "目前方案尚未開放 AI 趨勢摘要。" }, { status: 403 });
+      return NextResponse.json({ message: "你目前的方案無法使用 AI 趨勢摘要。" }, { status: 403 });
     }
 
     const [latestSummary, todaySummary] = await Promise.all([
@@ -341,7 +174,7 @@ export async function GET() {
       dailyLimit: entitlement.dailyLimit,
       planCode: entitlement.planCode,
       canGenerate: entitlement.dailyLimit == null || (todaySummary?.usage_count ?? 0) < entitlement.dailyLimit,
-      message: latestSummary ? undefined : "目前還沒有摘要，點擊重新生成即可建立最新摘要。",
+      message: latestSummary ? undefined : "目前還沒有快取摘要，可手動產生今日趨勢摘要。",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected server error";
@@ -361,7 +194,7 @@ export async function POST() {
     const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
     if (entitlement.dailyLimit === 0) {
-      return NextResponse.json({ message: "目前方案尚未開放 AI 趨勢摘要。" }, { status: 403 });
+      return NextResponse.json({ message: "你目前的方案無法使用 AI 趨勢摘要。" }, { status: 403 });
     }
 
     const todaySummary = await getTodayTrendSummaryRow(supabase, user.id, requestDate);
@@ -382,22 +215,22 @@ export async function POST() {
         dailyLimit: entitlement.dailyLimit,
         planCode: entitlement.planCode,
         canGenerate: false,
-        message: "今天已達使用上限，請明天再試。",
+        message: "今天的 AI 趨勢摘要次數已達上限。",
       });
     }
 
     const records = await listRecentRecordsForSummary(supabase, user.id);
 
     if (records.length < 2) {
-      return NextResponse.json({ message: "至少需要 2 筆可納入圖表的紀錄才可產生摘要。" }, { status: 400 });
+      return NextResponse.json({ message: "至少需要 2 筆已納入圖表的紀錄才能產生趨勢摘要。" }, { status: 400 });
     }
 
     const prompt = buildGeminiPrompt(records);
-    const geminiResult = await generateSummaryWithGemini(prompt, getModelPool(entitlement.config));
-    const structuredSummary = parseStructuredSummaryText(geminiResult.text);
+    const llmResult = await generateText(prompt, getModelPool(entitlement.config));
+    const structuredSummary = parseStructuredSummaryText(llmResult.text);
 
     if (!structuredSummary) {
-      throw new TrendSummaryProviderError("Gemini returned invalid structured summary", "empty_response", geminiResult.model);
+      throw new LlmProviderError("Gemini returned invalid structured summary", "empty_response", llmResult.model);
     }
 
     const summary = toLegacySummaryText(structuredSummary);
@@ -410,7 +243,7 @@ export async function POST() {
         feature_key: "trend_summary",
         request_date: requestDate,
         summary_text: storedSummary,
-        model_name: geminiResult.model,
+        model_name: llmResult.model,
         source_record_count: records.length,
         usage_count: nextUsageCount,
         last_generated_at: new Date().toISOString(),
@@ -419,14 +252,14 @@ export async function POST() {
     );
 
     if (upsertError) {
-      return NextResponse.json({ message: "Failed to persist summary." }, { status: 500 });
+      return NextResponse.json({ message: "摘要儲存失敗。" }, { status: 500 });
     }
 
     return NextResponse.json({
       summary,
       structuredSummary,
       generatedAt: new Date().toISOString(),
-      modelName: geminiResult.model,
+      modelName: llmResult.model,
       provider: "gemini",
       reused: false,
       usageCount: nextUsageCount,
@@ -436,48 +269,8 @@ export async function POST() {
       requestDate,
     });
   } catch (error) {
-    if (error instanceof TrendSummaryProviderError) {
-      if (error.code === "missing_key") {
-        return NextResponse.json({ message: "伺服器尚未設定 GEMINI_API_KEY。", code: error.code }, { status: 500 });
-      }
-
-      if (error.code === "authentication") {
-        return NextResponse.json({ message: "Gemini API 驗證失敗，請檢查 API key。", code: error.code, modelName: error.model }, { status: 401 });
-      }
-
-      if (error.code === "permission_denied") {
-        return NextResponse.json({ message: "Gemini API key 權限不足。", code: error.code, modelName: error.model }, { status: 403 });
-      }
-
-      if (error.code === "invalid_request") {
-        return NextResponse.json({ message: "Gemini 請求格式或大小不合法。", code: error.code, modelName: error.model }, { status: 400 });
-      }
-
-      if (error.code === "not_found") {
-        return NextResponse.json({ message: "Gemini 模型目前不可用。", code: error.code, modelName: error.model }, { status: 404 });
-      }
-
-      if (error.code === "quota") {
-        return NextResponse.json({ message: "Gemini 配額已達上限，請稍後再試。", code: error.code, modelName: error.model }, { status: 429 });
-      }
-
-      if (error.code === "empty_response") {
-        return NextResponse.json({ message: "Gemini 未回傳可用內容，請稍後再試。", code: error.code, modelName: error.model }, { status: 502 });
-      }
-
-      if (error.code === "internal") {
-        return NextResponse.json({ message: "Gemini 服務內部錯誤，請稍後再試。", code: error.code, modelName: error.model }, { status: 500 });
-      }
-
-      if (error.code === "unavailable") {
-        return NextResponse.json({ message: "Gemini 服務暫時過載，請稍後再試。", code: error.code, modelName: error.model }, { status: 503 });
-      }
-
-      if (error.code === "timeout") {
-        return NextResponse.json({ message: "Gemini 處理逾時，請稍後再試。", code: error.code, modelName: error.model }, { status: 504 });
-      }
-
-      return NextResponse.json({ message: "Gemini 服務暫時不可用，請稍後再試。", code: error.code, modelName: error.model }, { status: 502 });
+    if (error instanceof LlmProviderError) {
+      return mapLlmErrorResponse(error);
     }
 
     const message = error instanceof Error ? error.message : "Unexpected server error";
