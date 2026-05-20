@@ -2,7 +2,7 @@
 
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronDown, LoaderCircle, ScanSearch } from "lucide-react";
+import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch } from "lucide-react";
 import { Controller, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ interface ScanResponse extends ScanUsageResponse {
 }
 
 type SectionKey = "basic" | "primary" | "additional" | "notes" | "segmental";
+type ScanStage = "uploading" | "analyzing" | null;
 
 function splitDateParts(value: string | null | undefined) {
   if (!value) {
@@ -104,22 +105,23 @@ function getRelativeDateValue(offsetDays = 0) {
   ].join("-");
 }
 
-function buildDialogInitialValues(initialRecord?: InbodyRecord | null, latestRecordForAutofill?: InbodyRecord | null) {
-  if (initialRecord) {
-    return recordToFormValues(initialRecord);
-  }
+function buildDialogInitialValues(initialRecord?: InbodyRecord | null) {
+  return recordToFormValues(initialRecord ?? null);
+}
 
-  const baseValues = recordToFormValues(null);
+function buildPreviousRecordValues(current: RecordFormValues, latestRecordForAutofill?: InbodyRecord | null): RecordFormValues | null {
   if (!latestRecordForAutofill) {
-    return baseValues;
+    return null;
   }
 
-  const latestValues = recordToFormValues(latestRecordForAutofill);
+  const previousValues = recordToFormValues(latestRecordForAutofill);
 
   return {
-    ...latestValues,
-    date: baseValues.date,
-    notes: baseValues.notes,
+    ...previousValues,
+    date: current.date,
+    notes: current.notes,
+    sourceType: "manual",
+    isIncludedInCharts: current.isIncludedInCharts,
   };
 }
 
@@ -194,6 +196,38 @@ function mergeDraftIntoForm(current: RecordFormValues, draft: RecordDraftValues,
       },
     },
   };
+}
+
+function formatUsageText(usageCount: number, dailyLimit: number | null) {
+  return `今日已使用 ${usageCount} / ${dailyLimit == null ? "不限" : dailyLimit} 次`;
+}
+
+function formatRecordDate(date: string | null | undefined) {
+  if (!date) {
+    return "尚無紀錄";
+  }
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return date;
+  }
+
+  return parsed.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+function splitMetaParts(meta: string | null | undefined) {
+  if (!meta) {
+    return [];
+  }
+
+  return meta
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
 function FieldShell({
@@ -271,23 +305,57 @@ function NumberInputWithAdjust({
   );
 }
 
-function formatUsageText(usageCount: number, dailyLimit: number | null) {
-  return `今日使用 ${usageCount} / ${dailyLimit == null ? "無上限" : dailyLimit} 次`;
+function QuickActionInfo({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => onOpenChange(true)}
+      onMouseLeave={() => onOpenChange(false)}
+    >
+      <button
+        aria-expanded={open}
+        aria-label="查看快速導入說明"
+        className="inline-flex size-8 items-center justify-center rounded-full border border-border/80 bg-card text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+        onClick={() => onOpenChange(!open)}
+        type="button"
+      >
+        <CircleHelp className="size-4" />
+      </button>
+
+      {open ? (
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-72 rounded-[1rem] border border-border/80 bg-card/95 p-3 shadow-panel backdrop-blur">
+          <p className="text-sm font-semibold text-foreground">快速導入說明</p>
+          <div className="mt-2 space-y-2 text-xs leading-5 text-muted-foreground">
+            <p>`AI Scan` 會解析看得清楚的欄位，不確定的內容會保留空白。</p>
+            <p>`導入前一次紀錄` 會帶入最近一筆數值，保留今天日期與目前備註，適合快速微調。</p>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill, onOpenChange, onSubmit }: RecordFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanStage, setScanStage] = useState<ScanStage>(null);
   const [isLoadingScanStatus, setIsLoadingScanStatus] = useState(false);
   const [scanMeta, setScanMeta] = useState<string | null>(null);
   const [scanUsage, setScanUsage] = useState<ScanUsageResponse | null>(null);
+  const [isQuickActionInfoOpen, setIsQuickActionInfoOpen] = useState(false);
   const [isCancelFeedbackVisible, setIsCancelFeedbackVisible] = useState(false);
   const [isSubmitFeedbackVisible, setIsSubmitFeedbackVisible] = useState(false);
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     additional: false,
-    basic: true,
+    basic: false,
     notes: false,
-    primary: true,
+    primary: false,
     segmental: false,
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -295,35 +363,37 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
   const sectionClassName = "surface-muted-gradient space-y-2 rounded-[1rem] border border-border/80 p-4";
   const sectionTitleClassName = "text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground";
   const controlClassName =
-    "h-10 rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "h-10 rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const selectClassName =
     "flex h-10 w-full appearance-none rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 pr-9 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
-    "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+    "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(recordFormSchema),
-    defaultValues: buildDialogInitialValues(initialRecord, latestRecordForAutofill),
+    defaultValues: buildDialogInitialValues(initialRecord),
   });
   const watchedValues = form.watch();
 
   useEffect(() => {
-    form.reset(buildDialogInitialValues(initialRecord, latestRecordForAutofill));
+    form.reset(buildDialogInitialValues(initialRecord));
     setScanMeta(null);
-  }, [form, initialRecord, latestRecordForAutofill, open]);
+  }, [form, initialRecord, open]);
 
   useEffect(() => {
     if (!open) {
       setIsCancelFeedbackVisible(false);
       setIsSubmitFeedbackVisible(false);
       setIsScanning(false);
+      setScanStage(null);
       setIsLoadingScanStatus(false);
       setScanMeta(null);
       setScanUsage(null);
+      setIsQuickActionInfoOpen(false);
       setOpenSections({
         additional: false,
-        basic: true,
+        basic: false,
         notes: false,
-        primary: true,
+        primary: false,
         segmental: false,
       });
     }
@@ -344,7 +414,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
         const payload = (await response.json().catch(() => null)) as ScanUsageResponse | { message?: string } | null;
 
         if (!response.ok) {
-          throw new Error(payload?.message || "無法取得 AI Scan 限額狀態。");
+          throw new Error(payload?.message || "無法取得 AI Scan 使用狀態。");
         }
 
         if (!cancelled) {
@@ -352,7 +422,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
         }
       } catch (error) {
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : "無法取得 AI Scan 限額狀態。");
+          toast.error(error instanceof Error ? error.message : "無法取得 AI Scan 使用狀態。");
         }
       } finally {
         if (!cancelled) {
@@ -385,6 +455,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     }
 
     setIsScanning(true);
+    setScanStage("uploading");
     setScanMeta(null);
 
     try {
@@ -395,11 +466,12 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
         method: "POST",
         body: formData,
       });
+      setScanStage("analyzing");
 
       const payload = (await response.json().catch(() => null)) as ScanResponse | { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message || "檔案分析失敗。");
+        throw new Error(payload?.message || "掃描解析失敗。");
       }
 
       const data = payload as ScanResponse;
@@ -418,36 +490,58 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
         canScan: data.canScan,
         message: data.canScan ? null : "今日 AI Scan 次數已達上限，請明天再試。",
       });
-      setOpenSections((current) => ({
-        ...current,
+      setOpenSections({
         additional: true,
         basic: true,
         notes: true,
         primary: true,
         segmental: true,
-      }));
+      });
 
       const metaParts = [
         data.modelName ? `Gemini ${data.modelName}` : null,
         typeof data.scanConfidence === "number" ? `辨識信心 ${data.scanConfidence}%` : null,
       ].filter(Boolean);
-      setScanMeta(metaParts.length > 0 ? metaParts.join("｜") : "已匯入 Gemini 掃描結果");
+      setScanMeta(metaParts.length > 0 ? metaParts.join(" | ") : "已套用 Gemini 掃描結果");
 
       if ((data.uncertaintyNotes ?? []).length > 0) {
-        toast.warning("部分欄位保留空白", {
-          description: "Gemini 只會填入看得清楚的數值，其餘欄位請手動確認補齊。",
+        toast.warning("部分欄位已保留空白", {
+          description: "Gemini 無法確認的內容不會自動填寫，請你再人工補上。",
         });
       } else {
-        toast.success("已完成 InBody 檔案分析");
+        toast.success("已帶入 InBody 掃描結果");
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "檔案分析失敗。");
+      toast.error(error instanceof Error ? error.message : "掃描解析失敗。");
     } finally {
       setIsScanning(false);
+      setScanStage(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
+  }
+
+  function handleImportPreviousRecord() {
+    const nextValues = buildPreviousRecordValues(form.getValues(), latestRecordForAutofill);
+
+    if (!nextValues) {
+      toast.error("目前沒有可導入的歷史紀錄。");
+      return;
+    }
+
+    form.reset(nextValues, { keepDefaultValues: false });
+    setOpenSections({
+      additional: true,
+      basic: true,
+      notes: true,
+      primary: true,
+      segmental: true,
+    });
+    setScanMeta(null);
+    toast.success("已帶入前一次紀錄", {
+      description: "已保留今天日期與目前備註，其餘數值請再快速檢查一次。",
+    });
   }
 
   function triggerFeedback(setter: Dispatch<SetStateAction<boolean>>) {
@@ -492,11 +586,12 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     watchedValues.visceralFatLevel,
     watchedValues.bmr,
     watchedValues.recommendedCalories,
-  ].some(hasValue);
+  ].every(hasValue);
   const isNotesComplete = hasValue(watchedValues.notes);
-  const isSegmentalComplete = Object.values(watchedValues.segmental).some(
-    (part) => hasValue(part.muscle) || hasValue(part.fat) || hasValue(part.muscleRatio) || hasValue(part.fatRatio),
+  const isSegmentalComplete = Object.values(watchedValues.segmental).every(
+    (part) => hasValue(part.muscle) && hasValue(part.fat) && hasValue(part.muscleRatio) && hasValue(part.fatRatio),
   );
+  const canSubmitRecord = isBasicComplete && isPrimaryComplete && isAdditionalComplete && isSegmentalComplete;
 
   function renderSectionToggle(section: SectionKey, label: string, isComplete: boolean) {
     return (
@@ -527,8 +622,8 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
           <DialogTitle>{initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄"}</DialogTitle>
           <DialogDescription>
             {initialRecord
-              ? "更新既有紀錄內容。是否納入圖表不影響資料是否保留。"
-              : "可手動輸入，或上傳 InBody 檔案交給 Gemini 擷取。看不清楚或不確定的欄位會保留空白，由使用者自行確認。"}
+              ? "調整這筆紀錄的數值與備註，是否納入圖表分析也可以一起修改。"
+              : "新增紀錄時預設保留空白欄位。你可以手動填寫、用 AI Scan 解析檔案，或直接導入前一次紀錄後再微調。"}
           </DialogDescription>
         </DialogHeader>
 
@@ -537,49 +632,97 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
             <div className="grid gap-3.5">
               {!initialRecord ? (
                 <section className={sectionClassName}>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className={sectionTitleClassName}>AI Scan</p>
-                      <p className="mt-1 text-sm text-muted-foreground">支援 JPG、PNG、WEBP、PDF，單檔上限 10 MB。</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {isLoadingScanStatus
-                          ? "正在確認今日額度..."
-                          : scanUsage
-                            ? formatUsageText(scanUsage.usageCount, scanUsage.dailyLimit)
-                            : "每日額度依方案而定。"}
-                      </p>
-                      {scanUsage?.message ? <p className="mt-1 text-xs text-danger">{scanUsage.message}</p> : null}
-                      {scanMeta ? <p className="mt-1 text-xs text-muted-foreground">{scanMeta}</p> : null}
+                      <p className={sectionTitleClassName}>快速導入</p>
+                      <p className="mt-1 text-xs text-muted-foreground">先導入，再人工確認。</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
-                        className="hidden"
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) {
-                            void handleScanUpload(file);
-                          }
-                        }}
-                        ref={fileInputRef}
-                        type="file"
-                      />
+                    <QuickActionInfo open={isQuickActionInfoOpen} onOpenChange={setIsQuickActionInfoOpen} />
+                  </div>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
                       <Button
+                        className="h-16 w-full justify-start rounded-[1rem] px-4 text-left"
                         disabled={isScanning || isLoadingScanStatus || (scanUsage != null && !scanUsage.canScan)}
                         onClick={() => fileInputRef.current?.click()}
                         type="button"
                         variant="outline"
                       >
                         {isScanning ? <LoaderCircle className="size-4 animate-spin" /> : <ScanSearch className="size-4" />}
-                        <span>{isScanning ? "分析中" : "上傳 InBody 檔案"}</span>
+                        <span>
+                          {scanStage === "uploading"
+                            ? "上傳中..."
+                            : scanStage === "analyzing"
+                              ? "分析中..."
+                              : "AI Scan"}
+                        </span>
                       </Button>
+                      {scanStage === "uploading" ? (
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">檔案正在上傳，完成後會自動進入分析。</p>
+                      ) : scanStage === "analyzing" ? (
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">檔案已送出，Gemini 正在分析內容。</p>
+                      ) : isLoadingScanStatus ? (
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">正在讀取可用次數...</p>
+                      ) : scanUsage ? (
+                        <div className="space-y-1.5 px-1">
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className="inline-flex items-center rounded-full bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-primary">
+                              {formatUsageText(scanUsage.usageCount, scanUsage.dailyLimit)}
+                            </span>
+                            {splitMetaParts(scanMeta).map((part) => (
+                              <span
+                                className="inline-flex items-center rounded-full bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                                key={part}
+                              >
+                                {part}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">尚未取得使用狀態</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Button
+                        className="h-16 w-full justify-start rounded-[1rem] px-4 text-left"
+                        disabled={!latestRecordForAutofill || isScanning}
+                        onClick={handleImportPreviousRecord}
+                        type="button"
+                        variant="outline"
+                      >
+                        <History className="size-4" />
+                        <span>導入前一次紀錄</span>
+                      </Button>
+                      <div className="px-1">
+                        <span className="inline-flex items-center rounded-full bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                          {latestRecordForAutofill ? `最近一次：${formatRecordDate(latestRecordForAutofill.date)}` : "目前沒有可導入的歷史紀錄"}
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  {scanUsage?.message ? <p className="mt-2 text-xs text-danger">{scanUsage.message}</p> : null}
+
+                  <input
+                    accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        void handleScanUpload(file);
+                      }
+                    }}
+                    ref={fileInputRef}
+                    type="file"
+                  />
                 </section>
               ) : null}
 
               <section className={sectionClassName}>
-                {renderSectionToggle("basic", "基本資料", isBasicComplete)}
+                {renderSectionToggle("basic", "基本設定", isBasicComplete)}
                 {openSections.basic ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <FieldShell error={form.formState.errors.date?.message} label="日期" required>
@@ -641,7 +784,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                                 <Button className="h-8 rounded-full px-3 text-xs" onClick={() => field.onChange(getRelativeDateValue(-1))} type="button" variant="outline">
                                   昨天
                                 </Button>
-                                <p className="text-xs text-muted-foreground">{field.value ? field.value.replace(/-/g, "/") : "請選擇日期。"}</p>
+                                <p className="text-xs text-muted-foreground">{field.value ? field.value.replace(/-/g, "/") : "請先選擇日期"}</p>
                               </div>
                             </div>
                           );
@@ -649,9 +792,9 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                       />
                     </FieldShell>
 
-                    <FieldShell label="圖表分析">
+                    <FieldShell label="納入圖表分析">
                       <div className="flex h-10 items-center justify-between rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5">
-                        <span className="text-sm text-foreground">納入圖表分析</span>
+                        <span className="text-sm text-foreground">這筆資料會出現在圖表中</span>
                         <Controller
                           control={form.control}
                           name="isIncludedInCharts"
@@ -684,7 +827,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
               </section>
 
               <section className={sectionClassName}>
-                {renderSectionToggle("additional", "其他數值", isAdditionalComplete)}
+                {renderSectionToggle("additional", "補充數值", isAdditionalComplete)}
                 {openSections.additional ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <FieldShell error={form.formState.errors.height?.message} label="身高 (cm)">
@@ -697,8 +840,8 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                       <SelectShell>
                         <select className={selectClassName} {...form.register("gender")}>
                           <option value="unknown">未知</option>
-                          <option value="male">男</option>
-                          <option value="female">女</option>
+                          <option value="male">男性</option>
+                          <option value="female">女性</option>
                           <option value="other">其他</option>
                         </select>
                       </SelectShell>
@@ -752,7 +895,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                   <FieldShell className="block" error={form.formState.errors.notes?.message} label="備註">
                     <Textarea
                       className={textareaClassName}
-                      placeholder="可補充掃描疑慮、來源資訊，或任何需要人工追蹤的備註。"
+                      placeholder="例如：今天訓練狀態、飲食調整、AI 掃描後需要人工補上的欄位，或其他觀察紀錄。"
                       {...form.register("notes")}
                     />
                   </FieldShell>
@@ -774,7 +917,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                 />
                 <span className="relative z-10">取消</span>
               </Button>
-              <Button className="relative overflow-hidden" disabled={isSubmitting || isScanning} onClick={handleSubmitPress} type="submit">
+              <Button className="relative overflow-hidden" disabled={isSubmitting || isScanning || !canSubmitRecord} onClick={handleSubmitPress} type="submit">
                 <span
                   aria-hidden
                   className={
