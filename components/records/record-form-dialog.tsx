@@ -723,8 +723,6 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                     </div>
                   </div>
 
-                  {scanUsage?.message ? <p className="mt-2 text-xs text-danger">{scanUsage.message}</p> : null}
-
                   <input
                     accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
                     className="hidden"
