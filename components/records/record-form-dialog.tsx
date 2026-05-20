@@ -637,6 +637,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
         className={`!h-auto max-w-4xl p-0 sm:!top-1/2 sm:!bottom-auto sm:!h-[min(88vh,52rem)] sm:!max-h-[90vh] sm:!-translate-y-1/2 ${dialogContentClassName}`}
+        onInteractOutside={(event) => event.preventDefault()}
         showCloseButton={false}
       >
         <DialogHeader className="px-4 py-3 sm:px-6 sm:py-4">

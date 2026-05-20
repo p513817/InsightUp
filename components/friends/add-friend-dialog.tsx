@@ -74,7 +74,11 @@ export function AddFriendDialog({ open, onConfirm, onOpenChange }: AddFriendDial
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="h-[min(88vh,30rem)] max-w-4xl p-0 sm:h-[min(88vh,32rem)]" showCloseButton={false}>
+      <DialogContent
+        className="h-[min(88vh,30rem)] max-w-4xl p-0 sm:h-[min(88vh,32rem)]"
+        onInteractOutside={(event) => event.preventDefault()}
+        showCloseButton={false}
+      >
         <DialogHeader className="px-5 py-4 sm:px-6">
           <DialogTitle>新增好友</DialogTitle>
           <DialogDescription>輸入對方在 Account 頁面看到的好友編號，系統會把對方最新的 InBody 快照加入你的列表。</DialogDescription>
