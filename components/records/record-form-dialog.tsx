@@ -6,7 +6,7 @@ import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch } fro
 import { Controller, type Path, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -382,6 +382,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     "flex h-10 w-full appearance-none rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 pr-9 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
     "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
+  const footerButtonClassName = "relative overflow-hidden";
   const dialogContentClassName = initialRecord
     ? "!top-[calc(env(safe-area-inset-top)+0.5rem)] !bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] !h-auto !max-h-none !translate-y-0"
     : "!top-1/2 !bottom-auto !h-[66.67dvh] !max-h-[66.67dvh] !-translate-y-1/2";
@@ -640,6 +641,9 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
       >
         <DialogHeader className="px-4 py-3 sm:px-6 sm:py-4">
           <DialogTitle>{initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄"}</DialogTitle>
+          <DialogDescription className="text-xs leading-5 sm:text-sm sm:leading-6">
+            {initialRecord ? "調整數值後儲存即可。" : "可手動輸入、AI Scan，或匯入前一次紀錄。"}
+          </DialogDescription>
         </DialogHeader>
 
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
@@ -919,9 +923,9 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-border/80 bg-card/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.125rem)] pt-1.5 sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.25rem)]">
+          <div className="shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
             <div className="flex flex-wrap justify-end gap-2.5">
-              <Button className="relative overflow-hidden" onClick={handleCancelClick} type="button" variant="outline">
+              <Button className={footerButtonClassName} onClick={handleCancelClick} type="button" variant="outline">
                 <span
                   aria-hidden
                   className={
@@ -932,7 +936,12 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                 />
                 <span className="relative z-10">取消</span>
               </Button>
-              <Button className="relative overflow-hidden" disabled={isSubmitting || isScanning || !canSubmitRecord} onClick={handleSubmitPress} type="submit">
+              <Button
+                className={footerButtonClassName}
+                disabled={isSubmitting || isScanning || !canSubmitRecord}
+                onClick={handleSubmitPress}
+                type="submit"
+              >
                 <span
                   aria-hidden
                   className={
