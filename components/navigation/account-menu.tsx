@@ -7,7 +7,6 @@ import { ChevronDown, LoaderCircle, LogOut, Mail, UserRound } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AppUserSummary } from "@/lib/presentation";
-import { getUserInitials } from "@/lib/presentation";
 
 interface AccountMenuProps {
   user: AppUserSummary;
@@ -43,12 +42,17 @@ function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React
   );
 }
 
+function getFirstDisplayCharacter(name: string) {
+  return Array.from(name.trim())[0]?.toUpperCase() || "I";
+}
+
 export function AccountMenu({ user, compact = false, collapseProgress = compact ? 1 : 0 }: AccountMenuProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
   const expandedProgress = compact ? 0 : 1 - progress;
   const menuStyle: AccountMenuStyle = {
@@ -63,6 +67,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
 
   useEffect(() => {
     setImageFailed(false);
+    setImageLoaded(false);
   }, [user.avatarUrl]);
 
   useEffect(() => {
@@ -104,19 +109,21 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
         type="button"
         variant="ghost"
       >
+        {(!user.avatarUrl || imageFailed || !imageLoaded) ? (
+          <div className="flex size-[var(--account-avatar-size)] items-center justify-center rounded-full border border-primary/35 text-lg font-semibold text-primary transition-[height,width] duration-500 ease-out">
+            {getFirstDisplayCharacter(user.name)}
+          </div>
+        ) : null}
         {user.avatarUrl && !imageFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt={user.name}
-            className="size-[var(--account-avatar-size)] rounded-full object-cover transition-[height,width] duration-500 ease-out"
+            className={`size-[var(--account-avatar-size)] rounded-full object-cover transition-[height,width,opacity] duration-500 ease-out ${imageLoaded ? "opacity-100" : "pointer-events-none absolute opacity-0"}`}
             onError={() => setImageFailed(true)}
+            onLoad={() => setImageLoaded(true)}
             src={user.avatarUrl}
           />
-        ) : (
-          <div className="surface-avatar-fallback-strong flex size-[var(--account-avatar-size)] items-center justify-center rounded-full text-xs font-semibold text-foreground transition-[height,width] duration-500 ease-out">
-            {getUserInitials(user.name)}
-          </div>
-        )}
+        ) : null}
         <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] transition-[max-width,opacity] duration-500 ease-out">
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
