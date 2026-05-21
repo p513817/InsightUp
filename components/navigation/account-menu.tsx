@@ -55,11 +55,12 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
   const [imageLoaded, setImageLoaded] = useState(false);
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
   const expandedProgress = compact ? 0 : 1 - progress;
+  const isCollapsed = expandedProgress === 0;
   const menuStyle: AccountMenuStyle = {
     "--account-gap": `${0.625 * expandedProgress}rem`,
-    "--account-px": `${0.3125 + expandedProgress * 0.1875}rem`,
-    "--account-py": `${0.3125 + expandedProgress * 0.0625}rem`,
-    "--account-avatar-size": `${1.875 + expandedProgress * 0.5}rem`,
+    "--account-px": isCollapsed ? "0" : `var(--brand-padding)`,
+    "--account-py": "0",
+    "--account-avatar-size": `var(--logo-size)`,
     "--account-chevron-width": `${1 * expandedProgress}rem`,
     "--account-text-width": `${11 * expandedProgress}rem`,
     "--account-text-opacity": expandedProgress,
@@ -101,37 +102,43 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
 
   return (
     <div className="relative" ref={containerRef} style={menuStyle}>
-      <Button
+      <div
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="surface-pill h-auto gap-[var(--account-gap)] rounded-full px-[var(--account-px)] py-[var(--account-py)] transition-[gap,padding,background-color] duration-500 ease-out hover:bg-card"
+        className={
+          [
+            "surface-pill flex items-center justify-center gap-[var(--brand-gap)] rounded-full cursor-pointer select-none transition-[gap,padding] duration-500 ease-out",
+            isCollapsed
+              ? "w-[2.625rem] h-[2.625rem] min-w-0 max-w-full p-0"
+              : "w-[3.25rem] h-[3.25rem] min-w-0 max-w-full p-0"
+          ].join(" ")
+        }
         onClick={() => setIsOpen((current) => !current)}
-        type="button"
-        variant="ghost"
+        tabIndex={0}
+        role="button"
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            setIsOpen(current => !current);
+          }
+        }}
+        style={isCollapsed
+          ? { outline: 'none', height: '2.625rem', width: '2.625rem' }
+          : { outline: 'none', height: '3.25rem', width: '3.25rem' }
+        }
       >
-        {(!user.avatarUrl || imageFailed || !imageLoaded) ? (
-          <div className="flex size-[var(--account-avatar-size)] items-center justify-center rounded-full border border-primary/35 text-base font-semibold text-primary transition-[height,width] duration-500 ease-out">
-            {getFirstDisplayCharacter(user.name)}
-          </div>
-        ) : null}
-        {user.avatarUrl && !imageFailed ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            alt={user.name}
-            className={`size-[var(--account-avatar-size)] rounded-full object-cover transition-[height,width,opacity] duration-500 ease-out ${imageLoaded ? "opacity-100" : "pointer-events-none absolute opacity-0"}`}
-            onError={() => setImageFailed(true)}
-            onLoad={() => setImageLoaded(true)}
-            src={user.avatarUrl}
-          />
-        ) : null}
-        <div className="hidden max-w-[var(--account-text-width)] overflow-hidden text-right opacity-[var(--account-text-opacity)] transition-[max-width,opacity] duration-500 ease-out">
-          <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{user.email || "Signed in with Google"}</p>
+        <div className="flex items-center justify-center rounded-full bg-background transition-[height,width] duration-500 ease-out w-[var(--logo-size)] h-[var(--logo-size)] mx-auto">
+          {(!user.avatarUrl || imageFailed)
+            ? <span className="text-base font-semibold text-primary">{getFirstDisplayCharacter(user.name)}</span>
+            : <img
+                alt={user.name}
+                className="w-full h-full rounded-full object-cover bg-background"
+                onError={() => setImageFailed(true)}
+                onLoad={() => setImageLoaded(true)}
+                src={user.avatarUrl}
+              />
+          }
         </div>
-        <span className="flex w-[var(--account-chevron-width)] shrink-0 overflow-hidden opacity-[var(--account-text-opacity)] transition-[width,opacity] duration-500 ease-out">
-          <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`} />
-        </span>
-      </Button>
+      </div>
 
       {isOpen ? (
         <div className="surface-menu absolute right-0 top-[calc(100%+0.75rem)] z-40 w-auto min-w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.35rem] p-2">
