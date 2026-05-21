@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ListOrdered, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
@@ -48,7 +48,12 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   const [busyRecordId, setBusyRecordId] = useState<string | null>(null);
   const [selectedChartView, setSelectedChartView] = useState<ChartViewKey>("overall");
   const [isChartViewMenuOpen, setIsChartViewMenuOpen] = useState(false);
+  const [isToolMenuOpen, setIsToolMenuOpen] = useState(false);
+  const [isMetricOrderEditing, setIsMetricOrderEditing] = useState(false);
   const chartViewMenuRef = useRef<HTMLDivElement>(null);
+  const toolMenuRef = useRef<HTMLDivElement>(null);
+  const chartViewTriggerRef = useRef<HTMLButtonElement>(null);
+  const toolTriggerRef = useRef<HTMLButtonElement>(null);
 
   const chart = buildChartPayload(records, selectedChartView);
   const latestRecord = records.at(-1);
@@ -58,16 +63,35 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
     ? "整體"
     : CHART_VIEWS.find((view) => view.key === selectedChartView)?.label || "整體";
 
+  function closeChartViewMenu() {
+    setIsChartViewMenuOpen(false);
+    if (chartViewMenuRef.current?.contains(document.activeElement)) {
+      chartViewTriggerRef.current?.focus();
+    }
+  }
+
+  function closeToolMenu() {
+    setIsToolMenuOpen(false);
+    if (toolMenuRef.current?.contains(document.activeElement)) {
+      toolTriggerRef.current?.focus();
+    }
+  }
+
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!chartViewMenuRef.current?.contains(event.target as Node)) {
-        setIsChartViewMenuOpen(false);
+      const target = event.target as Node;
+      if (!chartViewMenuRef.current?.contains(target)) {
+        closeChartViewMenu();
+      }
+      if (!toolMenuRef.current?.contains(target)) {
+        closeToolMenu();
       }
     }
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setIsChartViewMenuOpen(false);
+        closeChartViewMenu();
+        closeToolMenu();
       }
     }
 
@@ -159,54 +183,116 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
       <>
         <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
           <section className="space-y-3">
-            <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
+            <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} isOrderEditing={isMetricOrderEditing} />
           </section>
         </div>
         <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:bottom-7 sm:left-7" ref={chartViewMenuRef}>
-          {isChartViewMenuOpen ? (
-            <div className="surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(10.5rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5">
-              <div className="grid grid-cols-1 gap-0.5" role="menu">
-                {CHART_VIEWS.map((view) => {
-                  const active = selectedChartView === view.key;
-                  const label = view.key === "overall" ? "整體" : view.label;
+          <div
+            className={`surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(11rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5 transition ${
+              isChartViewMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+            }`}
+            inert={!isChartViewMenuOpen}
+          >
+            <div className="grid grid-cols-1 gap-0.5" role="menu">
+              {CHART_VIEWS.map((view) => {
+                const active = selectedChartView === view.key;
+                const label = view.key === "overall" ? "整體" : view.label;
 
-                  return (
-                    <button
-                      aria-pressed={active}
-                      className={`flex h-11 w-full items-center justify-between rounded-[0.8rem] px-3 text-left text-sm font-semibold transition active:scale-[0.98] ${
-                        active
-                          ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-                          : "text-foreground hover:bg-primary/7"
-                      }`}
-                      key={view.key}
-                      onClick={() => {
-                        setSelectedChartView(view.key);
-                        setIsChartViewMenuOpen(false);
-                      }}
-                      role="menuitemradio"
-                      type="button"
-                    >
-                      <span className="truncate">{label}</span>
-                      <Check className={`size-4 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
-                    </button>
-                  );
-                })}
-              </div>
+                return (
+                  <button
+                    aria-pressed={active}
+                    className={`flex h-10 w-full items-center justify-between rounded-[0.8rem] px-3 text-left text-sm font-semibold transition active:scale-[0.98] ${
+                      active
+                        ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+                        : "text-foreground hover:bg-primary/7"
+                    }`}
+                    key={view.key}
+                    onClick={() => {
+                      setSelectedChartView(view.key);
+                      closeChartViewMenu();
+                      setIsMetricOrderEditing(false);
+                    }}
+                    role="menuitemradio"
+                    type="button"
+                  >
+                    <span className="truncate">{label}</span>
+                    <Check className={`size-4 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
+          </div>
 
           <Button
             aria-expanded={isChartViewMenuOpen}
             aria-haspopup="menu"
             className="h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
-            onClick={() => setIsChartViewMenuOpen((current) => !current)}
+            onClick={() => {
+              closeToolMenu();
+              setIsChartViewMenuOpen((current) => !current);
+            }}
+            ref={chartViewTriggerRef}
             type="button"
           >
             <span className="truncate text-sm font-medium">部位: {selectedChartViewLabel}</span>
             <ChevronDown className={`size-4 text-primary-foreground transition ${isChartViewMenuOpen ? "rotate-180" : ""}`} />
           </Button>
         </div>
-        <TrendSummaryFab />
+
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7" ref={toolMenuRef}>
+          <div
+            className={`surface-menu absolute bottom-[calc(100%+0.65rem)] right-0 z-30 w-[min(11rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5 transition ${
+              isToolMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+            }`}
+            inert={!isToolMenuOpen}
+          >
+            <div className="space-y-1" role="menu">
+              <TrendSummaryFab
+                embedded
+                onOpenSummary={closeToolMenu}
+                triggerClassName="h-10 w-full justify-start rounded-[0.8rem] px-3 text-foreground shadow-none hover:bg-primary/7 hover:text-foreground"
+                triggerLabel="摘要"
+                triggerVariant="ghost"
+              />
+              <button
+                aria-pressed={isMetricOrderEditing}
+                className="flex h-10 w-full items-center gap-2 rounded-[0.8rem] px-3 text-left text-sm font-semibold text-foreground transition hover:bg-primary/7 active:scale-[0.98]"
+                onClick={() => {
+                  setIsMetricOrderEditing((current) => !current);
+                  closeToolMenu();
+                  closeChartViewMenu();
+                }}
+                role="menuitem"
+                type="button"
+              >
+                {isMetricOrderEditing ? <Check className="size-4" /> : <ListOrdered className="size-4" />}
+                <span>{isMetricOrderEditing ? "完成排序" : "排序"}</span>
+              </button>
+            </div>
+          </div>
+
+          <Button
+            aria-expanded={isMetricOrderEditing ? undefined : isToolMenuOpen}
+            aria-haspopup={isMetricOrderEditing ? undefined : "menu"}
+            aria-label={isMetricOrderEditing ? "Finish sorting" : "Dashboard tools"}
+            className="size-11 rounded-full px-0 shadow-panel"
+            onClick={() => {
+              if (isMetricOrderEditing) {
+                setIsMetricOrderEditing(false);
+                closeChartViewMenu();
+                closeToolMenu();
+                return;
+              }
+
+              closeChartViewMenu();
+              setIsToolMenuOpen((current) => !current);
+            }}
+            ref={toolTriggerRef}
+            type="button"
+          >
+            {isMetricOrderEditing ? <Check className="size-5 text-primary-foreground" /> : <MoreHorizontal className="size-5 text-primary-foreground" />}
+          </Button>
+        </div>
       </>
     );
   }
