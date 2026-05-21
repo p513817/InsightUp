@@ -56,10 +56,10 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
   const expandedProgress = compact ? 0 : 1 - progress;
   const menuStyle: AccountMenuStyle = {
-    "--account-gap": `${0.75 * expandedProgress}rem`,
-    "--account-px": `${0.375 + expandedProgress * 0.25}rem`,
-    "--account-py": `${0.375 + expandedProgress * 0.125}rem`,
-    "--account-avatar-size": `${2 + expandedProgress * 0.75}rem`,
+    "--account-gap": `${0.625 * expandedProgress}rem`,
+    "--account-px": `${0.3125 + expandedProgress * 0.1875}rem`,
+    "--account-py": `${0.3125 + expandedProgress * 0.0625}rem`,
+    "--account-avatar-size": `${1.875 + expandedProgress * 0.5}rem`,
     "--account-chevron-width": `${1 * expandedProgress}rem`,
     "--account-text-width": `${11 * expandedProgress}rem`,
     "--account-text-opacity": expandedProgress,
@@ -110,7 +110,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
         variant="ghost"
       >
         {(!user.avatarUrl || imageFailed || !imageLoaded) ? (
-          <div className="flex size-[var(--account-avatar-size)] items-center justify-center rounded-full border border-primary/35 text-lg font-semibold text-primary transition-[height,width] duration-500 ease-out">
+          <div className="flex size-[var(--account-avatar-size)] items-center justify-center rounded-full border border-primary/35 text-base font-semibold text-primary transition-[height,width] duration-500 ease-out">
             {getFirstDisplayCharacter(user.name)}
           </div>
         ) : null}

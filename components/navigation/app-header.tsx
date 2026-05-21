@@ -14,7 +14,7 @@ interface AppHeaderProps {
   user: AppUserSummary;
 }
 
-const COLLAPSE_AT = 128;
+const COLLAPSE_AT = 72;
 const EXPAND_AT = 4;
 
 type HeaderStyle = CSSProperties & {
@@ -109,25 +109,27 @@ export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const collapsedNavRef = useRef<HTMLDivElement>(null);
+  const expandedNavRef = useRef<HTMLDivElement>(null);
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname === "/records" || pathname === "/profile";
   const isFriends = pathname === "/friends";
   const expandedProgress = isCollapsed ? 0 : 1;
   const useCollapsedNav = isCollapsed;
   const headerStyle: HeaderStyle = {
-    "--account-zone-width": `${3.25 + expandedProgress * 1.75}rem`,
-    "--brand-gap": `${0.75 * expandedProgress}rem`,
-    "--brand-padding": `${0.375 + expandedProgress * 0.125}rem`,
-    "--brand-text-width": `${12 * expandedProgress}rem`,
+    "--account-zone-width": `${3 + expandedProgress * 1.25}rem`,
+    "--brand-gap": `${0.625 * expandedProgress}rem`,
+    "--brand-padding": `${0.3125 + expandedProgress * 0.0625}rem`,
+    "--brand-text-width": `${10.5 * expandedProgress}rem`,
     "--collapsed-nav-opacity": isCollapsed ? 1 : 0,
     "--collapsed-nav-width": isCollapsed ? "9rem" : "0rem",
     "--expanded-nav-height": `${2.75 * expandedProgress}rem`,
     "--expanded-nav-opacity": isCollapsed ? 0 : 1,
     "--header-expanded-opacity": expandedProgress,
-    "--header-py": `${0.625 + expandedProgress * 0.375}rem`,
-    "--header-row-gap": `${1 * expandedProgress}rem`,
-    "--header-row-height": `${3.25 + expandedProgress * 0.5}rem`,
-    "--logo-size": `${2 + expandedProgress * 0.75}rem`,
+    "--header-py": `${0.5 + expandedProgress * 0.25}rem`,
+    "--header-row-gap": `${0.75 * expandedProgress}rem`,
+    "--header-row-height": `${3 + expandedProgress * 0.375}rem`,
+    "--logo-size": `${1.875 + expandedProgress * 0.5}rem`,
     boxShadow: isCollapsed ? "0 8px 22px rgba(16, 35, 63, 0.09)" : "0 0 0 rgba(16, 35, 63, 0)",
   };
 
@@ -168,6 +170,22 @@ export function AppHeader({ user }: AppHeaderProps) {
   }, []);
 
   useEffect(() => {
+    const activeElement = document.activeElement;
+
+    if (!(activeElement instanceof HTMLElement)) {
+      return;
+    }
+
+    if (isCollapsed && expandedNavRef.current?.contains(activeElement)) {
+      activeElement.blur();
+    }
+
+    if (!isCollapsed && collapsedNavRef.current?.contains(activeElement)) {
+      activeElement.blur();
+    }
+  }, [isCollapsed]);
+
+  useEffect(() => {
     function updateHeaderOffset() {
       const headerElement = headerRef.current;
 
@@ -205,18 +223,19 @@ export function AppHeader({ user }: AppHeaderProps) {
             <Link className="surface-pill flex min-w-0 max-w-full items-center gap-[var(--brand-gap)] rounded-full p-[var(--brand-padding)] transition-[gap,padding] duration-500 ease-out" href="/dashboard">
               <LogoAnimated className="size-[var(--logo-size)] rounded-full transition-[height,width] duration-500 ease-out" playOnce size={44} />
               <div className="min-w-0 max-w-[var(--brand-text-width)] overflow-hidden opacity-[var(--header-expanded-opacity)] transition-[max-width,opacity] duration-500 ease-out">
-                <p className="truncate font-display text-xl text-foreground">InsightUp</p>
+                <p className="truncate font-display text-lg text-foreground">InsightUp</p>
                 <p className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground">InBody tracker</p>
               </div>
             </Link>
           </div>
 
           <div
-            aria-hidden={!useCollapsedNav}
             className={cn(
               "flex h-[var(--header-row-height)] w-[var(--collapsed-nav-width)] items-center justify-center overflow-hidden opacity-[var(--collapsed-nav-opacity)] transition-[height,width,opacity] duration-500 ease-out",
               useCollapsedNav ? "pointer-events-auto" : "pointer-events-none",
             )}
+            inert={!useCollapsedNav}
+            ref={collapsedNavRef}
           >
             <NavCluster activeTabIndex={useCollapsedNav ? 0 : -1} compact isDashboard={isDashboard} isFriends={isFriends} isRecords={isRecords} />
           </div>
@@ -228,11 +247,12 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
 
           <div
-            aria-hidden={useCollapsedNav}
             className={cn(
               "col-span-3 flex h-[var(--expanded-nav-height)] min-w-0 justify-center overflow-hidden opacity-[var(--expanded-nav-opacity)] transition-[height,opacity] duration-500 ease-out",
               useCollapsedNav ? "pointer-events-none" : "pointer-events-auto",
             )}
+            inert={useCollapsedNav}
+            ref={expandedNavRef}
           >
             <NavCluster activeTabIndex={useCollapsedNav ? -1 : 0} isDashboard={isDashboard} isFriends={isFriends} isRecords={isRecords} />
           </div>
