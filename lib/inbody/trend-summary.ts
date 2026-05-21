@@ -229,6 +229,7 @@ export function buildGeminiPrompt(records: CleanTrendRecord[]) {
   const segmentDeltaText = buildSegmentDeltaText(records);
 
   return [
+    "你必須只使用繁體中文（台灣用語）回答。除了 JSON key 名稱之外，所有 JSON string 內容都必須是繁體中文；不要輸出英文句子、簡體中文、Markdown 或 code block。",
     "你是同時具備體態管理、阻力訓練安排與基礎運動營養能力的專業教練。",
     "任務：根據最近 5 筆 InBody 趨勢資料，輸出繁體中文的結構化分析與建議。",
     "風格：專業、具體、克制，像在做會員回顧；不要寫成勵志文案，也不要過度包裝語氣。",
