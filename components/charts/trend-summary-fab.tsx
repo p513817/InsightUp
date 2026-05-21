@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ChevronDown, ClipboardList, Lightbulb, LoaderCircle, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TrendSummaryResponse {
   summary: string | null;
@@ -77,7 +77,21 @@ function renderSectionToggle(
   );
 }
 
-export function TrendSummaryFab() {
+interface TrendSummaryFabProps {
+  embedded?: boolean;
+  onOpenSummary?: () => void;
+  triggerClassName?: string;
+  triggerLabel?: string;
+  triggerVariant?: "default" | "outline" | "secondary" | "ghost" | "destructive";
+}
+
+export function TrendSummaryFab({
+  embedded = false,
+  onOpenSummary,
+  triggerClassName,
+  triggerLabel = "摘要",
+  triggerVariant = "default",
+}: TrendSummaryFabProps) {
   const [open, setOpen] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [refreshingSummary, setRefreshingSummary] = useState(false);
@@ -101,6 +115,12 @@ export function TrendSummaryFab() {
       ...current,
       [section]: !current[section],
     }));
+  }
+
+  function handleDialogOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      setOpen(true);
+    }
   }
 
   const shouldDisableOverlayBlur = useMemo(() => {
@@ -158,6 +178,7 @@ export function TrendSummaryFab() {
     setLoadingSummary(!hasExistingSummary);
     setRefreshingSummary(hasExistingSummary);
     setOpen(true);
+    onOpenSummary?.();
 
     try {
       const response = await fetch("/api/trend-summary", {
@@ -219,27 +240,39 @@ export function TrendSummaryFab() {
     }
   }
 
+  const triggerButton = (
+    <Button
+      aria-label="Open AI trend summary"
+      className={triggerClassName || "h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"}
+      disabled={loadingSummary || generating}
+      onClick={openSummary}
+      type="button"
+      variant={triggerVariant}
+    >
+      {loadingSummary ? (
+        <LoaderCircle className={`${embedded ? "size-4" : "size-3.5"} animate-spin`} />
+      ) : (
+        <Sparkles className={embedded ? "size-4" : "size-3.5"} />
+      )}
+      <span className={embedded ? "text-sm font-semibold" : "text-sm font-medium"}>{triggerLabel}</span>
+    </Button>
+  );
+
   return (
     <>
-      {!open ? (
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7">
-          <Button
-            aria-label="查看 AI 趨勢摘要"
-            className="h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
-            disabled={loadingSummary || generating}
-            onClick={openSummary}
-            type="button"
-          >
-            {loadingSummary ? <LoaderCircle className="size-3.5 animate-spin text-primary-foreground" /> : <Sparkles className="size-3.5 text-primary-foreground" />}
-            <span className="text-sm font-medium">趨勢摘要</span>
-          </Button>
-        </div>
-      ) : null}
+      {!open ? embedded ? triggerButton : <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7">{triggerButton}</div> : null}
 
-      <Dialog onOpenChange={setOpen} open={open}>
-        <DialogContent className="flex h-[min(88vh,46rem)] max-w-4xl flex-col p-0 sm:h-[min(88vh,52rem)]" showCloseButton={false}>
+      <Dialog onOpenChange={handleDialogOpenChange} open={open}>
+        <DialogContent
+          className="flex h-[min(88vh,46rem)] max-w-4xl flex-col p-0 sm:h-[min(88vh,52rem)]"
+          onInteractOutside={(event) => event.preventDefault()}
+          showCloseButton={false}
+        >
           <DialogHeader className="shrink-0 border-b-0 px-5 py-4 pb-2 sm:px-6">
             <DialogTitle className="text-[1.65rem] leading-tight">近期 5 筆趨勢摘要</DialogTitle>
+            <DialogDescription className="sr-only">
+              AI-generated trend summary based on your latest included InBody records.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="shrink-0 border-b border-border/80 px-5 pt-2 pb-3 sm:px-6">
@@ -320,14 +353,14 @@ export function TrendSummaryFab() {
             )}
           </div>
 
-          <div className="shrink-0 border-t border-border/80 bg-card/96 px-5 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-2 sm:px-6">
-            <div className="flex justify-end gap-2">
+          <div className="shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+            <div className="flex flex-wrap justify-end gap-2.5">
               <Button
                 variant="outline"
                 disabled={loadingSummary || generating}
                 onClick={() => setOpen(false)}
                 type="button"
-                className="h-10"
+                className="relative overflow-hidden"
               >
                 <span>關閉</span>
               </Button>
@@ -335,7 +368,7 @@ export function TrendSummaryFab() {
                 disabled={loadingSummary || generating || !canGenerate}
                 onClick={regenerateSummary}
                 type="button"
-                className="h-10"
+                className="relative overflow-hidden"
               >
                 <span>{generating ? (summary ? "重新生成中..." : "生成中...") : summary ? "重新生成" : "生成摘要"}</span>
               </Button>
