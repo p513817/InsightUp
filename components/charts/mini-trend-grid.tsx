@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import type { DotProps } from "recharts";
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/page-loading";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
@@ -14,10 +13,12 @@ import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/present
 interface MiniTrendGridProps {
   chart: ChartPayload;
   initialMetricOrder?: string[];
+  isOrderEditing?: boolean;
 }
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
 const SAVE_ORDER_DEBOUNCE_MS = 260;
+const REORDER_ANIMATION_MS = 420;
 
 function getMetricOrderStorageKey(view: ChartPayload["view"]) {
   return view === "overall" ? METRIC_ORDER_STORAGE_KEY : `${METRIC_ORDER_STORAGE_KEY}.${view}`;
@@ -75,24 +76,6 @@ function sortMetricsBySavedOrder(metrics: ChartMetric[], savedOrder: string[]) {
   });
 }
 
-function moveMetric(metrics: ChartMetric[], fromKey: string, toKey: string) {
-  if (fromKey === toKey) {
-    return metrics;
-  }
-
-  const nextMetrics = [...metrics];
-  const fromIndex = nextMetrics.findIndex((metric) => metric.key === fromKey);
-  const toIndex = nextMetrics.findIndex((metric) => metric.key === toKey);
-
-  if (fromIndex === -1 || toIndex === -1) {
-    return metrics;
-  }
-
-  const [movedMetric] = nextMetrics.splice(fromIndex, 1);
-  nextMetrics.splice(toIndex, 0, movedMetric);
-  return nextMetrics;
-}
-
 function moveMetricByOffset(metrics: ChartMetric[], key: string, offset: -1 | 1) {
   const fromIndex = metrics.findIndex((metric) => metric.key === key);
 
@@ -126,11 +109,12 @@ async function persistMetricOrder(metricOrder: string[]) {
   }
 }
 
-export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridProps) {
+export function MiniTrendGrid({ chart, initialMetricOrder = [], isOrderEditing = false }: MiniTrendGridProps) {
   const [isChartReady, setIsChartReady] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
-  const [draggingMetricKey, setDraggingMetricKey] = useState<string | null>(null);
-  const [dropTargetMetricKey, setDropTargetMetricKey] = useState<string | null>(null);
+  const orderedMetricsRef = useRef(chart.metrics);
+  const cardRectsRef = useRef(new Map<string, DOMRect>());
+  const shouldAnimateNextOrderRef = useRef(false);
   const saveTimeoutIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -164,6 +148,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
     const preferredOrder = chart.view === "overall" && initialMetricOrder.length ? initialMetricOrder : savedOrder;
     const nextMetrics = sortMetricsBySavedOrder(chart.metrics, preferredOrder);
 
+    orderedMetricsRef.current = nextMetrics;
     setOrderedMetrics(nextMetrics);
     window.localStorage.setItem(getMetricOrderStorageKey(chart.view), JSON.stringify(nextMetrics.map((metric) => metric.key)));
   }, [chart.metrics, chart.view, initialMetricOrder]);
@@ -177,6 +162,9 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
   }, []);
 
   function applyMetricOrder(nextMetrics: ChartMetric[]) {
+    cardRectsRef.current = getDashboardCardRects();
+    shouldAnimateNextOrderRef.current = true;
+    orderedMetricsRef.current = nextMetrics;
     setOrderedMetrics(nextMetrics);
 
     const nextMetricOrder = nextMetrics.map((metric) => metric.key);
@@ -198,6 +186,72 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
       });
     }, SAVE_ORDER_DEBOUNCE_MS);
   }
+
+  function getDashboardCardRects() {
+    const rects = new Map<string, DOMRect>();
+
+    document.querySelectorAll<HTMLElement>("[data-dashboard-metric-key]").forEach((card) => {
+      const metricKey = card.dataset.dashboardMetricKey;
+
+      if (metricKey) {
+        rects.set(metricKey, card.getBoundingClientRect());
+      }
+    });
+
+    return rects;
+  }
+
+  useLayoutEffect(() => {
+    if (!shouldAnimateNextOrderRef.current) {
+      cardRectsRef.current = getDashboardCardRects();
+      return;
+    }
+
+    shouldAnimateNextOrderRef.current = false;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      cardRectsRef.current = getDashboardCardRects();
+      return;
+    }
+
+    const previousRects = cardRectsRef.current;
+
+    document.querySelectorAll<HTMLElement>("[data-dashboard-metric-key]").forEach((card) => {
+      const metricKey = card.dataset.dashboardMetricKey;
+      const previousRect = metricKey ? previousRects.get(metricKey) : null;
+
+      if (!previousRect) {
+        return;
+      }
+
+      const nextRect = card.getBoundingClientRect();
+      const deltaX = previousRect.left - nextRect.left;
+      const deltaY = previousRect.top - nextRect.top;
+
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) {
+        return;
+      }
+
+      card.animate(
+        [
+          {
+            transform: `translate(${deltaX}px, ${deltaY}px)`,
+            boxShadow: "0 18px 34px rgba(16, 35, 63, 0.13)",
+          },
+          {
+            transform: "translate(0, 0)",
+            boxShadow: "0 10px 24px rgba(16, 35, 63, 0.06)",
+          },
+        ],
+        {
+          duration: REORDER_ANIMATION_MS,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      );
+    });
+
+    cardRectsRef.current = getDashboardCardRects();
+  }, [orderedMetrics]);
 
   if (!isChartReady) {
     return <PageLoading className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />;
@@ -229,66 +283,37 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
 
         return (
           <Card
-            className={`dashboard-card surface-chart-shell gap-3 p-4 ${draggingMetricKey === metric.key ? "dashboard-card-dragging" : ""} ${dropTargetMetricKey === metric.key ? "dashboard-card-drop-target" : ""}`}
-            draggable
+            className={`dashboard-card surface-chart-shell relative gap-3 overflow-hidden py-4 pr-4 ${isOrderEditing ? "pl-8" : "pl-4"}`}
+            data-dashboard-metric-key={metric.key}
             key={metric.key}
-            onDragEnd={() => {
-              setDraggingMetricKey(null);
-              setDropTargetMetricKey(null);
-            }}
-            onDragOver={(event) => {
-              event.preventDefault();
-              if (!draggingMetricKey || draggingMetricKey === metric.key) {
-                return;
-              }
-
-              if (dropTargetMetricKey !== metric.key) {
-                setDropTargetMetricKey(metric.key);
-              }
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-
-              if (!draggingMetricKey || draggingMetricKey === metric.key) {
-                setDropTargetMetricKey(null);
-                return;
-              }
-
-              applyMetricOrder(moveMetric(orderedMetrics, draggingMetricKey, metric.key));
-              setDropTargetMetricKey(null);
-            }}
-            onDragStart={() => setDraggingMetricKey(metric.key)}
           >
+            {isOrderEditing ? (
+              <div className="dashboard-card-order-controls" aria-label={`${metric.label} order controls`}>
+                <button
+                  aria-label={`Move ${metric.label} up`}
+                  className="dashboard-card-order-button"
+                  disabled={index === 0}
+                  onClick={() => applyMetricOrder(moveMetricByOffset(orderedMetrics, metric.key, -1))}
+                  type="button"
+                >
+                  <ArrowUp className="size-3" />
+                </button>
+                <button
+                  aria-label={`Move ${metric.label} down`}
+                  className="dashboard-card-order-button"
+                  disabled={index === orderedMetrics.length - 1}
+                  onClick={() => applyMetricOrder(moveMetricByOffset(orderedMetrics, metric.key, 1))}
+                  type="button"
+                >
+                  <ArrowDown className="size-3" />
+                </button>
+              </div>
+            ) : null}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
-                <GripVertical className="size-4 text-muted-foreground/80" />
                 <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
               </div>
               <div className="flex items-center gap-1.5 text-right">
-                <div className="flex items-center gap-1 sm:hidden">
-                  <Button
-                    aria-label={`將 ${metric.label} 上移`}
-                    className="size-7 rounded-full"
-                    disabled={index === 0}
-                    onClick={() => applyMetricOrder(moveMetricByOffset(orderedMetrics, metric.key, -1))}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ArrowUp className="size-3.5" />
-                  </Button>
-                  <Button
-                    aria-label={`將 ${metric.label} 下移`}
-                    className="size-7 rounded-full"
-                    disabled={index === orderedMetrics.length - 1}
-                    onClick={() => applyMetricOrder(moveMetricByOffset(orderedMetrics, metric.key, 1))}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ArrowDown className="size-3.5" />
-                  </Button>
-                </div>
                 <p className={`text-sm font-semibold ${deltaToneClass}`}>{formatDelta(metric, delta)}</p>
               </div>
             </div>
