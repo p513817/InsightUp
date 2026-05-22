@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
+import { GripVertical } from "lucide-react";
 import type { DotProps } from "recharts";
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -13,12 +15,10 @@ import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/present
 interface MiniTrendGridProps {
   chart: ChartPayload;
   initialMetricOrder?: string[];
-  isOrderEditing?: boolean;
 }
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
 const SAVE_ORDER_DEBOUNCE_MS = 260;
-const REORDER_ANIMATION_MS = 420;
 
 function getMetricOrderStorageKey(view: ChartPayload["view"]) {
   return view === "overall" ? METRIC_ORDER_STORAGE_KEY : `${METRIC_ORDER_STORAGE_KEY}.${view}`;
@@ -76,25 +76,6 @@ function sortMetricsBySavedOrder(metrics: ChartMetric[], savedOrder: string[]) {
   });
 }
 
-function moveMetricByOffset(metrics: ChartMetric[], key: string, offset: -1 | 1) {
-  const fromIndex = metrics.findIndex((metric) => metric.key === key);
-
-  if (fromIndex === -1) {
-    return metrics;
-  }
-
-  const toIndex = fromIndex + offset;
-
-  if (toIndex < 0 || toIndex >= metrics.length) {
-    return metrics;
-  }
-
-  const nextMetrics = [...metrics];
-  const [movedMetric] = nextMetrics.splice(fromIndex, 1);
-  nextMetrics.splice(toIndex, 0, movedMetric);
-  return nextMetrics;
-}
-
 async function persistMetricOrder(metricOrder: string[]) {
   const response = await fetch("/api/preferences/dashboard", {
     body: JSON.stringify({ metricOrder }),
@@ -109,13 +90,112 @@ async function persistMetricOrder(metricOrder: string[]) {
   }
 }
 
-export function MiniTrendGrid({ chart, initialMetricOrder = [], isOrderEditing = false }: MiniTrendGridProps) {
+function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) {
+  if (!transform) {
+    return undefined;
+  }
+
+  return `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`;
+}
+
+interface SortableMetricCardProps {
+  deltaToneClass: string;
+  formattedDelta: string;
+  metric: ChartMetric;
+  points: Array<{ date: string; label: string; value: number | null }>;
+}
+
+function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: SortableMetricCardProps) {
+  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({ id: metric.key });
+
+  return (
+    <Card
+      className={`dashboard-card surface-chart-shell relative gap-3 overflow-hidden py-4 pl-4 pr-4 [will-change:transform] ${
+        isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_22px_46px_rgba(16,35,63,0.18)]" : ""
+      }`}
+      data-dashboard-metric-key={metric.key}
+      data-dragging={isDragging ? "true" : undefined}
+      ref={setNodeRef}
+      style={{
+        transform: transformToCss(transform),
+        transition,
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            aria-label={`拖曳排序 ${metric.label}`}
+            className="grid size-8 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition hover:bg-primary/7 hover:text-primary active:cursor-grabbing active:bg-primary/10"
+            ref={setActivatorNodeRef}
+            type="button"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <p className="truncate text-sm font-medium text-muted-foreground">{metric.label}</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-right">
+          <p className={`text-sm font-semibold ${deltaToneClass}`}>{formattedDelta}</p>
+        </div>
+      </div>
+
+      <div className="surface-chart-shell h-24 rounded-[1.1rem] px-2 py-1.5 sm:h-28">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={points} margin={{ top: 16, right: 8, bottom: 2, left: 8 }}>
+            <YAxis domain={["dataMin - 1", "dataMax + 1"]} hide />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) {
+                  return null;
+                }
+
+                const point = payload[0]?.payload as { date?: string; value?: number | null } | undefined;
+                return (
+                  <div className="surface-tooltip rounded-xl px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{formatChartDate(point?.date)}</p>
+                    <p className="mt-1 text-sm font-medium text-foreground">{formatMetricValue(metric, point?.value)}</p>
+                  </div>
+                );
+              }}
+            />
+            <Line
+              dataKey="value"
+              dot={<MiniChartDot metric={metric} />}
+              isAnimationActive={false}
+              stroke={metric.color}
+              strokeLinecap="round"
+              strokeWidth={3}
+              type="monotone"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  );
+}
+
+export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridProps) {
   const [isChartReady, setIsChartReady] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const orderedMetricsRef = useRef(chart.metrics);
-  const cardRectsRef = useRef(new Map<string, DOMRect>());
-  const shouldAnimateNextOrderRef = useRef(false);
   const saveTimeoutIdRef = useRef<number | null>(null);
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 4,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 180,
+        tolerance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   useEffect(() => {
     let firstFrame = 0;
@@ -132,7 +212,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [], isOrderEditing =
       window.cancelAnimationFrame(secondFrame);
     };
   }, []);
-  
+
   useEffect(() => {
     let savedOrder: string[] = [];
     const savedOrderRaw = window.localStorage.getItem(getMetricOrderStorageKey(chart.view));
@@ -162,8 +242,6 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [], isOrderEditing =
   }, []);
 
   function applyMetricOrder(nextMetrics: ChartMetric[]) {
-    cardRectsRef.current = getDashboardCardRects();
-    shouldAnimateNextOrderRef.current = true;
     orderedMetricsRef.current = nextMetrics;
     setOrderedMetrics(nextMetrics);
 
@@ -187,71 +265,22 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [], isOrderEditing =
     }, SAVE_ORDER_DEBOUNCE_MS);
   }
 
-  function getDashboardCardRects() {
-    const rects = new Map<string, DOMRect>();
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
 
-    document.querySelectorAll<HTMLElement>("[data-dashboard-metric-key]").forEach((card) => {
-      const metricKey = card.dataset.dashboardMetricKey;
+    if (!over || active.id === over.id) {
+      return;
+    }
 
-      if (metricKey) {
-        rects.set(metricKey, card.getBoundingClientRect());
-      }
-    });
+    const oldIndex = orderedMetricsRef.current.findIndex((metric) => metric.key === active.id);
+    const newIndex = orderedMetricsRef.current.findIndex((metric) => metric.key === over.id);
 
-    return rects;
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    applyMetricOrder(arrayMove(orderedMetricsRef.current, oldIndex, newIndex));
   }
-
-  useLayoutEffect(() => {
-    if (!shouldAnimateNextOrderRef.current) {
-      cardRectsRef.current = getDashboardCardRects();
-      return;
-    }
-
-    shouldAnimateNextOrderRef.current = false;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      cardRectsRef.current = getDashboardCardRects();
-      return;
-    }
-
-    const previousRects = cardRectsRef.current;
-
-    document.querySelectorAll<HTMLElement>("[data-dashboard-metric-key]").forEach((card) => {
-      const metricKey = card.dataset.dashboardMetricKey;
-      const previousRect = metricKey ? previousRects.get(metricKey) : null;
-
-      if (!previousRect) {
-        return;
-      }
-
-      const nextRect = card.getBoundingClientRect();
-      const deltaX = previousRect.left - nextRect.left;
-      const deltaY = previousRect.top - nextRect.top;
-
-      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) {
-        return;
-      }
-
-      card.animate(
-        [
-          {
-            transform: `translate(${deltaX}px, ${deltaY}px)`,
-            boxShadow: "0 18px 34px rgba(16, 35, 63, 0.13)",
-          },
-          {
-            transform: "translate(0, 0)",
-            boxShadow: "0 10px 24px rgba(16, 35, 63, 0.06)",
-          },
-        ],
-        {
-          duration: REORDER_ANIMATION_MS,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-        },
-      );
-    });
-
-    cardRectsRef.current = getDashboardCardRects();
-  }, [orderedMetrics]);
 
   if (!isChartReady) {
     return <PageLoading className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />;
@@ -269,91 +298,32 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [], isOrderEditing =
   const previousPoint = chart.points.at(-2);
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-      {orderedMetrics.map((metric, index) => {
-        const latestValue = getNumericValue(latestPoint?.[metric.key]);
-        const previousValue = getNumericValue(previousPoint?.[metric.key]);
-        const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
-        const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-danger";
-        const points = chart.points.map((point) => ({
-          date: String(point.date || ""),
-          label: String(point.label || ""),
-          value: getNumericValue(point[metric.key]),
-        }));
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+      <SortableContext items={orderedMetrics.map((metric) => metric.key)} strategy={rectSortingStrategy}>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {orderedMetrics.map((metric) => {
+            const latestValue = getNumericValue(latestPoint?.[metric.key]);
+            const previousValue = getNumericValue(previousPoint?.[metric.key]);
+            const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
+            const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-danger";
+            const points = chart.points.map((point) => ({
+              date: String(point.date || ""),
+              label: String(point.label || ""),
+              value: getNumericValue(point[metric.key]),
+            }));
 
-        return (
-          <Card
-            className={`dashboard-card surface-chart-shell relative gap-3 overflow-hidden py-4 pr-4 ${isOrderEditing ? "pl-8" : "pl-4"}`}
-            data-dashboard-metric-key={metric.key}
-            key={metric.key}
-          >
-            {isOrderEditing ? (
-              <div className="dashboard-card-order-controls" aria-label={`${metric.label} order controls`}>
-                <button
-                  aria-label={`Move ${metric.label} up`}
-                  className="dashboard-card-order-button"
-                  disabled={index === 0}
-                  onClick={() => applyMetricOrder(moveMetricByOffset(orderedMetrics, metric.key, -1))}
-                  type="button"
-                >
-                  <ArrowUp className="size-3" />
-                </button>
-                <button
-                  aria-label={`Move ${metric.label} down`}
-                  className="dashboard-card-order-button"
-                  disabled={index === orderedMetrics.length - 1}
-                  onClick={() => applyMetricOrder(moveMetricByOffset(orderedMetrics, metric.key, 1))}
-                  type="button"
-                >
-                  <ArrowDown className="size-3" />
-                </button>
-              </div>
-            ) : null}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
-              </div>
-              <div className="flex items-center gap-1.5 text-right">
-                <p className={`text-sm font-semibold ${deltaToneClass}`}>{formatDelta(metric, delta)}</p>
-              </div>
-            </div>
-
-            <div className="surface-chart-shell h-24 rounded-[1.1rem] px-2 py-1.5 sm:h-28">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={points} margin={{ top: 16, right: 8, bottom: 2, left: 8 }}>
-                  <YAxis domain={["dataMin - 1", "dataMax + 1"]} hide />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) {
-                        return null;
-                      }
-
-                      const point = payload[0]?.payload as { date?: string; value?: number | null } | undefined;
-                      return (
-                        <div className="surface-tooltip rounded-xl px-3 py-2">
-                          <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                            {formatChartDate(point?.date)}
-                          </p>
-                          <p className="mt-1 text-sm font-medium text-foreground">{formatMetricValue(metric, point?.value)}</p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Line
-                    dataKey="value"
-                    dot={<MiniChartDot metric={metric} />}
-                    isAnimationActive={false}
-                    stroke={metric.color}
-                    strokeLinecap="round"
-                    strokeWidth={3}
-                    type="monotone"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        );
-      })}
-    </div>
+            return (
+              <SortableMetricCard
+                deltaToneClass={deltaToneClass}
+                formattedDelta={formatDelta(metric, delta)}
+                key={metric.key}
+                metric={metric}
+                points={points}
+              />
+            );
+          })}
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 }

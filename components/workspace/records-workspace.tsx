@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CircleDot, Footprints, Hand, ListOrdered, MoreHorizontal, UserRound } from "lucide-react";
+import { Check, CircleDot, Footprints, Hand, MoreHorizontal, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
@@ -65,7 +65,6 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   const [selectedChartView, setSelectedChartView] = useState<ChartViewKey>("overall");
   const [isChartViewMenuOpen, setIsChartViewMenuOpen] = useState(false);
   const [isToolMenuOpen, setIsToolMenuOpen] = useState(false);
-  const [isMetricOrderEditing, setIsMetricOrderEditing] = useState(false);
   const chartViewMenuRef = useRef<HTMLDivElement>(null);
   const toolMenuRef = useRef<HTMLDivElement>(null);
   const chartViewTriggerRef = useRef<HTMLButtonElement>(null);
@@ -199,7 +198,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
       <>
         <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
           <section className="space-y-3">
-            <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} isOrderEditing={isMetricOrderEditing} />
+            <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
           </section>
         </div>
         <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:bottom-7 sm:left-7" ref={chartViewMenuRef}>
@@ -226,7 +225,6 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
                     onClick={() => {
                       setSelectedChartView(view.key);
                       closeChartViewMenu();
-                      setIsMetricOrderEditing(false);
                     }}
                     role="menuitemradio"
                     type="button"
@@ -275,43 +273,22 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
                 triggerLabel="摘要"
                 triggerVariant="ghost"
               />
-              <button
-                aria-pressed={isMetricOrderEditing}
-                className="flex h-10 w-full items-center gap-2 rounded-[0.8rem] px-3 text-left text-sm font-semibold text-foreground transition hover:bg-primary/7 active:scale-[0.98]"
-                onClick={() => {
-                  setIsMetricOrderEditing((current) => !current);
-                  closeToolMenu();
-                  closeChartViewMenu();
-                }}
-                role="menuitem"
-                type="button"
-              >
-                {isMetricOrderEditing ? <Check className="size-4" /> : <ListOrdered className="size-4" />}
-                <span>{isMetricOrderEditing ? "完成排序" : "排序"}</span>
-              </button>
             </div>
           </div>
 
           <Button
-            aria-expanded={isMetricOrderEditing ? undefined : isToolMenuOpen}
-            aria-haspopup={isMetricOrderEditing ? undefined : "menu"}
-            aria-label={isMetricOrderEditing ? "Finish sorting" : "Dashboard tools"}
+            aria-expanded={isToolMenuOpen}
+            aria-haspopup="menu"
+            aria-label="Dashboard tools"
             className="size-11 rounded-full px-0 shadow-panel"
             onClick={() => {
-              if (isMetricOrderEditing) {
-                setIsMetricOrderEditing(false);
-                closeChartViewMenu();
-                closeToolMenu();
-                return;
-              }
-
               closeChartViewMenu();
               setIsToolMenuOpen((current) => !current);
             }}
             ref={toolTriggerRef}
             type="button"
           >
-            {isMetricOrderEditing ? <Check className="size-5 text-primary-foreground" /> : <MoreHorizontal className="size-5 text-primary-foreground" />}
+            <MoreHorizontal className="size-5 text-primary-foreground" />
           </Button>
         </div>
       </>
