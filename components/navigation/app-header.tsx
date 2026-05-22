@@ -5,7 +5,7 @@ import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AppUserSummary } from "@/lib/presentation";
-import { Files, LayoutDashboard, Menu, UsersRound, X } from "lucide-react";
+import { Files, LayoutDashboard, Menu, Sparkles, UsersRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
@@ -72,7 +72,8 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isRecords = pathname === "/records" || pathname === "/profile";
   const isFriends = pathname === "/friends";
   const isAccount = pathname === "/account";
-  const currentPageLabel = isDashboard ? "趨勢" : isFriends ? "朋友" : isAccount ? "帳號資訊" : "紀錄";
+  const isSummary = pathname === "/summary";
+  const currentPageLabel = isDashboard ? "趨勢" : isFriends ? "朋友" : isAccount ? "帳號資訊" : isSummary ? "AI 摘要" : "紀錄";
   const headerStyle: HeaderStyle = {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
     "--brand-gap": "0rem",
@@ -100,6 +101,13 @@ export function AppHeader({ user }: AppHeaderProps) {
       description: "管理好友與查看快照",
       icon: <UsersRound className="size-4" />,
       active: isFriends,
+    },
+    {
+      href: "/summary",
+      label: "AI 摘要",
+      description: "查看近期趨勢分析",
+      icon: <Sparkles className="size-4" />,
+      active: isSummary,
     },
   ];
 
