@@ -1,150 +1,121 @@
 "use client";
 
 import { LogoAnimated } from "@/components/auth/logo-animated";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { type CSSProperties, useEffect, useRef, useState, useTransition } from "react";
-import { Files, LayoutDashboard, UsersRound } from "lucide-react";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AppUserSummary } from "@/lib/presentation";
+import { Files, LayoutDashboard, Menu, UsersRound, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 interface AppHeaderProps {
   user: AppUserSummary;
 }
 
-const COLLAPSE_AT = 72;
-const EXPAND_AT = 4;
-
 type HeaderStyle = CSSProperties & {
-  "--account-zone-width": string;
+  "--app-header-translate": string;
   "--brand-gap": string;
-  "--brand-padding": string;
-  "--brand-text-width": string;
-  "--collapsed-nav-opacity": number;
-  "--collapsed-nav-width": string;
-  "--expanded-nav-height": string;
-  "--expanded-nav-opacity": number;
-  "--header-expanded-opacity": number;
-  "--header-py": string;
-  "--header-row-gap": string;
-  "--header-row-height": string;
   "--logo-size": string;
 };
 
 type NavItem = {
   href: string;
   label: string;
-  icon: React.ReactNode;
+  description: string;
+  icon: ReactNode;
   active: boolean;
-  compact?: boolean;
-  tabIndex?: number;
 };
 
-function NavButton({ href, label, icon, active, compact = false, tabIndex }: NavItem) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const showPendingBorder = isPending && !active;
-
+function SidebarNavLink({ active, description, href, icon, label, onNavigate }: NavItem & { onNavigate: () => void }) {
   return (
-    <Button
+    <Link
       aria-current={active ? "page" : undefined}
-      aria-label={label}
       className={cn(
-        "relative isolate shrink-0 justify-center overflow-hidden rounded-full shadow-none hover:translate-y-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[inset_0_0_0_2px_rgb(var(--brand-sky-50)/0.78)]",
-        compact ? "size-9 gap-0 px-0" : "h-9 w-full",
-        showPendingBorder && "border border-transparent text-foreground",
+        "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition",
+        active
+          ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)]"
+          : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62",
       )}
-      onClick={() => {
-        if (!active && !isPending) startTransition(() => router.push(href));
-      }}
-      size="sm"
-      tabIndex={tabIndex}
-      variant={active ? "default" : "ghost"}
+      href={href}
+      onClick={onNavigate}
     >
-      {showPendingBorder ? (
-        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full">
-          <span
-            className="absolute inset-0 rounded-full"
-            style={{
-              animation: "rotate-gradient 2s linear infinite",
-              background:
-                "repeating-conic-gradient(from var(--gradient-rotation), rgb(var(--brand-sky-50) / 0) 0deg, rgb(var(--brand-sky-50) / 0) 145deg, rgb(var(--brand-mint-500) / 0.4) 155deg, rgb(var(--brand-navy-700) / 1) 160deg, rgb(var(--brand-navy-700) / 1) 195deg, rgb(var(--brand-mint-500) / 0.4) 205deg, rgb(var(--brand-sky-50) / 0) 215deg, rgb(var(--brand-sky-50) / 0) 360deg)",
-            }}
-          />
-          <span className="absolute inset-[1.5px] rounded-full" style={{ background: "rgb(var(--background))" }} />
-        </span>
-      ) : null}
-
-      <span className={cn("relative z-10 size-4 shrink-0", showPendingBorder && "opacity-90")}>{icon}</span>
-      {!compact ? <span className={cn("relative z-10", showPendingBorder && "opacity-85")}>{label}</span> : null}
-    </Button>
-  );
-}
-
-function NavCluster({
-  activeTabIndex,
-  compact,
-  isDashboard,
-  isFriends,
-  isRecords,
-}: {
-  activeTabIndex: number;
-  compact?: boolean;
-  isDashboard: boolean;
-  isFriends: boolean;
-  isRecords: boolean;
-}) {
-  return (
-    <div className={cn("surface-pill rounded-full p-1", compact ? "inline-flex h-11 items-center gap-1" : "grid h-11 w-full grid-cols-3 gap-2")}>
-      <NavButton compact={compact} href="/dashboard" label="趨勢" icon={<LayoutDashboard className="size-4" />} active={isDashboard} tabIndex={activeTabIndex} />
-      <NavButton compact={compact} href="/records" label="紀錄" icon={<Files className="size-4" />} active={isRecords} tabIndex={activeTabIndex} />
-      <NavButton compact={compact} href="/friends" label="好友" icon={<UsersRound className="size-4" />} active={isFriends} tabIndex={activeTabIndex} />
-    </div>
+      <span
+        className={cn(
+          "grid size-9 shrink-0 place-items-center rounded-full transition",
+          active ? "bg-white/78 text-accent-strong shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.2)]" : "bg-white/62 text-muted-foreground group-hover:bg-white group-hover:text-primary",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold">{label}</span>
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{description}</span>
+      </span>
+    </Link>
   );
 }
 
 export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
-  const collapsedNavRef = useRef<HTMLDivElement>(null);
-  const expandedNavRef = useRef<HTMLDivElement>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname === "/records" || pathname === "/profile";
   const isFriends = pathname === "/friends";
-  const expandedProgress = isCollapsed ? 0 : 1;
-  const useCollapsedNav = isCollapsed;
+  const currentPageLabel = isDashboard ? "趨勢" : isFriends ? "朋友" : "紀錄";
   const headerStyle: HeaderStyle = {
-    "--account-zone-width": `${3 + expandedProgress * 1.25}rem`,
-    "--brand-gap": `${0.625 * expandedProgress}rem`,
-    "--brand-padding": `${0.3125 + expandedProgress * 0.0625}rem`,
-    "--brand-text-width": `${10.5 * expandedProgress}rem`,
-    "--collapsed-nav-opacity": isCollapsed ? 1 : 0,
-    "--collapsed-nav-width": isCollapsed ? "9rem" : "0rem",
-    "--expanded-nav-height": `${2.75 * expandedProgress}rem`,
-    "--expanded-nav-opacity": isCollapsed ? 0 : 1,
-    "--header-expanded-opacity": expandedProgress,
-    "--header-py": `${0.5 + expandedProgress * 0.25}rem`,
-    "--header-row-gap": `${0.75 * expandedProgress}rem`,
-    "--header-row-height": `${3 + expandedProgress * 0.375}rem`,
-    "--logo-size": `${1.875 + expandedProgress * 0.5}rem`,
-    boxShadow: isCollapsed ? "0 8px 22px rgba(16, 35, 63, 0.09)" : "0 0 0 rgba(16, 35, 63, 0)",
+    "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
+    "--brand-gap": "0rem",
+    "--logo-size": "2.625rem",
+    transform: "translateY(var(--app-header-translate))",
   };
+  const navItems: NavItem[] = [
+    {
+      href: "/dashboard",
+      label: "趨勢",
+      description: "查看圖表與近期變化",
+      icon: <LayoutDashboard className="size-4" />,
+      active: isDashboard,
+    },
+    {
+      href: "/records",
+      label: "紀錄",
+      description: "新增、編輯與管理分析資料",
+      icon: <Files className="size-4" />,
+      active: isRecords,
+    },
+    {
+      href: "/friends",
+      label: "朋友",
+      description: "管理好友與查看快照",
+      icon: <UsersRound className="size-4" />,
+      active: isFriends,
+    },
+  ];
 
   useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
     let animationFrame = 0;
 
-    function updateCollapsedState() {
+    function updateHeaderVisibility() {
       animationFrame = 0;
-      setIsCollapsed((current) => {
-        if (current) {
-          return window.scrollY > EXPAND_AT;
-        }
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
 
-        return window.scrollY >= COLLAPSE_AT;
-      });
+      if (currentScrollY < 12 || delta < -6) {
+        setIsHeaderVisible(true);
+      } else if (delta > 6 && currentScrollY > 80 && !isSidebarOpen) {
+        setIsHeaderVisible(false);
+      }
+
+      lastScrollY = Math.max(currentScrollY, 0);
     }
 
     function handleScroll() {
@@ -152,38 +123,41 @@ export function AppHeader({ user }: AppHeaderProps) {
         return;
       }
 
-      animationFrame = window.requestAnimationFrame(updateCollapsedState);
+      animationFrame = window.requestAnimationFrame(updateHeaderVisibility);
     }
 
-    updateCollapsedState();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", updateCollapsedState);
-
     return () => {
       if (animationFrame) {
         window.cancelAnimationFrame(animationFrame);
       }
 
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", updateCollapsedState);
     };
-  }, []);
+  }, [isSidebarOpen]);
 
   useEffect(() => {
-    const activeElement = document.activeElement;
-
-    if (!(activeElement instanceof HTMLElement)) {
+    if (!isSidebarOpen) {
       return;
     }
 
-    if (isCollapsed && expandedNavRef.current?.contains(activeElement)) {
-      activeElement.blur();
+    setIsHeaderVisible(true);
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsSidebarOpen(false);
+      }
     }
 
-    if (!isCollapsed && collapsedNavRef.current?.contains(activeElement)) {
-      activeElement.blur();
-    }
-  }, [isCollapsed]);
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     function updateHeaderOffset() {
@@ -216,48 +190,67 @@ export function AppHeader({ user }: AppHeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/55 bg-background/94 backdrop-blur-sm transition-[box-shadow] duration-500 ease-out" ref={headerRef} style={headerStyle}>
-      <div className="mx-auto w-full max-w-6xl px-4 py-[var(--header-py)] transition-[padding] duration-500 ease-out sm:px-6 lg:px-8">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-y-[var(--header-row-gap)] transition-[gap] duration-500 ease-out">
-          <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-start transition-[height] duration-500 ease-out">
-            <Link className="surface-pill flex min-w-0 max-w-full items-center gap-[var(--brand-gap)] rounded-full p-[var(--brand-padding)] transition-[gap,padding] duration-500 ease-out" href="/dashboard">
-              <LogoAnimated className="size-[var(--logo-size)] rounded-full transition-[height,width] duration-500 ease-out" playOnce size={44} />
-              <div className="min-w-0 max-w-[var(--brand-text-width)] overflow-hidden opacity-[var(--header-expanded-opacity)] transition-[max-width,opacity] duration-500 ease-out">
-                <p className="truncate font-display text-lg text-foreground">InsightUp</p>
-                <p className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground">InBody tracker</p>
-              </div>
-            </Link>
+    <>
+      <header
+        className="sticky top-0 z-40 border-b border-border/55 bg-background/94 shadow-[0_8px_22px_rgba(16,35,63,0.08)] backdrop-blur-sm transition-transform duration-300 ease-out"
+        ref={headerRef}
+        style={headerStyle}
+      >
+        <div className="mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="surface-pill flex min-w-0 items-center gap-2 rounded-full bg-card/78 px-2 py-1.5 pr-4 shadow-none">
+            <button
+              aria-label="開啟側邊選單"
+              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary transition hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              onClick={() => setIsSidebarOpen(true)}
+              type="button"
+            >
+              <Menu className="size-5" />
+            </button>
+            <div className="h-5 w-px bg-border/70" />
+            <p className="truncate font-display text-lg leading-5 text-foreground">{currentPageLabel}</p>
           </div>
 
-          <div
-            className={cn(
-              "flex h-[var(--header-row-height)] w-[var(--collapsed-nav-width)] items-center justify-center overflow-hidden opacity-[var(--collapsed-nav-opacity)] transition-[height,width,opacity] duration-500 ease-out",
-              useCollapsedNav ? "pointer-events-auto" : "pointer-events-none",
-            )}
-            inert={!useCollapsedNav}
-            ref={collapsedNavRef}
-          >
-            <NavCluster activeTabIndex={useCollapsedNav ? 0 : -1} compact isDashboard={isDashboard} isFriends={isFriends} isRecords={isRecords} />
-          </div>
-
-          <div className="flex h-[var(--header-row-height)] min-w-0 items-center justify-end transition-[height] duration-500 ease-out">
-            <div className="flex w-[var(--account-zone-width)] justify-end transition-[width] duration-500 ease-out">
-              <AccountMenu collapseProgress={isCollapsed ? 1 : 0} user={user} />
-            </div>
-          </div>
-
-          <div
-            className={cn(
-              "col-span-3 flex h-[var(--expanded-nav-height)] min-w-0 justify-center overflow-hidden opacity-[var(--expanded-nav-opacity)] transition-[height,opacity] duration-500 ease-out",
-              useCollapsedNav ? "pointer-events-none" : "pointer-events-auto",
-            )}
-            inert={useCollapsedNav}
-            ref={expandedNavRef}
-          >
-            <NavCluster activeTabIndex={useCollapsedNav ? -1 : 0} isDashboard={isDashboard} isFriends={isFriends} isRecords={isRecords} />
+          <div className="flex shrink-0 justify-end">
+            <AccountMenu compact user={user} />
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <div
+        aria-hidden={!isSidebarOpen}
+        className={cn(
+          "fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.12)] backdrop-blur-[1px] transition-opacity duration-300",
+          isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
+      <aside
+        aria-label="主要導覽"
+        className={cn(
+          "fixed left-3 top-3 z-50 flex max-h-[calc(100dvh-1.5rem)] w-[min(17rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[1.75rem] border border-white/76 bg-[rgb(var(--card)/0.9)] shadow-[0_18px_38px_rgba(16,35,63,0.11)] backdrop-blur-xl transition-transform duration-300 ease-out",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]",
+        )}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5">
+          <div className="flex min-w-0 items-center gap-3">
+            <LogoAnimated className="size-9 rounded-full" playOnce size={40} />
+            <div className="min-w-0">
+              <p className="truncate font-display text-lg text-foreground">InsightUp</p>
+              <p className="text-xs text-muted-foreground">InBody tracker</p>
+            </div>
+          </div>
+          <Button aria-label="關閉側邊選單" className="size-10 px-0" onClick={() => setIsSidebarOpen(false)} size="icon" type="button" variant="ghost">
+            <X className="size-5" />
+          </Button>
+        </div>
+
+        <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-3">
+          {navItems.map((item) => (
+            <SidebarNavLink key={item.href} {...item} onNavigate={() => setIsSidebarOpen(false)} />
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }
