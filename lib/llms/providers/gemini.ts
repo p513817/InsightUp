@@ -12,7 +12,7 @@ function getGeminiApiKey() {
 }
 
 function shouldRotateModel(code: LlmProviderError["code"]) {
-  return code === "quota" || code === "internal" || code === "unavailable" || code === "timeout" || code === "not_found";
+  return code === "quota" || code === "internal" || code === "unavailable" || code === "timeout" || code === "not_found" || code === "empty_response";
 }
 
 export function mapGeminiError(error: unknown, model: string) {
@@ -83,6 +83,7 @@ export async function generateGeminiText(prompt: string, modelPool: string[], in
           : prompt,
         config: {
           maxOutputTokens: 2048,
+          responseMimeType: "application/json",
           temperature: 0.4,
         },
       });

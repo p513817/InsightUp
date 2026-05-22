@@ -56,6 +56,8 @@ async function getLatestTrendSummaryRow(
     .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
     .eq("user_id", userId)
     .eq("feature_key", "trend_summary")
+    .not("summary_text", "is", null)
+    .neq("summary_text", "")
     .order("request_date", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(1)
@@ -230,7 +232,7 @@ export async function POST() {
     const structuredSummary = parseStructuredSummaryText(llmResult.text);
 
     if (!structuredSummary) {
-      throw new LlmProviderError("Gemini returned invalid structured summary", "empty_response", llmResult.model);
+      throw new LlmProviderError("Gemini returned text that could not be parsed as the expected summary JSON", "provider_error", llmResult.model);
     }
 
     const summary = toLegacySummaryText(structuredSummary);

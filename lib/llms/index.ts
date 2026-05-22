@@ -13,6 +13,54 @@ function stripJsonFence(text: string) {
   return fenced ? fenced[1].trim() : trimmed;
 }
 
+function extractFirstJsonObject(text: string) {
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = inString;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (char === "{") {
+      if (depth === 0) {
+        start = index;
+      }
+      depth += 1;
+      continue;
+    }
+
+    if (char === "}" && depth > 0) {
+      depth -= 1;
+
+      if (depth === 0 && start >= 0) {
+        return text.slice(start, index + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
 function toStringArray(value: unknown) {
   if (!Array.isArray(value)) {
     return [];
@@ -26,7 +74,8 @@ function toStringArray(value: unknown) {
 
 export function parseStructuredSummaryText(text: string) {
   try {
-    const parsed = JSON.parse(stripJsonFence(text)) as Record<string, unknown>;
+    const strippedText = stripJsonFence(text);
+    const parsed = JSON.parse(strippedText) as Record<string, unknown>;
 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return null;
@@ -49,7 +98,13 @@ export function parseStructuredSummaryText(text: string) {
       watchouts,
     } satisfies StructuredTrendSummary;
   } catch {
-    return null;
+    const extractedJson = extractFirstJsonObject(stripJsonFence(text));
+
+    if (!extractedJson || extractedJson === text) {
+      return null;
+    }
+
+    return parseStructuredSummaryText(extractedJson);
   }
 }
 
