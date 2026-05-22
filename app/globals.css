@@ -418,9 +418,13 @@ body.dialog-overlay-no-blur .dialog-overlay {
 }
 
 .dashboard-card {
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 420ms ease, border-color 320ms ease, background-color 320ms ease;
+  transition: transform 140ms cubic-bezier(0.2, 0, 0, 1), box-shadow 180ms ease, border-color 160ms ease, background-color 160ms ease;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.dashboard-card[data-dragging="true"] {
+  transition: box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease;
 }
 
 @media (hover: hover) {

@@ -244,7 +244,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       <div
         aria-hidden={!isSidebarOpen}
         className={cn(
-          "fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.16)] transition-opacity duration-300",
+          "fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.16)] transition-opacity duration-150 ease-out",
           isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={() => setIsSidebarOpen(false)}
@@ -253,7 +253,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       <aside
         aria-label="主要導覽"
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.92)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] backdrop-blur-xl transition-transform duration-300 ease-out",
+          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.98)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] transition-transform duration-[180ms] ease-out will-change-transform",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >

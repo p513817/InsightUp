@@ -106,7 +106,13 @@ interface SortableMetricCardProps {
 }
 
 function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: SortableMetricCardProps) {
-  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({ id: metric.key });
+  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
+    id: metric.key,
+    transition: {
+      duration: 120,
+      easing: "cubic-bezier(0.2, 0, 0, 1)",
+    },
+  });
 
   return (
     <Card
@@ -118,14 +124,14 @@ function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: 
       ref={setNodeRef}
       style={{
         transform: transformToCss(transform),
-        transition,
+        transition: isDragging ? "none" : transition,
       }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <button
             aria-label={`拖曳排序 ${metric.label}`}
-            className="grid size-8 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition hover:bg-primary/7 hover:text-primary active:cursor-grabbing active:bg-primary/10"
+            className="grid size-8 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-colors duration-100 hover:bg-primary/7 hover:text-primary active:cursor-grabbing active:bg-primary/10"
             ref={setActivatorNodeRef}
             type="button"
             {...attributes}
@@ -183,13 +189,13 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 4,
+        distance: 2,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 180,
-        tolerance: 6,
+        delay: 70,
+        tolerance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
