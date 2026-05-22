@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, ListOrdered, MoreHorizontal } from "lucide-react";
+import { Check, CircleDot, Footprints, Hand, ListOrdered, MoreHorizontal, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
@@ -39,6 +39,22 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 
 function sortRecords(records: InbodyRecord[]) {
   return [...records].sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
+}
+
+function ChartViewIcon({ view, className = "size-4" }: { view: ChartViewKey; className?: string }) {
+  if (view === "overall") {
+    return <UserRound className={className} />;
+  }
+
+  if (view === "leftArm" || view === "rightArm") {
+    return <Hand className={`${className} ${view === "leftArm" ? "-scale-x-100" : ""}`} />;
+  }
+
+  if (view === "leftLeg" || view === "rightLeg") {
+    return <Footprints className={`${className} ${view === "leftLeg" ? "-scale-x-100" : ""}`} />;
+  }
+
+  return <CircleDot className={className} />;
 }
 
 export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialRecords, mode }: RecordsWorkspaceProps) {
@@ -201,7 +217,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
                 return (
                   <button
                     aria-pressed={active}
-                    className={`flex h-10 w-full items-center justify-between rounded-[0.8rem] px-3 text-left text-sm font-semibold transition active:scale-[0.98] ${
+                    className={`flex h-10 w-full items-center justify-between gap-3 rounded-[0.8rem] px-3 text-left text-sm font-semibold transition active:scale-[0.98] ${
                       active
                         ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
                         : "text-foreground hover:bg-primary/7"
@@ -215,7 +231,12 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
                     role="menuitemradio"
                     type="button"
                   >
-                    <span className="truncate">{label}</span>
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className={`grid size-7 shrink-0 place-items-center rounded-full ${active ? "bg-white/12" : "bg-primary/7 text-primary"}`}>
+                        <ChartViewIcon view={view.key} />
+                      </span>
+                      <span className="truncate">{label}</span>
+                    </span>
                     <Check className={`size-4 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
                   </button>
                 );
@@ -226,7 +247,8 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
           <Button
             aria-expanded={isChartViewMenuOpen}
             aria-haspopup="menu"
-            className="h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
+            aria-label={`切換圖表部位，目前：${selectedChartViewLabel}`}
+            className="size-11 rounded-full px-0 shadow-panel"
             onClick={() => {
               closeToolMenu();
               setIsChartViewMenuOpen((current) => !current);
@@ -234,8 +256,7 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
             ref={chartViewTriggerRef}
             type="button"
           >
-            <span className="truncate text-sm font-medium">部位: {selectedChartViewLabel}</span>
-            <ChevronDown className={`size-4 text-primary-foreground transition ${isChartViewMenuOpen ? "rotate-180" : ""}`} />
+            <ChartViewIcon className="size-5" view={selectedChartView} />
           </Button>
         </div>
 
