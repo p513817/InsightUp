@@ -28,19 +28,17 @@ type NavItem = {
   active: boolean;
 };
 
-function SidebarNavLink({ active, description, href, icon, label, onNavigate }: NavItem & { onNavigate: () => void }) {
+const sidebarNavClassName = (active: boolean) =>
+  cn(
+    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition",
+    active
+      ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)]"
+      : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62",
+  );
+
+function SidebarNavContent({ active, description, icon, label }: Pick<NavItem, "active" | "description" | "icon" | "label">) {
   return (
-    <Link
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition",
-        active
-          ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)]"
-          : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62",
-      )}
-      href={href}
-      onClick={onNavigate}
-    >
+    <>
       <span
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-full transition",
@@ -53,6 +51,14 @@ function SidebarNavLink({ active, description, href, icon, label, onNavigate }: 
         <span className="block font-semibold">{label}</span>
         <span className="mt-0.5 block truncate text-xs text-muted-foreground">{description}</span>
       </span>
+    </>
+  );
+}
+
+function SidebarNavLink({ active, description, href, icon, label, onNavigate }: NavItem & { onNavigate: () => void }) {
+  return (
+    <Link aria-current={active ? "page" : undefined} className={sidebarNavClassName(active)} href={href} onClick={onNavigate}>
+      <SidebarNavContent active={active} description={description} icon={icon} label={label} />
     </Link>
   );
 }
@@ -65,7 +71,8 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname === "/records" || pathname === "/profile";
   const isFriends = pathname === "/friends";
-  const currentPageLabel = isDashboard ? "趨勢" : isFriends ? "朋友" : "紀錄";
+  const isAccount = pathname === "/account";
+  const currentPageLabel = isDashboard ? "趨勢" : isFriends ? "朋友" : isAccount ? "帳號資訊" : "紀錄";
   const headerStyle: HeaderStyle = {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
     "--brand-gap": "0rem",
@@ -228,8 +235,8 @@ export function AppHeader({ user }: AppHeaderProps) {
       <aside
         aria-label="主要導覽"
         className={cn(
-          "fixed left-3 top-3 z-50 flex max-h-[calc(100dvh-1.5rem)] w-[min(17rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[1.75rem] border border-white/76 bg-[rgb(var(--card)/0.9)] shadow-[0_18px_38px_rgba(16,35,63,0.11)] backdrop-blur-xl transition-transform duration-300 ease-out",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]",
+          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.92)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] backdrop-blur-xl transition-transform duration-300 ease-out",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5">
