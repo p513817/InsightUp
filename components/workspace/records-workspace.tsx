@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CircleDot, Footprints, Hand, MoreHorizontal, UserRound } from "lucide-react";
+import { Check, CircleDot, Footprints, Hand, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
-import { TrendSummaryFab } from "@/components/charts/trend-summary-fab";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
 import { Button } from "@/components/ui/button";
@@ -64,11 +63,8 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   const [busyRecordId, setBusyRecordId] = useState<string | null>(null);
   const [selectedChartView, setSelectedChartView] = useState<ChartViewKey>("overall");
   const [isChartViewMenuOpen, setIsChartViewMenuOpen] = useState(false);
-  const [isToolMenuOpen, setIsToolMenuOpen] = useState(false);
   const chartViewMenuRef = useRef<HTMLDivElement>(null);
-  const toolMenuRef = useRef<HTMLDivElement>(null);
   const chartViewTriggerRef = useRef<HTMLButtonElement>(null);
-  const toolTriggerRef = useRef<HTMLButtonElement>(null);
 
   const chart = buildChartPayload(records, selectedChartView);
   const latestRecord = records.at(-1);
@@ -85,28 +81,17 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
     }
   }
 
-  function closeToolMenu() {
-    setIsToolMenuOpen(false);
-    if (toolMenuRef.current?.contains(document.activeElement)) {
-      toolTriggerRef.current?.focus();
-    }
-  }
-
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node;
       if (!chartViewMenuRef.current?.contains(target)) {
         closeChartViewMenu();
       }
-      if (!toolMenuRef.current?.contains(target)) {
-        closeToolMenu();
-      }
     }
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         closeChartViewMenu();
-        closeToolMenu();
       }
     }
 
@@ -248,47 +233,12 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
             aria-label={`切換圖表部位，目前：${selectedChartViewLabel}`}
             className="size-11 rounded-full px-0 shadow-panel"
             onClick={() => {
-              closeToolMenu();
               setIsChartViewMenuOpen((current) => !current);
             }}
             ref={chartViewTriggerRef}
             type="button"
           >
             <ChartViewIcon className="size-5" view={selectedChartView} />
-          </Button>
-        </div>
-
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7" ref={toolMenuRef}>
-          <div
-            className={`surface-menu absolute bottom-[calc(100%+0.65rem)] right-0 z-30 w-[min(11rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5 transition ${
-              isToolMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
-            }`}
-            inert={!isToolMenuOpen}
-          >
-            <div className="space-y-1" role="menu">
-              <TrendSummaryFab
-                embedded
-                onOpenSummary={closeToolMenu}
-                triggerClassName="h-10 w-full justify-start rounded-[0.8rem] px-3 text-foreground shadow-none hover:bg-primary/7 hover:text-foreground"
-                triggerLabel="摘要"
-                triggerVariant="ghost"
-              />
-            </div>
-          </div>
-
-          <Button
-            aria-expanded={isToolMenuOpen}
-            aria-haspopup="menu"
-            aria-label="Dashboard tools"
-            className="size-11 rounded-full px-0 shadow-panel"
-            onClick={() => {
-              closeChartViewMenu();
-              setIsToolMenuOpen((current) => !current);
-            }}
-            ref={toolTriggerRef}
-            type="button"
-          >
-            <MoreHorizontal className="size-5 text-primary-foreground" />
           </Button>
         </div>
       </>
