@@ -165,11 +165,17 @@ export function AppHeader({ user }: AppHeaderProps) {
     }
 
     const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
     document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousBodyOverflow;
+      document.body.style.paddingRight = previousBodyPaddingRight;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isSidebarOpen]);
@@ -211,7 +217,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         ref={headerRef}
         style={headerStyle}
       >
-        <div className="mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <div className="surface-pill flex min-w-0 items-center gap-2 rounded-full bg-card/78 px-2 py-1.5 pr-4 shadow-none">
             <button
               aria-label="開啟側邊選單"
@@ -225,6 +231,10 @@ export function AppHeader({ user }: AppHeaderProps) {
             <p className="truncate font-display text-lg leading-5 text-foreground">{currentPageLabel}</p>
           </div>
 
+          <p className="pointer-events-none absolute left-1/2 max-w-[44vw] -translate-x-1/2 truncate text-center font-display text-xl leading-none text-foreground sm:text-2xl">
+            Insight Up
+          </p>
+
           <div className="flex shrink-0 justify-end">
             <AccountMenu compact user={user} />
           </div>
@@ -234,7 +244,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       <div
         aria-hidden={!isSidebarOpen}
         className={cn(
-          "fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.12)] backdrop-blur-[1px] transition-opacity duration-300",
+          "fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.16)] transition-opacity duration-300",
           isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={() => setIsSidebarOpen(false)}
