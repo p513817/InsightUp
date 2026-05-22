@@ -95,7 +95,7 @@ function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) 
     return undefined;
   }
 
-  return `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`;
+  return `translate3d(${transform.x}px, ${transform.y}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`;
 }
 
 interface SortableMetricCardProps {
@@ -194,8 +194,7 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 70,
-        tolerance: 8,
+        distance: 3,
       },
     }),
     useSensor(KeyboardSensor, {
