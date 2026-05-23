@@ -13,7 +13,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Eye, EyeOff, PencilLine, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -127,8 +127,6 @@ export function RecordManager({
     () => [...records].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
     [records],
   );
-  const includedCount = records.filter((record) => record.isIncludedInCharts).length;
-
   const filteredRecords = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -339,60 +337,64 @@ export function RecordManager({
 
   return (
     <div className="space-y-2.5 pb-24 sm:space-y-3 sm:pb-28">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-6 text-muted-foreground">
-          共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。
-        </p>
-      </div>
+      {records.length ? (
+        <div className="sticky top-20 z-30 py-1 sm:top-24">
+          <Card className="gap-0 border-border/70 bg-card/94 p-2.5 shadow-[0_12px_30px_rgb(23_52_93/0.12)] backdrop-blur">
+            <div className="flex min-w-0 items-center gap-2">
+              <label className="sr-only" htmlFor="record-search">
+                搜尋日期或備註
+              </label>
+              <div className="relative min-w-[10rem] flex-1">
+                <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="h-10 w-full rounded-full border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] pl-10 pr-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15 sm:h-11"
+                  id="record-search"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="搜尋日期或備註"
+                  value={searchQuery}
+                />
+              </div>
 
-      <Card className="gap-4 border-border/60 bg-card/90 p-4 sm:p-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <Input
-            className="h-10 w-full max-w-[26rem] rounded-[1rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="搜尋日期或備註"
-            value={searchQuery}
-          />
+              <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto">
+                {[
+                  { value: "all", label: "全部" },
+                  { value: "included", label: "納入" },
+                  { value: "excluded", label: "排除" },
+                ].map((option) => {
+                  const isActive = inclusionFilter === option.value;
 
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { value: "all", label: "全部" },
-              { value: "included", label: "納入" },
-              { value: "excluded", label: "排除" },
-            ].map((option) => {
-              const isActive = inclusionFilter === option.value;
+                  return (
+                    <Button
+                      className={`shrink-0 cursor-pointer ${isActive ? "border-transparent" : ""}`}
+                      key={option.value}
+                      onClick={() => setInclusionFilter(option.value as typeof inclusionFilter)}
+                      size="sm"
+                      type="button"
+                      variant={isActive ? "default" : "outline"}
+                    >
+                      {option.label}
+                    </Button>
+                  );
+                })}
+              </div>
 
-              return (
+              {hasActiveFilters ? (
                 <Button
-                  className={isActive ? "border-transparent" : ""}
-                  key={option.value}
-                  onClick={() => setInclusionFilter(option.value as typeof inclusionFilter)}
-                  size="sm"
+                  aria-label="清除篩選"
+                  className="size-10 shrink-0 cursor-pointer px-0 sm:size-11"
+                  onClick={resetFilters}
+                  size="icon"
+                  title="清除篩選"
                   type="button"
-                  variant={isActive ? "default" : "outline"}
+                  variant="ghost"
                 >
-                  {option.label}
+                  <X className="size-4" />
                 </Button>
-              );
-            })}
-
-            {hasActiveFilters ? (
-              <Button onClick={resetFilters} size="sm" type="button" variant="ghost">
-                重設
-              </Button>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          </Card>
         </div>
-
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            顯示 {filteredRecords.length} / {records.length} 筆資料，每頁 {PAGE_SIZE} 筆。
-          </p>
-          <p>
-            第 {page} / {totalPages} 頁
-          </p>
-        </div>
-      </Card>
+      ) : null}
 
       {records.length ? (
         filteredRecords.length ? (
@@ -469,18 +471,15 @@ export function RecordManager({
               })}
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                顯示第 {pagination.pageIndex * pagination.pageSize + 1} 到 {Math.min((pagination.pageIndex + 1) * pagination.pageSize, filteredRecords.length)} 筆，共 {filteredRecords.length} 筆。
-              </p>
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <Button disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()} size="sm" variant="outline">
+            <div className="flex justify-center">
+              <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:w-auto">
+                <Button className="w-full sm:w-auto" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()} size="sm" variant="outline">
                   上一頁
                 </Button>
-                <div className="rounded-full border border-border/60 bg-card/86 px-4 py-2 text-sm text-foreground">
+                <div className="rounded-full border border-border/60 bg-card/86 px-4 py-2 text-center text-sm text-foreground">
                   Page {page} / {totalPages}
                 </div>
-                <Button disabled={!table.getCanNextPage()} onClick={() => table.nextPage()} size="sm" variant="outline">
+                <Button className="w-full sm:w-auto" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()} size="sm" variant="outline">
                   下一頁
                 </Button>
               </div>
@@ -499,11 +498,11 @@ export function RecordManager({
         <RecordEmptyState onAdd={onAdd} />
       )}
       {records.length ? (
-        <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
+        <div className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 sm:inset-x-7 sm:bottom-7">
           <div className="mx-auto flex w-full max-w-6xl justify-end">
             <Button
               aria-label="新增 InBody 紀錄"
-              className="pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96]"
+              className="pointer-events-auto relative size-12 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-14"
               onClick={handleAddClick}
               title="新增 InBody 紀錄"
               type="button"
