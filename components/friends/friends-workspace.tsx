@@ -85,7 +85,7 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-8">
+    <div className="space-y-3 pb-24 sm:space-y-8 sm:pb-28">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl space-y-4 sm:space-y-5">
           <StatsScrollbarRow
@@ -110,14 +110,24 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
       <section className="space-y-2.5 sm:space-y-3">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm leading-6 text-muted-foreground">共 {friends.length} 位好友</p>
-          <Button className="self-start sm:self-auto" onClick={() => setDialogOpen(true)}>
-            <Plus className="size-4" />
-            新增好友
-          </Button>
         </div>
 
         <FriendsTable busyFriendId={busyFriendId} friends={friends} onRemove={handleRemoveFriend} />
       </section>
+
+      <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
+        <div className="mx-auto flex w-full max-w-5xl justify-end">
+          <Button
+            aria-label="新增好友"
+            className="pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96]"
+            onClick={() => setDialogOpen(true)}
+            title="新增好友"
+            type="button"
+          >
+            <Plus className="size-6" />
+          </Button>
+        </div>
+      </div>
 
       <AddFriendDialog onConfirm={handleAddFriend} onOpenChange={setDialogOpen} open={dialogOpen} />
     </div>

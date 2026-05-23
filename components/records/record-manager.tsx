@@ -337,22 +337,11 @@ export function RecordManager({
   const hasActiveFilters = searchQuery.trim().length > 0 || inclusionFilter !== "all";
 
   return (
-    <div className="space-y-2.5 sm:space-y-3">
+    <div className="space-y-2.5 pb-24 sm:space-y-3 sm:pb-28">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-6 text-muted-foreground">
           共 {records.length} 筆資料，其中 {includedCount} 筆納入圖表分析。
         </p>
-        <Button
-          className="relative self-start overflow-hidden sm:self-auto"
-          onClick={handleAddClick}
-        >
-          <span
-            aria-hidden
-            className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
-          />
-          <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-4 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-4 transition-transform duration-200"} />
-          <span className="relative z-10">新增 InBody 紀錄</span>
-        </Button>
       </div>
 
       <Card className="gap-4 border-border/60 bg-card/90 p-4 sm:p-5">
@@ -512,6 +501,25 @@ export function RecordManager({
           <Button onClick={onAdd}>新增第一筆資料</Button>
         </Card>
       )}
+      {records.length ? (
+        <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
+          <div className="mx-auto flex w-full max-w-6xl justify-end">
+            <Button
+              aria-label="新增 InBody 紀錄"
+              className="pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96]"
+              onClick={handleAddClick}
+              title="新增 InBody 紀錄"
+              type="button"
+            >
+              <span
+                aria-hidden
+                className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
+              />
+              <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-6 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-6 transition-transform duration-200"} />
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
