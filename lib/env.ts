@@ -18,7 +18,7 @@ export function getSupabaseEnv() {
 }
 
 export function getSiteUrl(fallbackOrigin?: string) {
-  return normalizeOrigin(fallbackOrigin || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:5500");
+  return normalizeOrigin(invariant(process.env.NEXT_PUBLIC_SITE_URL || fallbackOrigin, "NEXT_PUBLIC_SITE_URL"));
 }
 
 export function getOAuthRedirectUrl(fallbackOrigin?: string) {
