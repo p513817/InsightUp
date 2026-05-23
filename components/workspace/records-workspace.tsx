@@ -247,14 +247,14 @@ export function RecordsWorkspace({
             aria-expanded={isChartViewMenuOpen}
             aria-haspopup="menu"
             aria-label={`切換圖表部位，目前：${selectedChartViewLabel}`}
-            className="size-11 rounded-full px-0 shadow-panel"
+            className="size-12 rounded-full px-0 shadow-panel"
             onClick={() => {
               setIsChartViewMenuOpen((current) => !current);
             }}
             ref={chartViewTriggerRef}
             type="button"
           >
-            <ChartViewIcon className="size-5" view={selectedChartView} />
+            <ChartViewIcon className="size-6" view={selectedChartView} />
           </Button>
         </div>
       </>

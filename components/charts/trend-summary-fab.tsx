@@ -243,18 +243,18 @@ export function TrendSummaryFab({
   const triggerButton = (
     <Button
       aria-label="Open AI trend summary"
-      className={triggerClassName || "h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"}
+      className={triggerClassName || (embedded ? "h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4" : "size-12 rounded-full p-0 shadow-panel")}
       disabled={loadingSummary || generating}
       onClick={openSummary}
       type="button"
       variant={triggerVariant}
     >
       {loadingSummary ? (
-        <LoaderCircle className={`${embedded ? "size-4" : "size-3.5"} animate-spin`} />
+        <LoaderCircle className={`${embedded ? "size-4" : "size-6"} animate-spin`} />
       ) : (
-        <Sparkles className={embedded ? "size-4" : "size-3.5"} />
+        <Sparkles className={embedded ? "size-4" : "size-6"} />
       )}
-      <span className={embedded ? "text-sm font-semibold" : "text-sm font-medium"}>{triggerLabel}</span>
+      {embedded ? <span className="text-sm font-semibold">{triggerLabel}</span> : null}
     </Button>
   );
 

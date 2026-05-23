@@ -392,7 +392,7 @@ export function RecordFormDialog({
   const textareaClassName =
     "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const footerButtonClassName = isPagePresentation
-    ? "pointer-events-auto relative size-11 overflow-hidden rounded-full p-0 transition-[box-shadow,transform] duration-200 active:scale-[0.96]"
+    ? "pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 transition-[box-shadow,transform] duration-200 active:scale-[0.96]"
     : "relative overflow-hidden";
   const cancelButtonClassName = isPagePresentation
     ? `${footerButtonClassName} border-border/80 bg-card/92 text-muted-foreground shadow-[0_8px_18px_rgb(15_23_42/0.10)] backdrop-blur hover:bg-card hover:text-foreground hover:shadow-[0_10px_22px_rgb(15_23_42/0.13)]`
@@ -972,7 +972,7 @@ export function RecordFormDialog({
                       : "pointer-events-none absolute inset-0 rounded-[0.9rem] bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.3)_0%,rgb(var(--brand-sky-400)/0.18)_34%,transparent_74%)] opacity-0 scale-[0.8] transition duration-200"
                   }
                 />
-                {isPagePresentation ? <X className="relative z-10 size-5" /> : <span className="relative z-10">取消</span>}
+                {isPagePresentation ? <X className="relative z-10 size-6" /> : <span className="relative z-10">取消</span>}
               </Button>
               <Button
                 aria-label={isPagePresentation ? (initialRecord ? "更新紀錄" : "建立紀錄") : undefined}
@@ -992,9 +992,9 @@ export function RecordFormDialog({
                 />
                 {isPagePresentation ? (
                   isSubmitting ? (
-                    <LoaderCircle className="relative z-10 size-5 animate-spin" />
+                    <LoaderCircle className="relative z-10 size-6 animate-spin" />
                   ) : (
-                    <Check className="relative z-10 size-5" />
+                    <Check className="relative z-10 size-6" />
                   )
                 ) : (
                   <span className="relative z-10">{isSubmitting ? "儲存中..." : initialRecord ? "更新紀錄" : "建立紀錄"}</span>
