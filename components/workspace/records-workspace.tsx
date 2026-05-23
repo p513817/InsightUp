@@ -215,9 +215,9 @@ export function RecordsWorkspace({
             <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
           </section>
         </div>
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 z-40 sm:bottom-7 sm:left-7" ref={chartViewMenuRef}>
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7" ref={chartViewMenuRef}>
           <div
-            className={`surface-menu absolute bottom-[calc(100%+0.65rem)] left-0 z-30 w-[min(11rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5 transition ${
+            className={`surface-menu absolute right-0 bottom-[calc(100%+0.65rem)] z-30 w-[min(11rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5 transition ${
               isChartViewMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
             }`}
             inert={!isChartViewMenuOpen}
