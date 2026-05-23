@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, CircleDot, Footprints, Hand, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
@@ -56,7 +57,12 @@ function ChartViewIcon({ view, className = "size-4" }: { view: ChartViewKey; cla
   return <CircleDot className={className} />;
 }
 
-export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialRecords, mode }: RecordsWorkspaceProps) {
+export function RecordsWorkspace({
+  initialDashboardMetricOrder = [],
+  initialRecords,
+  mode,
+}: RecordsWorkspaceProps) {
+  const router = useRouter();
   const [records, setRecords] = useState(sortRecords(initialRecords));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
@@ -169,11 +175,21 @@ export function RecordsWorkspace({ initialDashboardMetricOrder = [], initialReco
   }
 
   function openCreateDialog() {
+    if (mode === "records") {
+      router.push("/records/new");
+      return;
+    }
+
     setEditingRecord(null);
     setDialogOpen(true);
   }
 
   function openEditDialog(record: InbodyRecord) {
+    if (mode === "records") {
+      router.push(`/records/${record.id}/edit`);
+      return;
+    }
+
     setEditingRecord(record);
     setDialogOpen(true);
   }

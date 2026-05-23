@@ -69,7 +69,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isDashboard = pathname === "/dashboard";
-  const isRecords = pathname === "/records" || pathname === "/profile";
+  const isRecords = pathname.startsWith("/records") || pathname === "/profile";
   const isFriends = pathname === "/friends";
   const isAccount = pathname === "/account";
   const isSummary = pathname === "/summary";

@@ -2,7 +2,7 @@
 
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch } from "lucide-react";
+import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch, X } from "lucide-react";
 import { Controller, type Path, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ interface RecordFormDialogProps {
   latestRecordForAutofill?: InbodyRecord | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: RecordFormValues) => Promise<void>;
+  presentation?: "dialog" | "page";
 }
 
 interface StructuredSummary {
@@ -355,7 +356,14 @@ function QuickActionInfo({
   );
 }
 
-export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill, onOpenChange, onSubmit }: RecordFormDialogProps) {
+export function RecordFormDialog({
+  open,
+  initialRecord,
+  latestRecordForAutofill,
+  onOpenChange,
+  onSubmit,
+  presentation = "dialog",
+}: RecordFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStage, setScanStage] = useState<ScanStage>(null);
@@ -372,6 +380,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     primary: false,
     segmental: false,
   });
+  const isPagePresentation = presentation === "page";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const currentYear = new Date().getFullYear();
   const sectionClassName = "surface-muted-gradient space-y-2 rounded-[1rem] border border-border/80 p-3 sm:p-4";
@@ -382,7 +391,15 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     "flex h-10 w-full appearance-none rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 pr-9 text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const textareaClassName =
     "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
-  const footerButtonClassName = "relative overflow-hidden";
+  const footerButtonClassName = isPagePresentation
+    ? "pointer-events-auto relative size-11 overflow-hidden rounded-full p-0 transition-[box-shadow,transform] duration-200 active:scale-[0.96]"
+    : "relative overflow-hidden";
+  const cancelButtonClassName = isPagePresentation
+    ? `${footerButtonClassName} border-border/80 bg-card/92 text-muted-foreground shadow-[0_8px_18px_rgb(15_23_42/0.10)] backdrop-blur hover:bg-card hover:text-foreground hover:shadow-[0_10px_22px_rgb(15_23_42/0.13)]`
+    : footerButtonClassName;
+  const submitButtonClassName = isPagePresentation
+    ? `${footerButtonClassName} shadow-[0_12px_28px_rgb(23_52_93/0.20)] hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] disabled:shadow-[0_8px_18px_rgb(15_23_42/0.10)]`
+    : footerButtonClassName;
   const dialogContentClassName = initialRecord
     ? "!top-[calc(env(safe-area-inset-top)+0.5rem)] !bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] !h-auto !max-h-none !translate-y-0"
     : "!top-1/2 !bottom-auto !h-[66.67dvh] !max-h-[66.67dvh] !-translate-y-1/2";
@@ -590,6 +607,10 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     }));
   }
 
+  function isSectionOpen(section: SectionKey) {
+    return isPagePresentation || openSections[section];
+  }
+
   const isBasicComplete = hasValue(watchedValues.date);
   const isPrimaryComplete =
     hasValue(watchedValues.weight) &&
@@ -612,19 +633,28 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
   const canSubmitRecord = isBasicComplete && isPrimaryComplete && isAdditionalComplete && isSegmentalComplete;
 
   function renderSectionToggle(section: SectionKey, label: string, isComplete: boolean) {
+    const isOpen = isSectionOpen(section);
+    const titleContent = (
+      <span className="flex items-center gap-2">
+        <span className={sectionTitleClassName}>{label}</span>
+        {isComplete ? (
+          <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-500/14 text-emerald-600">
+            <Check className="size-3" />
+          </span>
+        ) : null}
+      </span>
+    );
+
+    if (isPagePresentation) {
+      return <div className="flex w-full items-center justify-between gap-3 text-left">{titleContent}</div>;
+    }
+
     return (
       <button className="flex w-full items-center justify-between gap-3 text-left" onClick={() => toggleSection(section)} type="button">
-        <span className="flex items-center gap-2">
-          <span className={sectionTitleClassName}>{label}</span>
-          {isComplete ? (
-            <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-500/14 text-emerald-600">
-              <Check className="size-3" />
-            </span>
-          ) : null}
-        </span>
+        {titleContent}
         <ChevronDown
           className={
-            openSections[section]
+            isOpen
               ? "size-4 rotate-180 text-muted-foreground transition-transform duration-200"
               : "size-4 text-muted-foreground transition-transform duration-200"
           }
@@ -633,22 +663,24 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
     );
   }
 
-  return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={`!h-auto max-w-4xl p-0 sm:!top-1/2 sm:!bottom-auto sm:!h-[min(88vh,52rem)] sm:!max-h-[90vh] sm:!-translate-y-1/2 ${dialogContentClassName}`}
-        onInteractOutside={(event) => event.preventDefault()}
-        showCloseButton={false}
-      >
-        <DialogHeader className="px-4 py-3 sm:px-6 sm:py-4">
-          <DialogTitle>{initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄"}</DialogTitle>
-          <DialogDescription className="text-xs leading-5 sm:text-sm sm:leading-6">
-            {initialRecord ? "調整數值後儲存即可。" : "可手動輸入、AI Scan，或匯入前一次紀錄。"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4">
+  const title = initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄";
+  const description = initialRecord
+    ? "調整這筆紀錄的數值與分析設定。"
+    : "手動輸入完整資料，或先用 AI Scan 建立草稿後再確認。";
+  const formClassName = isPagePresentation ? "flex flex-col" : "flex min-h-0 flex-1 flex-col";
+  const formBodyClassName =
+    isPagePresentation
+      ? "py-3 sm:py-4"
+      : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4";
+  const formFooterClassName = isPagePresentation
+    ? "pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7"
+    : "shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]";
+  const formFooterInnerClassName = isPagePresentation
+    ? "mx-auto flex w-full max-w-7xl items-center justify-between gap-3"
+    : "flex flex-wrap justify-end gap-2.5";
+  const formContent = (
+        <form className={formClassName} onSubmit={form.handleSubmit(handleSubmit)}>
+          <div className={formBodyClassName}>
             <div className="grid gap-3.5">
               {!initialRecord ? (
                 <section className={sectionClassName}>
@@ -741,8 +773,8 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
 
               <section className={sectionClassName}>
                 {renderSectionToggle("basic", "基本設定", isBasicComplete)}
-                {openSections.basic ? (
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {isSectionOpen("basic") ? (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <FieldShell error={form.formState.errors.date?.message} label="日期" required>
                       <Controller
                         control={form.control}
@@ -826,7 +858,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
 
               <section className={sectionClassName}>
                 {renderSectionToggle("primary", "主要數值", isPrimaryComplete)}
-                {openSections.primary ? (
+                {isSectionOpen("primary") ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <FieldShell error={form.formState.errors.weight?.message} label="體重 (kg)" required>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="weight" placeholder="66.1" step={0.1} />
@@ -846,7 +878,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
 
               <section className={sectionClassName}>
                 {renderSectionToggle("additional", "補充數值", isAdditionalComplete)}
-                {openSections.additional ? (
+                {isSectionOpen("additional") ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <FieldShell error={form.formState.errors.height?.message} label="身高 (cm)">
                       <NumberInputWithAdjust className={controlClassName} form={form} name="height" placeholder="170" step={0.1} />
@@ -882,8 +914,8 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
 
               <section className={sectionClassName}>
                 {renderSectionToggle("segmental", "部位數值", isSegmentalComplete)}
-                {openSections.segmental ? (
-                  <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
+                {isSectionOpen("segmental") ? (
+                  <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                     {SEGMENT_PARTS.map((part) => (
                       <div className="grid gap-2.5" key={part.key}>
                         <h4 className="text-sm font-semibold text-foreground">{part.label}</h4>
@@ -909,7 +941,7 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
 
               <section className={sectionClassName}>
                 {renderSectionToggle("notes", "備註", isNotesComplete)}
-                {openSections.notes ? (
+                {isSectionOpen("notes") ? (
                   <FieldShell className="block" error={form.formState.errors.notes?.message} label="備註">
                     <Textarea
                       className={textareaClassName}
@@ -922,9 +954,16 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
-            <div className="flex flex-wrap justify-end gap-2.5">
-              <Button className={footerButtonClassName} onClick={handleCancelClick} type="button" variant="outline">
+          <div className={formFooterClassName}>
+            <div className={formFooterInnerClassName}>
+              <Button
+                aria-label={isPagePresentation ? (initialRecord ? "取消編輯紀錄" : "取消新增紀錄") : undefined}
+                className={cancelButtonClassName}
+                onClick={handleCancelClick}
+                title={isPagePresentation ? "取消" : undefined}
+                type="button"
+                variant="outline"
+              >
                 <span
                   aria-hidden
                   className={
@@ -933,12 +972,14 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                       : "pointer-events-none absolute inset-0 rounded-[0.9rem] bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.3)_0%,rgb(var(--brand-sky-400)/0.18)_34%,transparent_74%)] opacity-0 scale-[0.8] transition duration-200"
                   }
                 />
-                <span className="relative z-10">取消</span>
+                {isPagePresentation ? <X className="relative z-10 size-5" /> : <span className="relative z-10">取消</span>}
               </Button>
               <Button
-                className={footerButtonClassName}
+                aria-label={isPagePresentation ? (initialRecord ? "更新紀錄" : "建立紀錄") : undefined}
+                className={submitButtonClassName}
                 disabled={isSubmitting || isScanning || !canSubmitRecord}
                 onClick={handleSubmitPress}
+                title={isPagePresentation ? (initialRecord ? "更新紀錄" : "建立紀錄") : undefined}
                 type="submit"
               >
                 <span
@@ -949,11 +990,45 @@ export function RecordFormDialog({ open, initialRecord, latestRecordForAutofill,
                       : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.24)_34%,transparent_76%)] opacity-0 scale-[0.8] transition duration-200"
                   }
                 />
-                <span className="relative z-10">{isSubmitting ? "儲存中..." : initialRecord ? "更新紀錄" : "建立紀錄"}</span>
+                {isPagePresentation ? (
+                  isSubmitting ? (
+                    <LoaderCircle className="relative z-10 size-5 animate-spin" />
+                  ) : (
+                    <Check className="relative z-10 size-5" />
+                  )
+                ) : (
+                  <span className="relative z-10">{isSubmitting ? "儲存中..." : initialRecord ? "更新紀錄" : "建立紀錄"}</span>
+                )}
               </Button>
             </div>
           </div>
         </form>
+  );
+
+  if (isPagePresentation) {
+    return (
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pb-24 pt-3 sm:px-6 sm:pt-5 lg:px-8">
+        <header className="space-y-1.5">
+          <h1 className="font-display text-2xl leading-tight text-foreground sm:text-3xl">{title}</h1>
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+        </header>
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent
+        className={`!h-auto max-w-4xl p-0 sm:!top-1/2 sm:!bottom-auto sm:!h-[min(88vh,52rem)] sm:!max-h-[90vh] sm:!-translate-y-1/2 ${dialogContentClassName}`}
+        onInteractOutside={(event) => event.preventDefault()}
+        showCloseButton={false}
+      >
+        <DialogHeader className="px-4 py-3 sm:px-6 sm:py-4">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="text-xs leading-5 sm:text-sm sm:leading-6">{description}</DialogDescription>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );
