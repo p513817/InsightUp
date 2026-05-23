@@ -5,6 +5,7 @@ import { Check, CircleDot, Footprints, Hand, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
+import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
 import { Button } from "@/components/ui/button";
@@ -195,6 +196,18 @@ export function RecordsWorkspace({
   }
 
   if (mode === "dashboard") {
+    if (!records.length) {
+      return (
+        <div className="pb-24 sm:pb-28">
+          <RecordEmptyState
+            actionLabel="新增第一筆紀錄"
+            description="新增第一筆紀錄後，這裡會顯示體重、肌肉量、體脂與部位趨勢。"
+            onAdd={openCreateDialog}
+          />
+        </div>
+      );
+    }
+
     return (
       <>
         <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">

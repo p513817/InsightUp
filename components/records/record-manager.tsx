@@ -14,6 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Eye, EyeOff, PencilLine, Plus, Trash2 } from "lucide-react";
+import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -495,11 +496,7 @@ export function RecordManager({
           </Card>
         )
       ) : (
-        <Card className="surface-state-panel items-center gap-2 p-8 text-center">
-          <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">還沒有 InBody 紀錄</p>
-          <p className="max-w-xl text-sm leading-6 text-muted-foreground">先建立第一筆紀錄，之後就能切換整體與區域圖表、調整納入分析的資料範圍。</p>
-          <Button onClick={onAdd}>新增第一筆資料</Button>
-        </Card>
+        <RecordEmptyState onAdd={onAdd} />
       )}
       {records.length ? (
         <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">

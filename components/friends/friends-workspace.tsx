@@ -112,22 +112,24 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
           <p className="text-sm leading-6 text-muted-foreground">共 {friends.length} 位好友</p>
         </div>
 
-        <FriendsTable busyFriendId={busyFriendId} friends={friends} onRemove={handleRemoveFriend} />
+        <FriendsTable busyFriendId={busyFriendId} friends={friends} onAdd={() => setDialogOpen(true)} onRemove={handleRemoveFriend} />
       </section>
 
-      <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-5xl justify-end">
-          <Button
-            aria-label="新增好友"
-            className="pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96]"
-            onClick={() => setDialogOpen(true)}
-            title="新增好友"
-            type="button"
-          >
-            <Plus className="size-6" />
-          </Button>
+      {friends.length ? (
+        <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
+          <div className="mx-auto flex w-full max-w-5xl justify-end">
+            <Button
+              aria-label="新增好友"
+              className="pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96]"
+              onClick={() => setDialogOpen(true)}
+              title="新增好友"
+              type="button"
+            >
+              <Plus className="size-6" />
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <AddFriendDialog onConfirm={handleAddFriend} onOpenChange={setDialogOpen} open={dialogOpen} />
     </div>

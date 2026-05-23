@@ -9,6 +9,7 @@ import { formatDecimal, formatLongDate, formatSourceType, getUserInitials } from
 interface FriendsTableProps {
   busyFriendId: string | null;
   friends: FriendSnapshot[];
+  onAdd: () => void;
   onRemove: (friend: FriendSnapshot) => void;
 }
 
@@ -107,13 +108,14 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
   );
 }
 
-export function FriendsTable({ busyFriendId, friends, onRemove }: FriendsTableProps) {
+export function FriendsTable({ busyFriendId, friends, onAdd, onRemove }: FriendsTableProps) {
   if (!friends.length) {
     return (
-      <div className="surface-state-panel rounded-[1.2rem] px-4 py-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:rounded-[1.5rem] sm:px-6 sm:py-10">
-        <p className="font-display text-[1.45rem] text-foreground sm:text-2xl">好友清單為空</p>
-        <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">先把朋友的好友編號加進來，這裡就會開始顯示他們最新的 InBody 快照。</p>
-      </div>
+      <Card className="surface-state-panel items-center gap-2 p-8 text-center">
+        <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">還沒有好友</p>
+        <p className="max-w-xl text-sm leading-6 text-muted-foreground">新增好友後，這裡會顯示對方最新 InBody 紀錄與變化。</p>
+        <Button onClick={onAdd}>新增第一位好友</Button>
+      </Card>
     );
   }
 
