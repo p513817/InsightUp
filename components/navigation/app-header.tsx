@@ -73,7 +73,6 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isFriends = pathname === "/friends";
   const isAccount = pathname === "/account";
   const isSummary = pathname === "/summary";
-  const currentPageLabel = isDashboard ? "趨勢" : isFriends ? "朋友" : isAccount ? "帳號資訊" : isSummary ? "AI 摘要" : "紀錄";
   const headerStyle: HeaderStyle = {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
     "--brand-gap": "0rem",
@@ -218,7 +217,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         style={headerStyle}
       >
         <div className="relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-          <div className="surface-pill flex min-w-0 items-center gap-2 rounded-full bg-card/78 px-2 py-1.5 pr-4 shadow-none">
+          <div className="surface-pill flex h-[2.625rem] min-w-0 items-center rounded-full bg-card/78 p-[0.3125rem] shadow-none">
             <button
               aria-label="開啟側邊選單"
               className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary transition hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -227,11 +226,9 @@ export function AppHeader({ user }: AppHeaderProps) {
             >
               <Menu className="size-5" />
             </button>
-            <div className="h-5 w-px bg-border/70" />
-            <p className="truncate font-display text-lg leading-5 text-foreground">{currentPageLabel}</p>
           </div>
 
-          <p className="pointer-events-none absolute left-1/2 max-w-[44vw] -translate-x-1/2 truncate text-center font-display text-xl leading-none text-foreground sm:text-2xl">
+          <p className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[44vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center font-display text-xl leading-none text-foreground shadow-none sm:text-2xl">
             Insight Up
           </p>
 

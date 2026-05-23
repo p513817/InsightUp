@@ -60,7 +60,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
     "--account-gap": `${0.625 * expandedProgress}rem`,
     "--account-px": isCollapsed ? "0" : `var(--brand-padding)`,
     "--account-py": "0",
-    "--account-avatar-size": `var(--logo-size)`,
+    "--account-avatar-size": isCollapsed ? "2rem" : "2.625rem",
     "--account-chevron-width": `${1 * expandedProgress}rem`,
     "--account-text-width": `${11 * expandedProgress}rem`,
     "--account-text-opacity": expandedProgress,
@@ -107,10 +107,10 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
         aria-haspopup="menu"
         className={
           [
-            "surface-pill flex items-center justify-center gap-[var(--brand-gap)] rounded-full cursor-pointer select-none transition-[gap,padding] duration-500 ease-out",
+            "surface-pill flex items-center justify-center gap-[var(--brand-gap)] rounded-full bg-card/78 cursor-pointer select-none transition-[gap,padding] duration-500 ease-out",
             isCollapsed
-              ? "w-[2.625rem] h-[2.625rem] min-w-0 max-w-full p-0"
-              : "w-[3.25rem] h-[3.25rem] min-w-0 max-w-full p-0"
+              ? "w-[2.625rem] h-[2.625rem] min-w-0 max-w-full p-[0.3125rem]"
+              : "w-[3.25rem] h-[3.25rem] min-w-0 max-w-full p-[0.3125rem]"
           ].join(" ")
         }
         onClick={() => setIsOpen((current) => !current)}
@@ -126,12 +126,12 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
           : { outline: 'none', height: '3.25rem', width: '3.25rem' }
         }
       >
-        <div className="flex items-center justify-center rounded-full bg-background transition-[height,width] duration-500 ease-out w-[var(--logo-size)] h-[var(--logo-size)] mx-auto">
+        <div className="flex items-center justify-center rounded-full bg-card/78 transition-[height,width] duration-500 ease-out w-[var(--account-avatar-size)] h-[var(--account-avatar-size)] mx-auto">
           {(!user.avatarUrl || imageFailed)
             ? <span className="text-base font-semibold text-primary">{getFirstDisplayCharacter(user.name)}</span>
             : <img
                 alt={user.name}
-                className="w-full h-full rounded-full object-cover bg-background"
+                className="w-full h-full rounded-full object-cover bg-card/78"
                 onError={() => setImageFailed(true)}
                 onLoad={() => setImageLoaded(true)}
                 src={user.avatarUrl}
