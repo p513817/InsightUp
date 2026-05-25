@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Activity, CircleDot, Footprints, Hand, UserRound } from "lucide-react";
+import { Activity, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
@@ -48,20 +48,25 @@ function sortRecords(records: InbodyRecord[]) {
   return [...records].sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
 }
 
-function ChartViewIcon({ view, className = "size-4" }: { view: ChartViewKey; className?: string }) {
-  if (view === "overall") {
-    return <UserRound className={className} />;
-  }
+const SEGMENT_ICON_SRC: Record<SegmentPartKey, string> = {
+  leftArm: "/icons/segments/arm-muscle.png",
+  rightArm: "/icons/segments/arm-muscle.png",
+  trunk: "/icons/segments/back.png",
+  leftLeg: "/icons/segments/leg.png",
+  rightLeg: "/icons/segments/leg.png",
+};
 
-  if (view === "leftArm" || view === "rightArm") {
-    return <Hand className={`${className} ${view === "leftArm" ? "-scale-x-100" : ""}`} />;
-  }
+function SegmentIcon({ view, className = "size-5" }: { view: SegmentPartKey; className?: string }) {
+  const shouldMirror = view === "leftArm" || view === "leftLeg";
 
-  if (view === "leftLeg" || view === "rightLeg") {
-    return <Footprints className={`${className} ${view === "leftLeg" ? "-scale-x-100" : ""}`} />;
-  }
-
-  return <CircleDot className={className} />;
+  return (
+    <img
+      alt=""
+      aria-hidden="true"
+      className={`${className} object-contain ${shouldMirror ? "-scale-x-100" : ""}`}
+      src={SEGMENT_ICON_SRC[view]}
+    />
+  );
 }
 
 function keepPrimarySegmentMetrics(chart: ChartPayload): ChartPayload {
@@ -244,7 +249,7 @@ export function RecordsWorkspace({
                 <section className="space-y-3" key={segment.key}>
                   <div className="flex items-center gap-2 px-1">
                     <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
-                      <ChartViewIcon view={segment.key} />
+                      <SegmentIcon view={segment.key} />
                     </span>
                     <h3 className="font-display text-lg leading-tight text-foreground">{segment.label}</h3>
                   </div>
