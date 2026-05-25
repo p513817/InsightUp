@@ -19,6 +19,7 @@ interface MiniTrendGridProps {
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
 const SAVE_ORDER_DEBOUNCE_MS = 260;
+const EMPTY_INITIAL_METRIC_ORDER: string[] = [];
 
 function getMetricOrderStorageKey(view: ChartPayload["view"]) {
   return view === "overall" ? METRIC_ORDER_STORAGE_KEY : `${METRIC_ORDER_STORAGE_KEY}.${view}`;
@@ -74,6 +75,10 @@ function sortMetricsBySavedOrder(metrics: ChartMetric[], savedOrder: string[]) {
     const rightRank = rank.get(right.key) ?? Number.MAX_SAFE_INTEGER;
     return leftRank - rightRank;
   });
+}
+
+function hasSameMetricOrder(left: ChartMetric[], right: ChartMetric[]) {
+  return left.length === right.length && left.every((metric, index) => metric.key === right[index]?.key);
 }
 
 async function persistMetricOrder(metricOrder: string[]) {
@@ -181,7 +186,7 @@ function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: 
   );
 }
 
-export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridProps) {
+export function MiniTrendGrid({ chart, initialMetricOrder = EMPTY_INITIAL_METRIC_ORDER }: MiniTrendGridProps) {
   const [isChartReady, setIsChartReady] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const orderedMetricsRef = useRef(chart.metrics);
@@ -233,8 +238,11 @@ export function MiniTrendGrid({ chart, initialMetricOrder = [] }: MiniTrendGridP
     const preferredOrder = chart.view === "overall" && initialMetricOrder.length ? initialMetricOrder : savedOrder;
     const nextMetrics = sortMetricsBySavedOrder(chart.metrics, preferredOrder);
 
-    orderedMetricsRef.current = nextMetrics;
-    setOrderedMetrics(nextMetrics);
+    if (!hasSameMetricOrder(orderedMetricsRef.current, nextMetrics)) {
+      orderedMetricsRef.current = nextMetrics;
+      setOrderedMetrics(nextMetrics);
+    }
+
     window.localStorage.setItem(getMetricOrderStorageKey(chart.view), JSON.stringify(nextMetrics.map((metric) => metric.key)));
   }, [chart.metrics, chart.view, initialMetricOrder]);
 

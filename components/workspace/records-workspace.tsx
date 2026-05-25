@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check, CircleDot, Footprints, Hand, UserRound } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Activity, CircleDot, Footprints, Hand, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
-import { Button } from "@/components/ui/button";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { buildChartPayload } from "@/lib/inbody/records";
 import { type RecordFormValues } from "@/lib/inbody/schema";
-import { CHART_VIEWS, type ChartViewKey, type InbodyRecord } from "@/lib/inbody/types";
+import { CHART_VIEWS, type ChartPayload, type ChartViewKey, type InbodyRecord, type SegmentPartKey } from "@/lib/inbody/types";
 import { formatCompactDate, formatLongDate } from "@/lib/presentation";
 
 interface RecordsWorkspaceProps {
@@ -20,6 +19,13 @@ interface RecordsWorkspaceProps {
   initialRecords: InbodyRecord[];
   mode: "dashboard" | "records";
 }
+
+type TrendMode = "overall" | "segmental";
+
+const SEGMENT_CHART_VIEWS = CHART_VIEWS.filter((view) => view.key !== "overall") as Array<{
+  key: SegmentPartKey;
+  label: string;
+}>;
 
 async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
@@ -58,6 +64,42 @@ function ChartViewIcon({ view, className = "size-4" }: { view: ChartViewKey; cla
   return <CircleDot className={className} />;
 }
 
+function keepPrimarySegmentMetrics(chart: ChartPayload): ChartPayload {
+  return {
+    ...chart,
+    metrics: chart.metrics.filter((metric) => metric.key === "muscle" || metric.key === "fat"),
+  };
+}
+
+function TrendModeButton({
+  active,
+  children,
+  icon,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  icon: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-selected={active}
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition sm:px-4 ${
+        active
+          ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+          : "text-muted-foreground hover:bg-primary/7 hover:text-foreground"
+      }`}
+      onClick={onClick}
+      role="tab"
+      type="button"
+    >
+      {icon}
+      <span>{children}</span>
+    </button>
+  );
+}
+
 export function RecordsWorkspace({
   initialDashboardMetricOrder = [],
   initialRecords,
@@ -68,48 +110,16 @@ export function RecordsWorkspace({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
   const [busyRecordId, setBusyRecordId] = useState<string | null>(null);
-  const [selectedChartView, setSelectedChartView] = useState<ChartViewKey>("overall");
-  const [isChartViewMenuOpen, setIsChartViewMenuOpen] = useState(false);
-  const chartViewMenuRef = useRef<HTMLDivElement>(null);
-  const chartViewTriggerRef = useRef<HTMLButtonElement>(null);
+  const [trendMode, setTrendMode] = useState<TrendMode>("overall");
 
-  const chart = buildChartPayload(records, selectedChartView);
+  const overallChart = buildChartPayload(records, "overall");
+  const segmentalCharts = SEGMENT_CHART_VIEWS.map((view) => ({
+    ...view,
+    chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key)),
+  }));
   const latestRecord = records.at(-1);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
-  const selectedChartViewLabel = selectedChartView === "overall"
-    ? "整體"
-    : CHART_VIEWS.find((view) => view.key === selectedChartView)?.label || "整體";
-
-  function closeChartViewMenu() {
-    setIsChartViewMenuOpen(false);
-    if (chartViewMenuRef.current?.contains(document.activeElement)) {
-      chartViewTriggerRef.current?.focus();
-    }
-  }
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as Node;
-      if (!chartViewMenuRef.current?.contains(target)) {
-        closeChartViewMenu();
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeChartViewMenu();
-      }
-    }
-
-    window.addEventListener("mousedown", handlePointerDown);
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      window.removeEventListener("mousedown", handlePointerDown);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
 
   async function handleSave(values: RecordFormValues) {
     try {
@@ -119,7 +129,7 @@ export function RecordsWorkspace({
           method: "PATCH",
         });
         setRecords((current) => sortRecords(current.map((record) => (record.id === response.record.id ? response.record : record))));
-        toast.success("紀錄已更新。");
+        toast.success("紀錄已更新");
         setEditingRecord(null);
         return;
       }
@@ -129,9 +139,9 @@ export function RecordsWorkspace({
         method: "POST",
       });
       setRecords((current) => sortRecords([...current, response.record]));
-      toast.success("已建立新的 InBody 紀錄。");
+      toast.success("已新增 InBody 紀錄");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "儲存失敗。");
+      toast.error(error instanceof Error ? error.message : "儲存失敗");
       throw error;
     }
   }
@@ -144,18 +154,18 @@ export function RecordsWorkspace({
         method: "PATCH",
       });
       setRecords((current) => current.map((entry) => (entry.id === response.record.id ? response.record : entry)));
-      toast.success(nextValue ? "紀錄已納入圖表分析。" : "紀錄已排除出圖表分析。", {
-        description: nextValue ? "歷史資料仍會保留。" : "紀錄仍會保留在清單中。",
+      toast.success(nextValue ? "紀錄已納入圖表分析" : "紀錄已排除出圖表分析", {
+        description: nextValue ? "這筆資料會重新影響趨勢圖。" : "紀錄仍會保留，只是不納入趨勢計算。",
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "更新 inclusion 失敗。");
+      toast.error(error instanceof Error ? error.message : "更新圖表納入狀態失敗");
     } finally {
       setBusyRecordId(null);
     }
   }
 
   async function handleDelete(record: InbodyRecord) {
-    if (!window.confirm(`確定要刪除 ${formatLongDate(record.date)} 這筆紀錄嗎？它會以 soft delete 方式隱藏。`)) {
+    if (!window.confirm(`確定要刪除 ${formatLongDate(record.date)} 的紀錄嗎？這會以 soft delete 保留資料。`)) {
       return;
     }
 
@@ -165,11 +175,11 @@ export function RecordsWorkspace({
         method: "DELETE",
       });
       setRecords((current) => current.filter((entry) => entry.id !== record.id));
-      toast.success("紀錄已刪除。", {
-        description: "資料以 soft delete 方式自主要畫面隱藏。",
+      toast.success("紀錄已刪除", {
+        description: "資料已用 soft delete 保留在資料庫中。",
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "刪除失敗。");
+      toast.error(error instanceof Error ? error.message : "刪除失敗");
     } finally {
       setBusyRecordId(null);
     }
@@ -209,68 +219,42 @@ export function RecordsWorkspace({
     }
 
     return (
-      <>
-        <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
-          <section className="space-y-3">
-            <MiniTrendGrid chart={chart} initialMetricOrder={initialDashboardMetricOrder} />
-          </section>
-        </div>
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7" ref={chartViewMenuRef}>
-          <div
-            className={`surface-menu absolute right-0 bottom-[calc(100%+0.65rem)] z-30 w-[min(11rem,calc(100vw-2rem))] overflow-hidden rounded-[1rem] p-1.5 transition ${
-              isChartViewMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
-            }`}
-            inert={!isChartViewMenuOpen}
-          >
-            <div className="grid grid-cols-1 gap-0.5" role="menu">
-              {CHART_VIEWS.map((view) => {
-                const active = selectedChartView === view.key;
-                const label = view.key === "overall" ? "整體" : view.label;
-
-                return (
-                  <button
-                    aria-pressed={active}
-                    className={`flex h-10 w-full items-center justify-between gap-3 rounded-[0.8rem] px-3 text-left text-sm font-semibold transition active:scale-[0.98] ${
-                      active
-                        ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-                        : "text-foreground hover:bg-primary/7"
-                    }`}
-                    key={view.key}
-                    onClick={() => {
-                      setSelectedChartView(view.key);
-                      closeChartViewMenu();
-                    }}
-                    role="menuitemradio"
-                    type="button"
-                  >
-                    <span className="flex min-w-0 items-center gap-2.5">
-                      <span className={`grid size-7 shrink-0 place-items-center rounded-full ${active ? "bg-white/12" : "bg-primary/7 text-primary"}`}>
-                        <ChartViewIcon view={view.key} />
-                      </span>
-                      <span className="truncate">{label}</span>
-                    </span>
-                    <Check className={`size-4 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
-                  </button>
-                );
-              })}
+      <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
+        <section className="space-y-4">
+          <div className="sticky top-[var(--app-header-sticky-offset,0px)] z-30 -mx-1 px-1 py-1 transition-[top] duration-[420ms] ease-out motion-reduce:transition-none">
+            <div
+              aria-label="趨勢分析模式"
+              className="mx-auto grid max-w-sm grid-cols-2 gap-1 rounded-full border border-border/70 bg-card/92 p-1 shadow-panel backdrop-blur"
+              role="tablist"
+            >
+              <TrendModeButton active={trendMode === "overall"} icon={<Activity className="size-4" />} onClick={() => setTrendMode("overall")}>
+                整體趨勢
+              </TrendModeButton>
+              <TrendModeButton active={trendMode === "segmental"} icon={<UserRound className="size-4" />} onClick={() => setTrendMode("segmental")}>
+                部位別趨勢
+              </TrendModeButton>
             </div>
           </div>
 
-          <Button
-            aria-expanded={isChartViewMenuOpen}
-            aria-haspopup="menu"
-            aria-label={`切換圖表部位，目前：${selectedChartViewLabel}`}
-            className="size-12 rounded-full px-0 shadow-panel"
-            onClick={() => {
-              setIsChartViewMenuOpen((current) => !current);
-            }}
-            ref={chartViewTriggerRef}
-            type="button"
-          >
-            <ChartViewIcon className="size-6" view={selectedChartView} />
-          </Button>
-        </div>
-      </>
+          {trendMode === "overall" ? (
+            <MiniTrendGrid chart={overallChart} initialMetricOrder={initialDashboardMetricOrder} />
+          ) : (
+            <div className="space-y-4">
+              {segmentalCharts.map((segment) => (
+                <section className="space-y-3" key={segment.key}>
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
+                      <ChartViewIcon view={segment.key} />
+                    </span>
+                    <h3 className="font-display text-lg leading-tight text-foreground">{segment.label}</h3>
+                  </div>
+                  <MiniTrendGrid chart={segment.chart} />
+                </section>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     );
   }
 
@@ -282,15 +266,17 @@ export function RecordsWorkspace({
             className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]"
           >
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">最新紀錄</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">最近量測</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
                 <span className="sm:hidden">{formatCompactDate(latestRecord?.date)}</span>
                 <span className="hidden sm:inline">{formatLongDate(latestRecord?.date)}</span>
               </p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">已納入分析</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{includedCount}/{records.length || 0}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">納入圖表</p>
+              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
+                {includedCount}/{records.length || 0}
+              </p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">已排除</p>

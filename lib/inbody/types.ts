@@ -1,6 +1,6 @@
 export const SEGMENT_PARTS = [
-  { key: "leftArm", label: "左手臂" },
-  { key: "rightArm", label: "右手臂" },
+  { key: "leftArm", label: "左臂" },
+  { key: "rightArm", label: "右臂" },
   { key: "trunk", label: "軀幹" },
   { key: "leftLeg", label: "左腿" },
   { key: "rightLeg", label: "右腿" },
