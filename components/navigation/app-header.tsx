@@ -77,6 +77,7 @@ export function AppHeader({ user }: AppHeaderProps) {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
     "--brand-gap": "0rem",
     "--logo-size": "2.625rem",
+    transitionTimingFunction: isHeaderVisible ? "cubic-bezier(0.16, 1, 0.3, 1)" : "cubic-bezier(0.55, 0, 0.45, 1)",
     transform: "translateY(var(--app-header-translate))",
   };
   const navItems: NavItem[] = [
@@ -125,7 +126,7 @@ export function AppHeader({ user }: AppHeaderProps) {
 
       if (currentScrollY < 12 || delta < -6) {
         setIsHeaderVisible(true);
-      } else if (delta > 6 && currentScrollY > 80 && !isSidebarOpen) {
+      } else if (delta > 2 && !isSidebarOpen) {
         setIsHeaderVisible(false);
       }
 
@@ -188,6 +189,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       }
 
       document.documentElement.style.setProperty("--app-header-offset", `${headerElement.offsetHeight}px`);
+      document.documentElement.style.setProperty("--app-header-sticky-offset", isHeaderVisible ? `${headerElement.offsetHeight}px` : "0px");
     }
 
     updateHeaderOffset();
@@ -207,12 +209,12 @@ export function AppHeader({ user }: AppHeaderProps) {
       resizeObserver.disconnect();
       window.removeEventListener("resize", updateHeaderOffset);
     };
-  }, []);
+  }, [isHeaderVisible]);
 
   return (
     <>
       <header
-        className="sticky top-0 z-40 border-b border-border/55 bg-background/94 shadow-[0_8px_22px_rgba(16,35,63,0.08)] backdrop-blur-sm transition-transform duration-300 ease-out"
+        className="sticky top-0 z-40 border-b border-border/55 bg-background/94 shadow-[0_8px_22px_rgba(16,35,63,0.08)] backdrop-blur-sm transition-transform duration-[420ms] will-change-transform motion-reduce:transition-none"
         ref={headerRef}
         style={headerStyle}
       >
