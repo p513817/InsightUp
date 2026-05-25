@@ -8,7 +8,7 @@ import { FriendsTable } from "@/components/friends/friends-table";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { Button } from "@/components/ui/button";
 import type { FriendSnapshot } from "@/lib/friends/types";
-import { formatLongDate } from "@/lib/presentation";
+import { formatCompactDate } from "@/lib/presentation";
 
 interface FriendsWorkspaceProps {
   initialFriends: FriendSnapshot[];
@@ -101,7 +101,7 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
             </div>
             <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">最新</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatLongDate(freshestFriend?.latestRecordedAt)}</p>
+              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatCompactDate(freshestFriend?.latestRecordedAt)}</p>
             </div>
           </StatsScrollbarRow>
         </div>

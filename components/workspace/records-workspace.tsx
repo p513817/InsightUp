@@ -273,8 +273,7 @@ export function RecordsWorkspace({
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">最近量測</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
-                <span className="sm:hidden">{formatCompactDate(latestRecord?.date)}</span>
-                <span className="hidden sm:inline">{formatLongDate(latestRecord?.date)}</span>
+                {formatCompactDate(latestRecord?.date)}
               </p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">

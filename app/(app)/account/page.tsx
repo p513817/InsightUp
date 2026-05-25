@@ -2,7 +2,7 @@ import { FriendCodeCard } from "@/components/friends/friend-code-card";
 import { ensureCurrentUserProfile } from "@/lib/friends/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listRecords } from "@/lib/inbody/records";
-import { formatLongDate, getUserInitials, summarizeUser } from "@/lib/presentation";
+import { formatCompactDate, getUserInitials, summarizeUser } from "@/lib/presentation";
 
 async function getCurrentPlanDisplayName(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string) {
   const nowIso = new Date().toISOString();
@@ -88,7 +88,7 @@ export default async function AccountPage() {
 
               <div className="surface-soft-card rounded-[1rem] p-4">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">加入日期</p>
-                <p className="mt-2 font-display text-2xl text-foreground">{formatLongDate(summary.createdAt)}</p>
+                <p className="mt-2 font-display text-2xl text-foreground">{formatCompactDate(summary.createdAt)}</p>
               </div>
 
               <div className="surface-soft-card rounded-[1rem] p-4">

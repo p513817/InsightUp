@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
+import { formatCompactDate } from "@/lib/presentation";
 
 interface TrendSummaryResponse {
   summary: string | null;
@@ -177,7 +178,7 @@ export function TrendSummaryWorkspace() {
           >
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">摘要日期</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{requestDate || "尚未生成"}</p>
+              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{requestDate ? formatCompactDate(requestDate) : "尚未生成"}</p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">今日額度</p>
