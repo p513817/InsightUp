@@ -118,7 +118,6 @@ export function RecordManager({
   onToggleInclusion,
 }: RecordManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [inclusionFilter, setInclusionFilter] = useState<"all" | "included" | "excluded">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
   const [isAddButtonFeedbackVisible, setIsAddButtonFeedbackVisible] = useState(false);
@@ -137,23 +136,18 @@ export function RecordManager({
           formatCompactDate(record.date),
           formatSourceType(record.sourceType),
           record.notes || "",
-          record.isIncludedInCharts ? "included" : "excluded",
         ]
           .join(" ")
           .toLowerCase()
           .includes(normalizedQuery);
 
-      const matchesInclusion =
-        inclusionFilter === "all" ||
-        (inclusionFilter === "included" ? record.isIncludedInCharts : !record.isIncludedInCharts);
-
-      return matchesQuery && matchesInclusion;
+      return matchesQuery;
     });
-  }, [inclusionFilter, searchQuery, sortedRecords]);
+  }, [searchQuery, sortedRecords]);
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }));
-  }, [searchQuery, inclusionFilter]);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!isAddButtonFeedbackVisible) {
@@ -169,9 +163,8 @@ export function RecordManager({
     };
   }, [isAddButtonFeedbackVisible]);
 
-  function resetFilters() {
+  function clearSearch() {
     setSearchQuery("");
-    setInclusionFilter("all");
   }
 
   function handleAddClick() {
@@ -333,13 +326,13 @@ export function RecordManager({
   const mobileFooterColumns = getMobileColumns("footer");
   const desktopColumnIds = new Set(["date", "weight", "muscle", "fatPercent", "analysis", "actions"]);
   const desktopCenteredColumnIds = new Set(["analysis", "actions"]);
-  const hasActiveFilters = searchQuery.trim().length > 0 || inclusionFilter !== "all";
+  const hasSearchQuery = searchQuery.trim().length > 0;
 
   return (
     <div className="space-y-2.5 pb-24 sm:space-y-3 sm:pb-28">
       {records.length ? (
-        <div className="sticky top-20 z-30 py-1 sm:top-24">
-          <Card className="gap-0 border-border/70 bg-card/94 p-2.5 shadow-[0_12px_30px_rgb(23_52_93/0.12)] backdrop-blur">
+        <div>
+          <Card className="gap-0 border-border/60 bg-card/90 p-2.5">
             <div className="flex min-w-0 items-center gap-2">
               <label className="sr-only" htmlFor="record-search">
                 搜尋日期或備註
@@ -355,36 +348,13 @@ export function RecordManager({
                 />
               </div>
 
-              <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto">
-                {[
-                  { value: "all", label: "全部" },
-                  { value: "included", label: "納入" },
-                  { value: "excluded", label: "排除" },
-                ].map((option) => {
-                  const isActive = inclusionFilter === option.value;
-
-                  return (
-                    <Button
-                      className={`shrink-0 cursor-pointer ${isActive ? "border-transparent" : ""}`}
-                      key={option.value}
-                      onClick={() => setInclusionFilter(option.value as typeof inclusionFilter)}
-                      size="sm"
-                      type="button"
-                      variant={isActive ? "default" : "outline"}
-                    >
-                      {option.label}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              {hasActiveFilters ? (
+              {hasSearchQuery ? (
                 <Button
-                  aria-label="清除篩選"
+                  aria-label="清除搜尋"
                   className="size-10 shrink-0 cursor-pointer px-0 sm:size-11"
-                  onClick={resetFilters}
+                  onClick={clearSearch}
                   size="icon"
-                  title="清除篩選"
+                  title="清除搜尋"
                   type="button"
                   variant="ghost"
                 >
@@ -488,9 +458,9 @@ export function RecordManager({
         ) : (
           <Card className="surface-state-panel items-center gap-2 p-8 text-center">
             <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">找不到符合條件的紀錄</p>
-            <p className="max-w-xl text-sm leading-6 text-muted-foreground">可以調整搜尋關鍵字或篩選條件，重新縮小你要看的資料範圍。</p>
-            <Button onClick={resetFilters} variant="outline">
-              清除篩選
+            <p className="max-w-xl text-sm leading-6 text-muted-foreground">可以調整搜尋關鍵字，重新縮小你要看的資料範圍。</p>
+            <Button onClick={clearSearch} variant="outline">
+              清除搜尋
             </Button>
           </Card>
         )
