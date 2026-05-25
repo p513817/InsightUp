@@ -334,6 +334,30 @@ body.dialog-overlay-no-blur .dialog-overlay {
     border-color: rgba(24, 155, 140, 0.34);
     box-shadow: 0 0 0 1px rgba(24, 155, 140, 0.08);
   }
+
+  .ai-generate-pulse {
+    isolation: isolate;
+    animation: ai-generate-button-glow 3.2s ease-in-out infinite;
+  }
+
+  .ai-generate-pulse::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle at 50% 42%, rgb(var(--accent) / 0.5), transparent 62%),
+      radial-gradient(circle at 50% 50%, rgb(var(--primary-strong) / 0.22), transparent 72%);
+    opacity: 0.5;
+    animation: ai-generate-inner-glow 3.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .ai-generate-pulse > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .brand-motion-line {
@@ -446,6 +470,28 @@ body.dialog-overlay-no-blur .dialog-overlay {
   }
 }
 
+@keyframes ai-generate-button-glow {
+  0%,
+  100% {
+    box-shadow: 0 12px 28px rgb(23 52 93 / 0.2), 0 0 0 0 rgb(var(--accent) / 0), 0 0 0 0 rgb(var(--primary) / 0);
+  }
+
+  48% {
+    box-shadow: 0 16px 34px rgb(23 52 93 / 0.25), 0 0 0 8px rgb(var(--accent) / 0.22), 0 0 0 15px rgb(var(--accent) / 0.08);
+  }
+}
+
+@keyframes ai-generate-inner-glow {
+  0%,
+  100% {
+    opacity: 0.34;
+  }
+
+  48% {
+    opacity: 0.86;
+  }
+}
+
 .animate-fade-up,
 .animate-fade-up-delay-1,
 .animate-fade-up-delay-2,
@@ -498,6 +544,11 @@ body.dialog-overlay-no-blur .dialog-overlay {
   .animate-fade-up-delay-3,
   .animate-fade-up-delay-4,
   .animate-fade-up-delay-5 {
+    animation: none;
+  }
+
+  .ai-generate-pulse,
+  .ai-generate-pulse::before {
     animation: none;
   }
 }
