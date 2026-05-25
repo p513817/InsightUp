@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { Activity, UserRound } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Activity, Check, LayoutTemplate, Pencil, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { MiniTrendGrid } from "@/components/charts/mini-trend-grid";
+import { MiniTrendGrid, type TrendGridLayout } from "@/components/charts/mini-trend-grid";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
@@ -21,6 +21,16 @@ interface RecordsWorkspaceProps {
 }
 
 type TrendMode = "overall" | "segmental";
+
+const TREND_LAYOUT_STORAGE_KEY = "insightup.dashboard.trend-layout";
+
+const TREND_LAYOUT_OPTIONS: Array<{ value: TrendGridLayout; label: string }> = [
+  { value: "auto", label: "自動" },
+  { value: "one", label: "單欄" },
+  { value: "two", label: "雙欄" },
+];
+
+const MIN_TWO_COLUMN_WIDTH = 360;
 
 const SEGMENT_CHART_VIEWS = CHART_VIEWS.filter((view) => view.key !== "overall") as Array<{
   key: SegmentPartKey;
@@ -57,7 +67,7 @@ const SEGMENT_ICON_SRC: Record<SegmentPartKey, string> = {
 };
 
 function SegmentIcon({ view, className = "size-5" }: { view: SegmentPartKey; className?: string }) {
-  const shouldMirror = view === "leftArm" || view === "leftLeg";
+  const shouldMirror = view === "rightArm" || view === "leftLeg";
 
   return (
     <img
@@ -105,6 +115,35 @@ function TrendModeButton({
   );
 }
 
+function TrendToolButton({
+  active,
+  children,
+  label,
+  onClick,
+}: {
+  active?: boolean;
+  children: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      aria-pressed={active}
+      className={`grid size-10 cursor-pointer place-items-center rounded-xl border text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+        active
+          ? "border-primary/45 bg-primary/10 text-primary"
+          : "border-border/70 bg-card/92 hover:border-accent/55 hover:bg-accent/10 hover:text-foreground"
+      }`}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
 export function RecordsWorkspace({
   initialDashboardMetricOrder = [],
   initialRecords,
@@ -116,6 +155,10 @@ export function RecordsWorkspace({
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
   const [busyRecordId, setBusyRecordId] = useState<string | null>(null);
   const [trendMode, setTrendMode] = useState<TrendMode>("overall");
+  const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("auto");
+  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
+  const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
+  const [trendEditMode, setTrendEditMode] = useState(false);
 
   const overallChart = buildChartPayload(records, "overall");
   const segmentalCharts = SEGMENT_CHART_VIEWS.map((view) => ({
@@ -125,6 +168,42 @@ export function RecordsWorkspace({
   const latestRecord = records.at(-1);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
+
+  useEffect(() => {
+    const savedLayout = window.localStorage.getItem(TREND_LAYOUT_STORAGE_KEY);
+
+    if (savedLayout === "auto" || savedLayout === "one" || savedLayout === "two") {
+      setTrendLayout(savedLayout);
+    }
+  }, []);
+
+  useEffect(() => {
+    function syncSupportedLayouts() {
+      const nextSupportsTwoColumnLayout = window.innerWidth >= MIN_TWO_COLUMN_WIDTH;
+      setSupportsTwoColumnLayout(nextSupportsTwoColumnLayout);
+
+      if (!nextSupportsTwoColumnLayout) {
+        setTrendLayout((current) => (current === "two" ? "auto" : current));
+      }
+    }
+
+    syncSupportedLayouts();
+    window.addEventListener("resize", syncSupportedLayouts);
+
+    return () => {
+      window.removeEventListener("resize", syncSupportedLayouts);
+    };
+  }, []);
+
+  function applyTrendLayout(nextLayout: TrendGridLayout) {
+    if (nextLayout === "two" && !supportsTwoColumnLayout) {
+      return;
+    }
+
+    setTrendLayout(nextLayout);
+    setLayoutMenuOpen(false);
+    window.localStorage.setItem(TREND_LAYOUT_STORAGE_KEY, nextLayout);
+  }
 
   async function handleSave(values: RecordFormValues) {
     try {
@@ -241,8 +320,55 @@ export function RecordsWorkspace({
             </div>
           </div>
 
+          <div className="-mt-1 flex justify-end px-1">
+            <div className="relative flex items-center gap-1.5">
+              <TrendToolButton active={layoutMenuOpen} label="調整趨勢欄數" onClick={() => setLayoutMenuOpen((current) => !current)}>
+                <LayoutTemplate className="size-4" />
+              </TrendToolButton>
+
+              {layoutMenuOpen ? (
+                <div className="absolute right-0 top-12 z-40 w-36 rounded-2xl border border-border/80 bg-card/98 p-1.5 shadow-panel backdrop-blur">
+                  {TREND_LAYOUT_OPTIONS.map((option) => {
+                    const disabled = option.value === "two" && !supportsTwoColumnLayout;
+
+                    return (
+                      <button
+                        className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground/45 ${
+                          disabled
+                            ? ""
+                            : `cursor-pointer hover:bg-primary/8 ${trendLayout === option.value ? "text-primary" : "text-foreground"}`
+                        }`}
+                        disabled={disabled}
+                        key={option.value}
+                        onClick={() => applyTrendLayout(option.value)}
+                        title={disabled ? "目前螢幕寬度不支援雙欄" : undefined}
+                        type="button"
+                      >
+                        <span>{option.label}</span>
+                        {trendLayout === option.value ? <Check className="size-4" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              <TrendToolButton
+                active={trendEditMode}
+                label={trendEditMode ? "結束編輯顯示指標" : "編輯顯示指標"}
+                onClick={() => setTrendEditMode((current) => !current)}
+              >
+                <Pencil className="size-4" />
+              </TrendToolButton>
+            </div>
+          </div>
+
           {trendMode === "overall" ? (
-            <MiniTrendGrid chart={overallChart} initialMetricOrder={initialDashboardMetricOrder} />
+            <MiniTrendGrid
+              chart={overallChart}
+              editMode={trendEditMode}
+              initialMetricOrder={initialDashboardMetricOrder}
+              layout={trendLayout}
+            />
           ) : (
             <div className="space-y-4">
               {segmentalCharts.map((segment) => (
@@ -253,7 +379,7 @@ export function RecordsWorkspace({
                     </span>
                     <h3 className="font-display text-lg leading-tight text-foreground">{segment.label}</h3>
                   </div>
-                  <MiniTrendGrid chart={segment.chart} />
+                  <MiniTrendGrid chart={segment.chart} editMode={trendEditMode} layout={trendLayout} />
                 </section>
               ))}
             </div>

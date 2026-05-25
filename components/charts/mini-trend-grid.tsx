@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
-import { GripVertical } from "lucide-react";
+import { Eye, EyeOff, GripVertical } from "lucide-react";
 import type { DotProps } from "recharts";
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -14,15 +14,33 @@ import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/present
 
 interface MiniTrendGridProps {
   chart: ChartPayload;
+  editMode?: boolean;
   initialMetricOrder?: string[];
+  layout?: TrendGridLayout;
 }
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
+const HIDDEN_METRICS_STORAGE_KEY = "insightup.dashboard.hidden-metrics";
 const SAVE_ORDER_DEBOUNCE_MS = 260;
 const EMPTY_INITIAL_METRIC_ORDER: string[] = [];
 
+export type TrendGridLayout = "auto" | "one" | "two";
+
+const COMPACT_CARD_CLASS = "min-h-[8.75rem] gap-2 py-3 pl-3 pr-3";
+const COMPACT_CHART_CLASS = "h-20 rounded-[0.9rem] px-1.5 py-1 sm:h-24";
+
+const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
+  auto: "grid grid-cols-2 gap-2 xl:grid-cols-3 2xl:grid-cols-4",
+  one: "grid gap-2 grid-cols-1",
+  two: "grid grid-cols-2 gap-2",
+};
+
 function getMetricOrderStorageKey(view: ChartPayload["view"]) {
   return view === "overall" ? METRIC_ORDER_STORAGE_KEY : `${METRIC_ORDER_STORAGE_KEY}.${view}`;
+}
+
+function getHiddenMetricsStorageKey(view: ChartPayload["view"]) {
+  return view === "overall" ? HIDDEN_METRICS_STORAGE_KEY : `${HIDDEN_METRICS_STORAGE_KEY}.${view}`;
 }
 
 function getNumericValue(value: string | number | null | undefined) {
@@ -104,13 +122,16 @@ function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) 
 }
 
 interface SortableMetricCardProps {
+  canHide: boolean;
   deltaToneClass: string;
+  editMode: boolean;
   formattedDelta: string;
   metric: ChartMetric;
+  onHide: (metricKey: string) => void;
   points: Array<{ date: string; label: string; value: number | null }>;
 }
 
-function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: SortableMetricCardProps) {
+function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta, metric, onHide, points }: SortableMetricCardProps) {
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
     id: metric.key,
     transition: {
@@ -121,39 +142,54 @@ function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: 
 
   return (
     <Card
-      className={`dashboard-card surface-chart-shell relative gap-3 overflow-hidden py-4 pl-4 pr-4 [will-change:transform] ${
+      className={`dashboard-card surface-chart-shell relative overflow-hidden [will-change:transform] ${COMPACT_CARD_CLASS} ${
         isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_22px_46px_rgba(16,35,63,0.18)]" : ""
-      }`}
+      } ${editMode ? "border-accent/70 bg-card shadow-[0_14px_30px_rgba(23,52,93,0.13)]" : ""}`}
       data-dashboard-metric-key={metric.key}
       data-dragging={isDragging ? "true" : undefined}
+      data-editing={editMode ? "true" : undefined}
       ref={setNodeRef}
       style={{
         transform: transformToCss(transform),
         transition: isDragging ? "none" : transition,
       }}
     >
-      <div className="flex items-start justify-between gap-3">
+
+      <div className="grid h-8 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <button
-            aria-label={`拖曳排序 ${metric.label}`}
-            className="grid size-8 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-colors duration-100 hover:bg-primary/7 hover:text-primary active:cursor-grabbing active:bg-primary/10"
-            ref={setActivatorNodeRef}
-            type="button"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="size-4" />
-          </button>
-          <p className="truncate text-sm font-medium text-muted-foreground">{metric.label}</p>
+          {editMode ? (
+            <button
+              aria-label={`隱藏 ${metric.label}`}
+              className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-danger/8 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45"
+              disabled={!canHide}
+              onClick={() => onHide(metric.key)}
+              title={canHide ? `隱藏 ${metric.label}` : "至少保留 1 個指標"}
+              type="button"
+            >
+              <EyeOff className="size-4" />
+            </button>
+          ) : (
+            <button
+              aria-label={`移動 ${metric.label}`}
+              className="grid size-7 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-colors duration-100 hover:bg-primary/7 hover:text-primary active:cursor-grabbing active:bg-primary/10"
+              ref={setActivatorNodeRef}
+              type="button"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="size-4" />
+            </button>
+          )}
+          <p className="truncate text-sm font-medium leading-none text-muted-foreground">{metric.label}</p>
         </div>
-        <div className="flex items-center gap-1.5 text-right">
-          <p className={`text-sm font-semibold ${deltaToneClass}`}>{formattedDelta}</p>
+        <div className="flex min-w-0 items-center justify-end text-right">
+          <p className={`whitespace-nowrap text-sm font-semibold leading-none tabular-nums ${deltaToneClass}`}>{formattedDelta}</p>
         </div>
       </div>
 
-      <div className="surface-chart-shell h-24 rounded-[1.1rem] px-2 py-1.5 sm:h-28">
+      <div className={`surface-chart-shell ${COMPACT_CHART_CLASS}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={points} margin={{ top: 16, right: 8, bottom: 2, left: 8 }}>
+          <LineChart data={points} margin={{ top: 18, right: 16, bottom: 2, left: 16 }}>
             <YAxis domain={["dataMin - 1", "dataMax + 1"]} hide />
             <Tooltip
               content={({ active, payload }) => {
@@ -186,8 +222,14 @@ function SortableMetricCard({ deltaToneClass, formattedDelta, metric, points }: 
   );
 }
 
-export function MiniTrendGrid({ chart, initialMetricOrder = EMPTY_INITIAL_METRIC_ORDER }: MiniTrendGridProps) {
+export function MiniTrendGrid({
+  chart,
+  editMode = false,
+  initialMetricOrder = EMPTY_INITIAL_METRIC_ORDER,
+  layout = "auto",
+}: MiniTrendGridProps) {
   const [isChartReady, setIsChartReady] = useState(false);
+  const [hiddenMetricKeys, setHiddenMetricKeys] = useState<string[]>([]);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const orderedMetricsRef = useRef(chart.metrics);
   const saveTimeoutIdRef = useRef<number | null>(null);
@@ -247,6 +289,23 @@ export function MiniTrendGrid({ chart, initialMetricOrder = EMPTY_INITIAL_METRIC
   }, [chart.metrics, chart.view, initialMetricOrder]);
 
   useEffect(() => {
+    const hiddenMetricsRaw = window.localStorage.getItem(getHiddenMetricsStorageKey(chart.view));
+
+    if (!hiddenMetricsRaw) {
+      setHiddenMetricKeys([]);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(hiddenMetricsRaw) as string[];
+      const availableKeys = new Set(chart.metrics.map((metric) => metric.key));
+      setHiddenMetricKeys(parsed.filter((key) => availableKeys.has(key)));
+    } catch {
+      setHiddenMetricKeys([]);
+    }
+  }, [chart.metrics, chart.view]);
+
+  useEffect(() => {
     return () => {
       if (saveTimeoutIdRef.current) {
         window.clearTimeout(saveTimeoutIdRef.current);
@@ -271,8 +330,8 @@ export function MiniTrendGrid({ chart, initialMetricOrder = EMPTY_INITIAL_METRIC
 
     saveTimeoutIdRef.current = window.setTimeout(() => {
       void persistMetricOrder(nextMetricOrder).catch(() => {
-        toast.error("排序未同步到雲端。", {
-          description: "目前裝置上的順序仍會保留，稍後再調整一次即可重試。",
+        toast.error("無法儲存卡片排序", {
+          description: "這次調整已保留在此裝置，重新登入後可能需要再調整一次。",
         });
       });
     }, SAVE_ORDER_DEBOUNCE_MS);
@@ -285,14 +344,37 @@ export function MiniTrendGrid({ chart, initialMetricOrder = EMPTY_INITIAL_METRIC
       return;
     }
 
-    const oldIndex = orderedMetricsRef.current.findIndex((metric) => metric.key === active.id);
-    const newIndex = orderedMetricsRef.current.findIndex((metric) => metric.key === over.id);
+    const visibleMetrics = orderedMetricsRef.current.filter((metric) => !hiddenMetricKeys.includes(metric.key));
+    const hiddenMetrics = orderedMetricsRef.current.filter((metric) => hiddenMetricKeys.includes(metric.key));
+    const oldIndex = visibleMetrics.findIndex((metric) => metric.key === active.id);
+    const newIndex = visibleMetrics.findIndex((metric) => metric.key === over.id);
 
     if (oldIndex === -1 || newIndex === -1) {
       return;
     }
 
-    applyMetricOrder(arrayMove(orderedMetricsRef.current, oldIndex, newIndex));
+    applyMetricOrder([...arrayMove(visibleMetrics, oldIndex, newIndex), ...hiddenMetrics]);
+  }
+
+  function applyHiddenMetricKeys(nextHiddenMetricKeys: string[]) {
+    setHiddenMetricKeys(nextHiddenMetricKeys);
+    window.localStorage.setItem(getHiddenMetricsStorageKey(chart.view), JSON.stringify(nextHiddenMetricKeys));
+  }
+
+  function hideMetric(metricKey: string) {
+    if (orderedMetrics.length - hiddenMetricKeys.length <= 1 || hiddenMetricKeys.includes(metricKey)) {
+      return;
+    }
+
+    applyHiddenMetricKeys([...hiddenMetricKeys, metricKey]);
+  }
+
+  function restoreMetric(metricKey: string) {
+    applyHiddenMetricKeys(hiddenMetricKeys.filter((key) => key !== metricKey));
+  }
+
+  function restoreAllMetrics() {
+    applyHiddenMetricKeys([]);
   }
 
   if (!isChartReady) {
@@ -309,34 +391,70 @@ export function MiniTrendGrid({ chart, initialMetricOrder = EMPTY_INITIAL_METRIC
 
   const latestPoint = chart.points.at(-1);
   const previousPoint = chart.points.at(-2);
+  const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
+  const hiddenMetrics = orderedMetrics.filter((metric) => hiddenMetricKeys.includes(metric.key));
+  const canHideVisibleMetric = visibleMetrics.length > 1;
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
-      <SortableContext items={orderedMetrics.map((metric) => metric.key)} strategy={rectSortingStrategy}>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {orderedMetrics.map((metric) => {
-            const latestValue = getNumericValue(latestPoint?.[metric.key]);
-            const previousValue = getNumericValue(previousPoint?.[metric.key]);
-            const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
-            const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-danger";
-            const points = chart.points.map((point) => ({
-              date: String(point.date || ""),
-              label: String(point.label || ""),
-              value: getNumericValue(point[metric.key]),
-            }));
+    <div className="space-y-2">
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+        <SortableContext items={visibleMetrics.map((metric) => metric.key)} strategy={rectSortingStrategy}>
+          <div className={LAYOUT_GRID_CLASS_MAP[layout]}>
+            {visibleMetrics.map((metric) => {
+              const latestValue = getNumericValue(latestPoint?.[metric.key]);
+              const previousValue = getNumericValue(previousPoint?.[metric.key]);
+              const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
+              const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-danger";
+              const points = chart.points.map((point) => ({
+                date: String(point.date || ""),
+                label: String(point.label || ""),
+                value: getNumericValue(point[metric.key]),
+              }));
 
-            return (
-              <SortableMetricCard
-                deltaToneClass={deltaToneClass}
-                formattedDelta={formatDelta(metric, delta)}
+              return (
+                <SortableMetricCard
+                  canHide={canHideVisibleMetric}
+                  deltaToneClass={deltaToneClass}
+                  editMode={editMode}
+                  formattedDelta={formatDelta(metric, delta)}
+                  key={metric.key}
+                  metric={metric}
+                  onHide={hideMetric}
+                  points={points}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {editMode && hiddenMetrics.length ? (
+        <section className="rounded-[1.1rem] border border-dashed border-border/80 bg-card/55 px-3 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">已隱藏指標</p>
+            <button
+              className="cursor-pointer rounded-lg px-2 py-1 text-xs font-semibold text-primary transition-colors duration-150 hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              onClick={restoreAllMetrics}
+              type="button"
+            >
+              全部復原
+            </button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {hiddenMetrics.map((metric) => (
+              <button
+                className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/75 bg-card px-3 text-sm font-medium text-foreground transition-colors duration-150 hover:border-primary/45 hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 key={metric.key}
-                metric={metric}
-                points={points}
-              />
-            );
-          })}
-        </div>
-      </SortableContext>
-    </DndContext>
+                onClick={() => restoreMetric(metric.key)}
+                type="button"
+              >
+                <Eye className="size-4 text-muted-foreground" />
+                <span>{metric.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </div>
   );
 }
