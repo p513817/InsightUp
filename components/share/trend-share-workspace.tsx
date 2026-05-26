@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Palette, Type, X } from "lucide-react";
+import { Check, Columns3, Download, Image as ImageIcon, ListChecks, TrendingUp, Type, X } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -402,7 +402,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [titleMode, setTitleMode] = useState<TitleMode>("show");
   const [titleAlign, setTitleAlign] = useState<TitleAlign>("left");
   const [isSaving, setIsSaving] = useState(false);
-  const [activeControl, setActiveControl] = useState<ControlPanel | null>(null);
+  const [activeControl, setActiveControl] = useState<ControlPanel | null>("style");
 
   const previewRef = useRef<HTMLDivElement>(null);
   const selectedMetrics = useMemo(() => shareMetrics.filter((item) => selectedIds.includes(item.id)), [selectedIds, shareMetrics]);
@@ -510,7 +510,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         </div>
       ) : null}
 
-      <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur">
+      {activeControl ? (
+        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur">
         {activeControl === "style" ? (
           <div className="min-w-0">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">樣式</p>
@@ -640,7 +641,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             </div>
           </div>
         ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-between px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <Button aria-label="取消" className="pointer-events-auto size-12 rounded-full shadow-panel" onClick={() => router.back()} size="icon" type="button" variant="outline">
@@ -657,7 +659,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             onClick={() => handleControlToggle("style")}
             type="button"
           >
-            <Palette className="size-4" />
+            <TrendingUp className="size-4" />
           </button>
           <button
             aria-label="調整背景"
