@@ -29,7 +29,7 @@ type ShareMetric = {
 };
 
 const EXPORT_IMAGE_WIDTH = 1080;
-const EXPORT_IMAGE_HEIGHT = 1920;
+const SHARE_CAPTURE_RETRY_DELAY_MS = 180;
 const TREND_CHART_MARGIN = { bottom: 8, left: 20, right: 20, top: 8 };
 const TIMELINE_CHART_MARGIN = { bottom: 0, left: 20, right: 20, top: 0 };
 
@@ -116,6 +116,85 @@ function formatTimelineDate(date: string | undefined) {
   }
 
   return new Intl.DateTimeFormat("zh-TW", { month: "numeric", day: "numeric" }).format(new Date(date));
+}
+
+async function dataUrlToImageFile(dataUrl: string, fileName: string) {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], fileName, { type: "image/png" });
+}
+
+function canShareImageFile(file: File) {
+  return typeof navigator !== "undefined" && typeof navigator.share === "function" && navigator.canShare?.({ files: [file] }) === true;
+}
+
+function downloadDataUrl(dataUrl: string, fileName: string) {
+  const link = document.createElement("a");
+  link.download = fileName;
+  link.href = dataUrl;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function waitForAnimationFrame() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function waitForDelay(delayMs: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, delayMs));
+}
+
+async function waitForSharePreviewReady() {
+  await document.fonts?.ready.catch(() => undefined);
+  await waitForAnimationFrame();
+  await waitForAnimationFrame();
+}
+
+async function renderSharePreviewImage(previewNode: HTMLDivElement) {
+  await waitForSharePreviewReady();
+
+  const sourceRect = previewNode.getBoundingClientRect();
+  const sourceWidth = Math.max(1, Math.round(sourceRect.width));
+  const sourceHeight = Math.max(1, Math.round(sourceRect.height));
+  const exportWidth = EXPORT_IMAGE_WIDTH;
+  const exportHeight = Math.round((exportWidth * sourceHeight) / sourceWidth);
+
+  const options = {
+    cacheBust: true,
+    canvasHeight: exportHeight,
+    canvasWidth: exportWidth,
+    height: sourceHeight,
+    pixelRatio: 1,
+    scrollX: 0,
+    scrollY: 0,
+    skipFonts: false,
+    style: {
+      height: `${sourceHeight}px`,
+      margin: "0",
+      transform: "none",
+      transformOrigin: "top left",
+      width: `${sourceWidth}px`,
+    },
+    width: sourceWidth,
+  };
+
+  try {
+    return {
+      dataUrl: await toPng(previewNode, options),
+      exportHeight,
+      exportWidth,
+    };
+  } catch {
+    await waitForDelay(SHARE_CAPTURE_RETRY_DELAY_MS);
+    await waitForSharePreviewReady();
+
+    return {
+      dataUrl: await toPng(previewNode, options),
+      exportHeight,
+      exportWidth,
+    };
+  }
 }
 
 function getTitleAlignClass(align: TitleAlign) {
@@ -356,14 +435,14 @@ function SharePreviewContent({
   titleMode: TitleMode;
 }) {
   return (
-    <div className={cn("flex h-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
+    <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
       <div className="min-w-0">
-        <div className={cn("flex min-w-0 flex-1 flex-col", getTitleAlignClass(titleAlign))}>
+        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))}>
           <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">我的身體趨勢</h2> : null}</div>
         </div>
       </div>
 
-      <div className={cn("grid min-w-0 gap-1.5", effectiveShareColumns === 1 ? "grid-cols-1" : "grid-cols-2")}>
+      <div className={cn("grid w-full min-w-0 gap-1.5", effectiveShareColumns === 1 ? "grid-cols-1" : "grid-cols-2")}>
         {selectedMetrics.length ? (
           selectedMetrics.map((item) =>
             shareStyle === "trend" ? (
@@ -379,7 +458,7 @@ function SharePreviewContent({
         )}
       </div>
 
-      <div className="grid min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
+      <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
         <div className="flex h-6 items-end pb-[3px]">
           <p className={cn("truncate font-display text-sm leading-none", background === "dark" ? "text-white/55" : "text-muted-foreground/75")}>Insight Up</p>
         </div>
@@ -443,33 +522,38 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     const toastId = toast.loading("正在產生圖片...");
 
     try {
-      const sourceWidth = previewNode.offsetWidth;
-      const sourceHeight = previewNode.offsetHeight;
-      const exportWidth = EXPORT_IMAGE_WIDTH;
-      const exportHeight = Math.round((EXPORT_IMAGE_WIDTH * sourceHeight) / sourceWidth);
-      const dataUrl = await toPng(previewNode, {
-        cacheBust: true,
-        height: sourceHeight,
-        width: sourceWidth,
-        canvasHeight: exportHeight,
-        canvasWidth: exportWidth,
-        pixelRatio: 1,
-        skipFonts: false,
-        style: {
-          height: `${sourceHeight}px`,
-          margin: "0",
-          width: `${sourceWidth}px`,
-        },
-      });
+      const { dataUrl, exportHeight, exportWidth } = await renderSharePreviewImage(previewNode);
+      const fileName = `insightup-trend-${latestDate ?? "share"}-${exportWidth}x${exportHeight}.png`;
 
-      const link = document.createElement("a");
-      link.download = `insightup-trend-${latestDate ?? "share"}-${exportWidth}x${exportHeight}.png`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      try {
+        const imageFile = await dataUrlToImageFile(dataUrl, fileName);
+        if (canShareImageFile(imageFile)) {
+          try {
+            await navigator.share({
+              files: [imageFile],
+              title: "Insight Up",
+            });
+            toast.success("已開啟系統分享，可儲存到照片或分享到 IG。", { id: toastId });
+            return;
+          } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") {
+              toast.dismiss(toastId);
+              return;
+            }
+          }
+        }
+      } catch {
+        // File share support can fail independently; keep the download fallback available.
+      }
+
+      downloadDataUrl(dataUrl, fileName);
       toast.success("圖片已下載。", { id: toastId });
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        toast.dismiss(toastId);
+        return;
+      }
+
       toast.error("圖片下載失敗，請再試一次。", { id: toastId });
     } finally {
       setIsSaving(false);
@@ -485,7 +569,12 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   }
 
   return (
-    <div className="relative -mx-6 flex min-h-[calc(100vh-var(--app-header-offset,0px)-1rem)] w-[calc(100%+3rem)] max-w-none flex-col overflow-x-hidden px-4 pb-52 sm:px-6 lg:-mx-10 lg:w-[calc(100%+5rem)] lg:px-10">
+    <div
+      className={cn(
+        "relative -mx-6 flex min-h-[calc(100vh-var(--app-header-offset,0px)-1rem)] w-[calc(100%+3rem)] max-w-none flex-col overflow-x-hidden px-4 sm:px-6 lg:-mx-10 lg:w-[calc(100%+5rem)] lg:px-10",
+        activeControl ? "pb-52" : "pb-24",
+      )}
+    >
       <h1 className="sr-only">分享趨勢數據</h1>
 
       <section className="flex min-h-[calc(100vh-var(--app-header-offset,0px)-16.5rem)] min-w-0 shrink-0 items-start justify-center pt-2">
