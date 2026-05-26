@@ -34,6 +34,7 @@ const TREND_CHART_MARGIN = { bottom: 8, left: 20, right: 20, top: 8 };
 const TIMELINE_CHART_MARGIN = { bottom: 0, left: 20, right: 20, top: 0 };
 const SHARE_COLOR_SWATCHES = ["#1c365f", "#3d7bb2", "#189b8c", "#79d7c3", "#b56878", "#8a659f", "#f59e0b", "#ef4444"];
 const BACKGROUND_COLOR_SWATCHES = SHARE_COLOR_SWATCHES;
+const TIMELINE_MONTH_LABELS = ["Jan.", "Feb.", "Mar.", "Apr.", "May.", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."];
 
 /*
 const OVERALL_LABELS: Record<string, string> = {
@@ -214,6 +215,13 @@ function formatTimelineDate(date: string | undefined) {
   return new Intl.DateTimeFormat("zh-TW", { month: "numeric", day: "numeric" }).format(new Date(date));
 }
 
+function formatTimelineDateParts(date: string | undefined) {
+  const [month = "", day = ""] = formatTimelineDate(date).split("/");
+  const monthIndex = Number(month) - 1;
+
+  return { day: day.padStart(2, "0"), month: TIMELINE_MONTH_LABELS[monthIndex] ?? month.padStart(2, "0") };
+}
+
 async function dataUrlToImageFile(dataUrl: string, fileName: string) {
   const response = await fetch(dataUrl);
   const blob = await response.blob();
@@ -318,12 +326,12 @@ function getTitleAlignClass(align: TitleAlign) {
 function buildTimelineDates(points: ShareMetric["points"]) {
   const dates = points.map((point) => point.date).filter(Boolean);
 
-  if (dates.length <= 4) {
+  if (dates.length <= 5) {
     return dates;
   }
 
   const lastIndex = dates.length - 1;
-  return [dates[0], dates[Math.round(lastIndex / 3)], dates[Math.round((lastIndex * 2) / 3)], dates[lastIndex]];
+  return [dates[0], dates[Math.round(lastIndex / 4)], dates[Math.round(lastIndex / 2)], dates[Math.round((lastIndex * 3) / 4)], dates[lastIndex]];
 }
 
 function TimelineTick({
@@ -337,18 +345,21 @@ function TimelineTick({
   payload?: { value?: string };
   fill?: string;
 }) {
+  const { day, month } = formatTimelineDateParts(payload?.value);
+
+  if (!month || !day) {
+    return null;
+  }
+
   return (
-    <text
-      dominantBaseline="text-after-edge"
-      fill={fill}
-      fontSize={10}
-      fontWeight={700}
-      textAnchor="middle"
-      x={x}
-      y={y + 12}
-    >
-      {formatTimelineDate(payload?.value)}
-    </text>
+    <g transform={`translate(${x}, ${y})`}>
+      <text dominantBaseline="middle" fill={fill} fontSize={7.5} fontWeight={800} textAnchor="middle" x={0} y={4}>
+        {month}
+      </text>
+      <text dominantBaseline="middle" fill={fill} fontSize={8} fontWeight={800} textAnchor="middle" x={0} y={13}>
+        {day}
+      </text>
+    </g>
   );
 }
 
