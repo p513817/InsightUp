@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, Check, LayoutTemplate, Pencil, UserRound } from "lucide-react";
+import { Activity, Check, LayoutTemplate, Pencil, Share2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MiniTrendGrid, type TrendGridLayout } from "@/components/charts/mini-trend-grid";
@@ -358,6 +358,9 @@ export function RecordsWorkspace({
                 onClick={() => setTrendEditMode((current) => !current)}
               >
                 <Pencil className="size-4" />
+              </TrendToolButton>
+              <TrendToolButton label="分享趨勢數據" onClick={() => router.push("/share")}>
+                <Share2 className="size-4" />
               </TrendToolButton>
             </div>
           </div>
