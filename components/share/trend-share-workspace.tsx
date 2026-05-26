@@ -124,8 +124,17 @@ async function dataUrlToImageFile(dataUrl: string, fileName: string) {
   return new File([blob], fileName, { type: "image/png" });
 }
 
-function canShareImageFile(file: File) {
-  return typeof navigator !== "undefined" && typeof navigator.share === "function" && navigator.canShare?.({ files: [file] }) === true;
+function canTryShareImageFile(file: File) {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
+    return false;
+  }
+
+  try {
+    navigator.canShare?.({ files: [file] });
+  } catch {
+  }
+
+  return true;
 }
 
 function downloadDataUrl(dataUrl: string, fileName: string) {
@@ -527,7 +536,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
       try {
         const imageFile = await dataUrlToImageFile(dataUrl, fileName);
-        if (canShareImageFile(imageFile)) {
+        if (canTryShareImageFile(imageFile)) {
           try {
             await navigator.share({
               files: [imageFile],
