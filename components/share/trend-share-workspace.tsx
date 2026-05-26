@@ -33,7 +33,6 @@ const SHARE_CAPTURE_RETRY_DELAY_MS = 180;
 const TREND_CHART_MARGIN = { bottom: 8, left: 20, right: 20, top: 8 };
 const TIMELINE_CHART_MARGIN = { bottom: 0, left: 20, right: 20, top: 0 };
 const SHARE_COLOR_SWATCHES = ["#1c365f", "#3d7bb2", "#189b8c", "#79d7c3", "#b56878", "#8a659f", "#f59e0b", "#ef4444"];
-const BACKGROUND_COLOR_SWATCHES = SHARE_COLOR_SWATCHES;
 const TIMELINE_MONTH_LABELS = ["Jan.", "Feb.", "Mar.", "Apr.", "May.", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."];
 
 /*
@@ -938,7 +937,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       */}
 
       {activeControl ? (
-        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur">
+        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur">
         {activeControl === "style" ? (
           <div className="min-w-0">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u6a23\u5f0f"}</p>
@@ -964,27 +963,18 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             </PillScrollGroup>
             {shareBackground === "custom" ? (
               <div className="mt-3 grid gap-3">
-                <div className="flex min-w-0 items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-wrap gap-1.5">
-                    {BACKGROUND_COLOR_SWATCHES.map((color) => (
-                      <button
-                        aria-label={`\u80cc\u666f\u8272 ${color}`}
-                        className={cn(
-                          "size-7 cursor-pointer rounded-full border transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                          customBackgroundColor.toLowerCase() === color.toLowerCase() ? "scale-110 border-foreground shadow-sm" : "border-white/80",
-                        )}
-                        key={color}
-                        onClick={() => setCustomBackgroundColor(color)}
-                        style={{ backgroundColor: color }}
-                        type="button"
-                      />
-                    ))}
-                  </div>
-                  <label className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border border-border/70 bg-background/72 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-within:ring-2 focus-within:ring-primary">
-                    <Pipette className="size-4" />
+                <div className="flex min-w-0 items-center justify-start gap-3">
+                  <label
+                    className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/70 bg-background/72 px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-within:ring-2 focus-within:ring-primary"
+                    style={{ color: customBackgroundColor }}
+                  >
+                    <span className="relative grid size-6 place-items-center rounded-full border border-white/80 shadow-sm" style={{ backgroundColor: customBackgroundColor }}>
+                      <Pipette className="size-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                    </span>
+                    <span>{"\u81ea\u8a02"}</span>
                     <input
                       aria-label="\u81ea\u8a02\u80cc\u666f\u8272"
-                      className="sr-only"
+                      className="pointer-events-none fixed left-1/2 top-[38vh] size-8 -translate-x-1/2 opacity-0"
                       onChange={(event) => setCustomBackgroundColor(event.target.value)}
                       type="color"
                       value={customBackgroundColor}
@@ -1098,13 +1088,17 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                           type="button"
                         />
                       ))}
-                      <input
-                        aria-label={`${item.metric.label} \u81ea\u8a02\u984f\u8272`}
-                        className="size-7 cursor-pointer rounded-full border border-border/70 bg-transparent p-0.5"
-                        onChange={(event) => updateMetricColor(item.id, event.target.value)}
-                        type="color"
-                        value={item.metric.color}
-                      />
+                      <label className="flex h-7 cursor-pointer items-center gap-1.5 rounded-full border border-border/70 bg-background/72 px-2 text-[0.6875rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-within:ring-2 focus-within:ring-primary">
+                        <span className="size-5 rounded-full border border-white/80 shadow-sm" style={{ backgroundColor: item.metric.color }} />
+                        <span>{"\u81ea\u8a02"}</span>
+                        <input
+                          aria-label={`${item.metric.label} \u81ea\u8a02\u984f\u8272`}
+                          className="pointer-events-none fixed left-1/2 top-[38vh] size-8 -translate-x-1/2 opacity-0"
+                          onChange={(event) => updateMetricColor(item.id, event.target.value)}
+                          type="color"
+                          value={item.metric.color}
+                        />
+                      </label>
                     </div>
                   </div>
                 ))}
