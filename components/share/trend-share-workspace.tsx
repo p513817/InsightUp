@@ -823,6 +823,13 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       ...current,
       ...(syncMetricColors ? { title: color, brand: color, date: color } : { [target]: color }),
     }));
+
+    if (syncMetricColors) {
+      setMetricColors((current) => ({
+        ...current,
+        ...Object.fromEntries(selectedIds.map((selectedId) => [selectedId, color])),
+      }));
+    }
   }
 
   function resetTextColors() {
@@ -1109,9 +1116,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             </div>
             <div className="max-h-32 min-w-0 overflow-y-auto pr-1">
               <div className="grid gap-2">
-                {selectedMetrics.length ? selectedMetrics.map((item, index) => {
-                  const isSyncedPreview = syncMetricColors && index > 0;
-
+                {selectedMetrics.length ? selectedMetrics.map((item) => {
                   return (
                   <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2" key={item.id}>
                     <div className="flex min-w-0 items-center">
@@ -1120,7 +1125,6 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                     <ColorSwatchPicker
                       color={item.metric.color}
                       customLabel={isEnglish ? "Custom" : "\u81ea\u8a02"}
-                      disabled={isSyncedPreview}
                       inputAriaLabel={`${item.metric.label} ${isEnglish ? "custom color" : "\u81ea\u8a02\u984f\u8272"}`}
                       onChange={(color) => updateMetricColor(item.id, color)}
                       swatchAriaLabelPrefix={item.metric.label}
@@ -1141,7 +1145,6 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                         <ColorSwatchPicker
                           color={option.color}
                           customLabel={isEnglish ? "Custom" : "\u81ea\u8a02"}
-                          disabled={syncMetricColors}
                           inputAriaLabel={`${option.label} ${isEnglish ? "custom color" : "\u81ea\u8a02\u984f\u8272"}`}
                           onChange={(color) => updateTextColor(option.value, color)}
                           swatchAriaLabelPrefix={option.label}
