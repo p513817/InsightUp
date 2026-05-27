@@ -31,13 +31,6 @@ interface RecordFormDialogProps {
   presentation?: "dialog" | "page";
 }
 
-interface StructuredSummary {
-  overview: string;
-  keyChanges: string[];
-  actionPlan: string[];
-  watchouts: string[];
-}
-
 interface ScanUsageResponse {
   requestDate: string;
   planCode: string;
@@ -49,7 +42,6 @@ interface ScanUsageResponse {
 
 interface ScanResponse extends ScanUsageResponse {
   draft: RecordDraftValues;
-  structuredSummary?: StructuredSummary | null;
   uncertaintyNotes?: string[];
   scanConfidence?: number | null;
   modelName?: string | null;
@@ -141,12 +133,8 @@ function hasValue(value: unknown) {
   return value !== null && value !== undefined && value !== "";
 }
 
-function buildScanNote(summary: StructuredSummary | null | undefined, uncertaintyNotes: string[], isEnglish: boolean) {
+function buildScanNote(uncertaintyNotes: string[], isEnglish: boolean) {
   const lines: string[] = [];
-
-  if (summary?.overview) {
-    lines.push(isEnglish ? `AI scan summary: ${summary.overview}` : `AI 掃描摘要：${summary.overview}`);
-  }
 
   if (uncertaintyNotes.length > 0) {
     lines.push(isEnglish ? `Needs manual review: ${uncertaintyNotes.join('; ')}` : `待人工確認：${uncertaintyNotes.join('；')}`);
@@ -523,7 +511,7 @@ export function RecordFormDialog({
       const nextValues = mergeDraftIntoForm(
         form.getValues(),
         data.draft,
-        buildScanNote(data.structuredSummary, data.uncertaintyNotes ?? [], isEnglish),
+        buildScanNote(data.uncertaintyNotes ?? [], isEnglish),
       );
 
       form.reset(nextValues, { keepDefaultValues: false });

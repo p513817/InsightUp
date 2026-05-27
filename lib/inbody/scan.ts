@@ -1,30 +1,15 @@
 import { z } from "zod";
 import { recordDraftSchema } from "@/lib/inbody/schema";
 import { SEGMENT_PARTS, type RecordInput } from "@/lib/inbody/types";
-import type { StructuredTrendSummary } from "@/lib/llms";
-
-const structuredSummarySchema = z.object({
-  overview: z.string().trim().default(""),
-  keyChanges: z.array(z.string().trim()).default([]),
-  actionPlan: z.array(z.string().trim()).default([]),
-  watchouts: z.array(z.string().trim()).default([]),
-});
 
 const scanExtractionSchema = z.object({
   record: recordDraftSchema.default({}),
-  summary: structuredSummarySchema.optional().default({
-    overview: "",
-    keyChanges: [],
-    actionPlan: [],
-    watchouts: [],
-  }),
   scanConfidence: z.number().min(0).max(100).nullable().optional().default(null),
   uncertaintyNotes: z.array(z.string().trim()).optional().default([]),
 });
 
 export interface RecordScanResult {
   record: z.infer<typeof recordDraftSchema>;
-  structuredSummary: StructuredTrendSummary | null;
   scanConfidence: number | null;
   uncertaintyNotes: string[];
 }
@@ -48,7 +33,8 @@ export function buildRecordScanPrompt() {
     "Use ISO date format YYYY-MM-DD when the measured date is visible; otherwise return null.",
     "Set sourceType to photo_scan.",
     "Set isIncludedInCharts to true unless the document clearly indicates the user should exclude it, otherwise true.",
-    "The summary should be short and practical, and should mention when the user needs to review missing or uncertain items manually.",
+    "Do not generate any trend summary, interpretation, or coaching text.",
+    "Return only the extracted record, scan confidence, and uncertainty notes.",
     "For segmental values, use these keys exactly:",
     segmentKeys,
     "Expected JSON schema:",
@@ -82,12 +68,6 @@ export function buildRecordScanPrompt() {
             ]),
           ),
         },
-        summary: {
-          overview: "",
-          keyChanges: [""],
-          actionPlan: [""],
-          watchouts: [""],
-        },
         scanConfidence: null,
         uncertaintyNotes: [""],
       },
@@ -100,20 +80,8 @@ export function buildRecordScanPrompt() {
 export function parseRecordScanResult(text: string): RecordScanResult {
   const parsed = scanExtractionSchema.parse(JSON.parse(stripJsonFence(text)) as unknown);
 
-  const summary = parsed.summary;
-  const structuredSummary =
-    summary.overview || summary.keyChanges.length || summary.actionPlan.length || summary.watchouts.length
-      ? {
-          overview: summary.overview,
-          keyChanges: summary.keyChanges.filter(Boolean),
-          actionPlan: summary.actionPlan.filter(Boolean),
-          watchouts: summary.watchouts.filter(Boolean),
-        }
-      : null;
-
   return {
     record: parsed.record,
-    structuredSummary,
     scanConfidence: parsed.scanConfidence,
     uncertaintyNotes: parsed.uncertaintyNotes.filter(Boolean),
   };

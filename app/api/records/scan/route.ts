@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DEFAULT_GEMINI_ROTATION_MODELS, LlmProviderError, generateText, toLegacySummaryText } from "@/lib/llms";
+import { DEFAULT_GEMINI_ROTATION_MODELS, LlmProviderError, generateText } from "@/lib/llms";
 import { consumeDailyFeatureUsage, getDailyFeatureUsage, resolveMyFeatureEntitlement } from "@/lib/llms/usage";
 import { buildRecordScanPrompt, parseRecordScanResult } from "@/lib/inbody/scan";
 import { getTodayTaipeiDate } from "@/lib/inbody/trend-summary";
@@ -130,42 +130,12 @@ export async function POST(request: Request) {
 
     await consumeDailyFeatureUsage(supabase, user.id, FEATURE_KEY, requestDate, nextUsageCount);
 
-    if (parsed.structuredSummary) {
-      const { data: existingSummary } = await supabase
-        .from("llm_trend_daily_summaries")
-        .select("usage_count")
-        .eq("user_id", user.id)
-        .eq("feature_key", "trend_summary")
-        .eq("request_date", requestDate)
-        .maybeSingle();
-
-      const { error: upsertError } = await supabase.from("llm_trend_daily_summaries").upsert(
-        {
-          user_id: user.id,
-          feature_key: "trend_summary",
-          request_date: requestDate,
-          summary_text: JSON.stringify(parsed.structuredSummary),
-          model_name: llmResult.model,
-          source_record_count: 1,
-          usage_count: existingSummary?.usage_count ?? 0,
-          last_generated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,feature_key,request_date" },
-      );
-
-      if (upsertError) {
-        throw upsertError;
-      }
-    }
-
     return NextResponse.json({
       draft: {
         ...parsed.record,
         isIncludedInCharts: parsed.record.isIncludedInCharts ?? true,
         sourceType: "photo_scan",
       },
-      structuredSummary: parsed.structuredSummary,
-      summary: parsed.structuredSummary ? toLegacySummaryText(parsed.structuredSummary) : null,
       uncertaintyNotes: parsed.uncertaintyNotes,
       scanConfidence: parsed.scanConfidence,
       modelName: llmResult.model,
