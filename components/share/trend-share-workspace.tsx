@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Palette, Pipette, TrendingUp, Type, X } from "lucide-react";
+import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Palette, Pipette, RotateCcw, TrendingUp, Type, X } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
@@ -19,6 +19,7 @@ type SharePosition = "top" | "center" | "bottom";
 type TitleMode = "show" | "hide";
 type TitleAlign = "left" | "center" | "right";
 type ControlPanel = "style" | "background" | "title" | "layout" | "metrics" | "colors";
+type TextColorTarget = "title" | "brand" | "date";
 
 type ShareMetric = {
   id: string;
@@ -33,7 +34,7 @@ const EXPORT_IMAGE_WIDTH = 1080;
 const SHARE_CAPTURE_RETRY_DELAY_MS = 180;
 const TREND_CHART_MARGIN = { bottom: 8, left: 20, right: 20, top: 8 };
 const TIMELINE_CHART_MARGIN = { bottom: 0, left: 20, right: 20, top: 0 };
-const SHARE_COLOR_SWATCHES = ["#1c365f", "#3d7bb2", "#189b8c", "#79d7c3", "#b56878", "#8a659f", "#f59e0b", "#ef4444"];
+const SHARE_COLOR_SWATCHES = ["#ffffff", "#64748b", "#2563eb", "#10b981", "#f59e0b", "#ef4444"];
 const TIMELINE_MONTH_LABELS = ["Jan.", "Feb.", "Mar.", "Apr.", "May.", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."];
 
 const OVERALL_LABELS: Record<string, string> = {
@@ -65,6 +66,14 @@ function getNumericValue(value: string | number | null | undefined) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isWhiteColor(color: string) {
+  return color.toLowerCase() === "#ffffff" || color.toLowerCase() === "#fff";
+}
+
+function isPresetShareColor(color: string) {
+  return SHARE_COLOR_SWATCHES.some((swatch) => swatch.toLowerCase() === color.toLowerCase());
 }
 
 function withReadableMetricLabel(metric: ChartMetric, labels: Record<string, string>) {
@@ -218,6 +227,86 @@ function buildTimelineDates(points: ShareMetric["points"]) {
   return [dates[0], dates[Math.round(lastIndex / 4)], dates[Math.round(lastIndex / 2)], dates[Math.round((lastIndex * 3) / 4)], dates[lastIndex]];
 }
 
+interface ColorSwatchPickerProps {
+  color: string;
+  customLabel: string;
+  disabled?: boolean;
+  inputAriaLabel: string;
+  onChange: (color: string) => void;
+  swatchAriaLabelPrefix: string;
+}
+
+function ColorSwatchPicker({
+  color,
+  customLabel,
+  disabled = false,
+  inputAriaLabel,
+  onChange,
+  swatchAriaLabelPrefix,
+}: ColorSwatchPickerProps) {
+  return (
+    <div className={cn("flex min-w-0 items-center gap-1.5 overflow-x-auto px-1.5 py-1", disabled && "pointer-events-none opacity-45 grayscale")}>
+      {SHARE_COLOR_SWATCHES.map((swatch) => {
+        const checked = color.toLowerCase() === swatch.toLowerCase();
+
+        return (
+          <span className="relative inline-flex h-6 w-5 shrink-0 items-center justify-center" key={`${swatchAriaLabelPrefix}-${swatch}`}>
+            <button
+              aria-label={`${swatchAriaLabelPrefix} ${swatch}`}
+              className={cn(
+                "size-5 shrink-0 cursor-pointer rounded-full border border-slate-200/90 transition-[box-shadow,border-color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                isWhiteColor(swatch) && "bg-white",
+                checked ? "border-slate-500 shadow-[0_0_0_3px_rgba(148,163,184,0.16)]" : "hover:border-slate-300 hover:shadow-sm",
+              )}
+              disabled={disabled}
+              onClick={() => onChange(swatch)}
+              style={{
+                backgroundColor: swatch,
+                boxShadow: isWhiteColor(swatch) ? "inset 0 0 0 1px rgba(148, 163, 184, 0.3)" : undefined,
+              }}
+              type="button"
+            />
+            {checked ? (
+              <Check
+                className={cn(
+                  "pointer-events-none absolute inset-0 m-auto size-2.5",
+                  isWhiteColor(swatch) ? "text-slate-700 drop-shadow-[0_1px_1px_rgba(255,255,255,0.85)]" : "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.7)]",
+                )}
+              />
+            ) : null}
+          </span>
+        );
+      })}
+      <label
+        className={cn(
+          "inline-flex h-7 min-w-[4.25rem] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border bg-background/72 px-2.5 text-[0.625rem] font-medium leading-none text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-within:ring-2 focus-within:ring-primary",
+          isPresetShareColor(color) ? "border-slate-200/90" : "border-slate-500 shadow-[0_0_0_3px_rgba(148,163,184,0.16)]",
+        )}
+      >
+        <span className="relative size-5 rounded-full border border-slate-200/90 shadow-sm" style={{ backgroundColor: color }}>
+          {!isPresetShareColor(color) ? (
+            <Check
+              className={cn(
+                "pointer-events-none absolute inset-0 m-auto size-2.5",
+                isWhiteColor(color) ? "text-slate-700 drop-shadow-[0_1px_1px_rgba(255,255,255,0.85)]" : "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.7)]",
+              )}
+            />
+          ) : null}
+        </span>
+        <span>{customLabel}</span>
+        <input
+          aria-label={inputAriaLabel}
+          className="pointer-events-none fixed left-1/2 top-[38vh] size-8 -translate-x-1/2 opacity-0"
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+          type="color"
+          value={color}
+        />
+      </label>
+    </div>
+  );
+}
+
 function TimelineTick({
   x = 0,
   y = 0,
@@ -326,6 +415,17 @@ function getAutomaticTextColor(background: ShareBackground, customColor: string,
   return useLightText ? "#f8fbff" : "#10213a";
 }
 
+function getAutomaticMutedTextColor(background: ShareBackground, customColor: string, customOpacity: number) {
+  if (background === "dark") {
+    return "rgb(255 255 255 / 0.55)";
+  }
+
+  const luminance = background === "custom" ? getHexLuminance(customColor) : null;
+  const useLightText = customOpacity >= 70 && luminance != null && luminance < 108;
+
+  return useLightText ? "rgb(255 255 255 / 0.62)" : "#64748b";
+}
+
 function getPreviewBackgroundStyle(background: ShareBackground, customColor: string, customOpacity: number): CSSProperties | undefined {
   if (background !== "custom") {
     return undefined;
@@ -425,10 +525,12 @@ function MetricTrendPreview({ background, item }: { background: ShareBackground;
 
 function ShareTimelineChart({
   background,
+  dateColor,
   points,
   ticks,
 }: {
   background: ShareBackground;
+  dateColor: string;
   points: ShareMetric["points"];
   ticks: string[];
 }) {
@@ -444,7 +546,7 @@ function ShareTimelineChart({
             axisLine={{ stroke: background === "dark" ? "#ffffff26" : "#0000001a" }}
             dataKey="date"
             interval={0}
-            tick={<TimelineTick fill={background === "dark" ? "#ffffff55" : "#6b7280"} />}
+            tick={<TimelineTick fill={dateColor} />}
             tickLine={false}
             ticks={ticks}
           />
@@ -480,6 +582,8 @@ interface TrendShareWorkspaceProps {
 
 function SharePreviewContent({
   background,
+  brandColor,
+  dateColor,
   effectiveShareColumns,
   selectedMetrics,
   sharePosition,
@@ -487,10 +591,13 @@ function SharePreviewContent({
   timelineDates,
   timelinePoints,
   titleAlign,
+  titleColor,
   titleMode,
   isEnglish,
 }: {
   background: ShareBackground;
+  brandColor: string;
+  dateColor: string;
   effectiveShareColumns: 1 | 2;
   selectedMetrics: ShareMetric[];
   sharePosition: SharePosition;
@@ -498,13 +605,14 @@ function SharePreviewContent({
   timelineDates: string[];
   timelinePoints: ShareMetric["points"];
   titleAlign: TitleAlign;
+  titleColor: string;
   titleMode: TitleMode;
   isEnglish: boolean;
 }) {
   return (
     <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
       <div className="min-w-0">
-        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))}>
+        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))} style={{ color: titleColor }}>
           <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{isEnglish ? "Trend overview" : "我的身體趨勢"}</h2> : null}</div>
         </div>
       </div>
@@ -527,9 +635,9 @@ function SharePreviewContent({
 
       <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
         <div className="flex h-6 items-end pb-[3px]">
-          <p className={cn("truncate font-display text-sm leading-none", background === "dark" ? "text-white/55" : "text-muted-foreground/75")}>Insight Up</p>
+          <p className="truncate font-display text-sm leading-none" style={{ color: brandColor }}>Insight Up</p>
         </div>
-        {shareStyle === "trend" ? <ShareTimelineChart background={background} points={timelinePoints} ticks={timelineDates} /> : null}
+        {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} points={timelinePoints} ticks={timelineDates} /> : null}
       </div>
     </div>
   );
@@ -544,6 +652,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const defaultSelectedIds = useMemo(() => shareMetrics.slice(0, 4).map((item) => item.id), [shareMetrics]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [metricColors, setMetricColors] = useState<Record<string, string>>({});
+  const [syncMetricColors, setSyncMetricColors] = useState(false);
   const [shareStyle, setShareStyle] = useState<ShareStyle>("trend");
   const [shareBackground, setShareBackground] = useState<ShareBackground>("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#f8fbff");
@@ -552,6 +661,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [shareColumns, setShareColumns] = useState<1 | 2>(2);
   const [titleMode, setTitleMode] = useState<TitleMode>("show");
   const [titleAlign, setTitleAlign] = useState<TitleAlign>("left");
+  const [textColors, setTextColors] = useState<Partial<Record<TextColorTarget, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [activeControl, setActiveControl] = useState<ControlPanel | null>("style");
   const styleOptions = isEnglish
@@ -630,14 +740,58 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     [metricColors, shareMetrics],
   );
   const selectedMetrics = useMemo(() => coloredShareMetrics.filter((item) => selectedIds.includes(item.id)), [coloredShareMetrics, selectedIds]);
+  const syncMetricColor = syncMetricColors ? selectedMetrics[0]?.metric.color ?? null : null;
   const timelinePoints = selectedMetrics[0]?.points ?? [];
   const timelineDates = buildTimelineDates(timelinePoints);
   const effectiveShareColumns = shareStyle === "trend" ? 1 : shareColumns;
   const hasEnoughData = records.filter((record) => record.isIncludedInCharts).length >= 2;
+  const automaticTitleColor = getAutomaticTextColor(shareBackground, customBackgroundColor, customBackgroundOpacity);
+  const automaticMutedTextColor = getAutomaticMutedTextColor(shareBackground, customBackgroundColor, customBackgroundOpacity);
+  const effectiveTitleColor = textColors.title ?? automaticTitleColor;
+  const effectiveBrandColor = textColors.brand ?? automaticMutedTextColor;
+  const effectiveDateColor = textColors.date ?? automaticMutedTextColor;
+  const textColorOptions = [
+    { value: "title" as const, label: isEnglish ? "Title" : "\u6a19\u984c", color: effectiveTitleColor },
+    { value: "brand" as const, label: "Insight Up", color: effectiveBrandColor },
+    { value: "date" as const, label: isEnglish ? "Date" : "\u65e5\u671f", color: effectiveDateColor },
+  ];
 
   useEffect(() => {
     setSelectedIds((current) => (current.length ? current : defaultSelectedIds));
   }, [defaultSelectedIds]);
+
+  useEffect(() => {
+    if (!syncMetricColors || !syncMetricColor) {
+      return;
+    }
+
+    setMetricColors((current) => {
+      const next = { ...current };
+      let changed = false;
+
+      for (const id of selectedIds) {
+        if (next[id] !== syncMetricColor) {
+          next[id] = syncMetricColor;
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+
+    setTextColors((current) => {
+      if (current.title === syncMetricColor && current.brand === syncMetricColor && current.date === syncMetricColor) {
+        return current;
+      }
+
+      return {
+        ...current,
+        title: syncMetricColor,
+        brand: syncMetricColor,
+        date: syncMetricColor,
+      };
+    });
+  }, [selectedIds, syncMetricColor, syncMetricColors]);
 
   function toggleMetric(id: string) {
     setSelectedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
@@ -646,12 +800,33 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   function updateMetricColor(id: string, color: string) {
     setMetricColors((current) => ({
       ...current,
-      [id]: color,
+      ...(syncMetricColors ? Object.fromEntries(selectedIds.map((selectedId) => [selectedId, color])) : { [id]: color }),
     }));
+
+    if (syncMetricColors) {
+      setTextColors((current) => ({
+        ...current,
+        title: color,
+        brand: color,
+        date: color,
+      }));
+    }
   }
 
   function resetMetricColors() {
     setMetricColors({});
+    setTextColors({});
+  }
+
+  function updateTextColor(target: TextColorTarget, color: string) {
+    setTextColors((current) => ({
+      ...current,
+      ...(syncMetricColors ? { title: color, brand: color, date: color } : { [target]: color }),
+    }));
+  }
+
+  function resetTextColors() {
+    setTextColors({});
   }
 
   function handleShareStyleChange(nextStyle: ShareStyle) {
@@ -745,6 +920,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         >
           <SharePreviewContent
             background={shareBackground}
+            brandColor={effectiveBrandColor}
+            dateColor={effectiveDateColor}
             effectiveShareColumns={effectiveShareColumns}
             selectedMetrics={selectedMetrics}
             sharePosition={sharePosition}
@@ -752,6 +929,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             timelineDates={timelineDates}
             timelinePoints={timelinePoints}
             titleAlign={titleAlign}
+            titleColor={effectiveTitleColor}
             titleMode={titleMode}
             isEnglish={isEnglish}
           />
@@ -894,50 +1072,85 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
           <div className="min-w-0">
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Chart colors" : "圖表顏色"}</p>
-              <button
-                className="h-7 cursor-pointer rounded-full px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              <div className="inline-flex h-7 shrink-0 rounded-full border border-border/70 bg-background/72 p-0.5">
+                <button
+                  aria-pressed={!syncMetricColors}
+                  className={cn(
+                    "h-6 cursor-pointer rounded-full px-2.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    !syncMetricColors ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                  onClick={() => setSyncMetricColors(false)}
+                  type="button"
+                >
+                  {isEnglish ? "Each" : "\u9010\u9805"}
+                </button>
+                <button
+                  aria-pressed={syncMetricColors}
+                  className={cn(
+                    "h-6 cursor-pointer rounded-full px-2.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    syncMetricColors ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                  onClick={() => setSyncMetricColors(true)}
+                  type="button"
+                >
+                  {isEnglish ? "Sync" : "\u540c\u6b65"}
+                </button>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                aria-label={isEnglish ? "Reset colors" : "\u91cd\u8a2d\u984f\u8272"}
+                className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={resetMetricColors}
                 type="button"
               >
-                {isEnglish ? "Reset" : "重設"}
+                <RotateCcw className="size-3.5" />
               </button>
+              </div>
             </div>
             <div className="max-h-32 min-w-0 overflow-y-auto pr-1">
               <div className="grid gap-2">
-                {coloredShareMetrics.map((item) => (
-                  <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/65 bg-background/64 px-3 py-2" key={item.id}>
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: item.metric.color }} />
+                {selectedMetrics.length ? selectedMetrics.map((item, index) => {
+                  const isSyncedPreview = syncMetricColors && index > 0;
+
+                  return (
+                  <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2" key={item.id}>
+                    <div className="flex min-w-0 items-center">
                       <span className="truncate text-sm font-semibold text-foreground">{item.metric.label}</span>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      {SHARE_COLOR_SWATCHES.map((color) => (
-                        <button
-                          aria-label={`${item.metric.label} ${color}`}
-                          className={cn(
-                            "size-6 cursor-pointer rounded-full border transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                            item.metric.color.toLowerCase() === color.toLowerCase() ? "scale-110 border-foreground shadow-sm" : "border-white/80",
-                          )}
-                          key={`${item.id}-${color}`}
-                          onClick={() => updateMetricColor(item.id, color)}
-                          style={{ backgroundColor: color }}
-                          type="button"
-                        />
-                      ))}
-                      <label className="flex h-7 cursor-pointer items-center gap-1.5 rounded-full border border-border/70 bg-background/72 px-2 text-[0.6875rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-within:ring-2 focus-within:ring-primary">
-                        <span className="size-5 rounded-full border border-white/80 shadow-sm" style={{ backgroundColor: item.metric.color }} />
-                        <span>{"\u81ea\u8a02"}</span>
-                        <input
-                          aria-label={`${item.metric.label} \u81ea\u8a02\u984f\u8272`}
-                          className="pointer-events-none fixed left-1/2 top-[38vh] size-8 -translate-x-1/2 opacity-0"
-                          onChange={(event) => updateMetricColor(item.id, event.target.value)}
-                          type="color"
-                          value={item.metric.color}
-                        />
-                      </label>
-                    </div>
+                    <ColorSwatchPicker
+                      color={item.metric.color}
+                      customLabel={isEnglish ? "Custom" : "\u81ea\u8a02"}
+                      disabled={isSyncedPreview}
+                      inputAriaLabel={`${item.metric.label} ${isEnglish ? "custom color" : "\u81ea\u8a02\u984f\u8272"}`}
+                      onChange={(color) => updateMetricColor(item.id, color)}
+                      swatchAriaLabelPrefix={item.metric.label}
+                    />
                   </div>
-                ))}
+                  );
+                }) : (
+                  <div className="rounded-xl border border-dashed border-border/70 bg-background/50 px-3 py-4 text-sm text-muted-foreground">
+                    {isEnglish ? "Select chart items first, then adjust their colors." : "請先選擇要顯示的項目，再調整顏色。"}
+                  </div>
+                )}
+                <div className="mt-1 min-w-0 border-t border-border/60 pt-2">
+                  <div className="grid gap-2">
+                    {textColorOptions.map((option) => {
+                      return (
+                      <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2" key={option.value}>
+                        <span className="truncate text-sm font-semibold text-foreground">{option.label}</span>
+                        <ColorSwatchPicker
+                          color={option.color}
+                          customLabel={isEnglish ? "Custom" : "\u81ea\u8a02"}
+                          disabled={syncMetricColors}
+                          inputAriaLabel={`${option.label} ${isEnglish ? "custom color" : "\u81ea\u8a02\u984f\u8272"}`}
+                          onChange={(color) => updateTextColor(option.value, color)}
+                          swatchAriaLabelPrefix={option.label}
+                        />
+                      </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
