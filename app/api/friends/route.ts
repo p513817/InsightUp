@@ -9,11 +9,14 @@ import {
   MissingFriendsInfrastructureError,
   SelfFriendshipError,
 } from "@/lib/friends/service";
+import { getServerTranslations } from "@/lib/i18n/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-function toErrorResponse(error: unknown) {
+type Translator = (key: string, params?: Record<string, string | number>) => string;
+
+function toErrorResponse(error: unknown, t: Translator) {
   if (error instanceof MissingFriendsInfrastructureError) {
-    return NextResponse.json({ message: error.message }, { status: 503 });
+    return NextResponse.json({ message: t("api.friendsInfraMissing") }, { status: 503 });
   }
 
   if (error instanceof FriendNotFoundError) {
@@ -32,38 +35,40 @@ function toErrorResponse(error: unknown) {
 }
 
 export async function GET() {
+  const { t } = await getServerTranslations();
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
   }
 
   try {
     const [profile, friends] = await Promise.all([ensureCurrentUserProfile(supabase, user), listFriendSnapshots(supabase)]);
     return NextResponse.json({ friends, profile });
   } catch (error) {
-    return toErrorResponse(error);
+    return toErrorResponse(error, t);
   }
 }
 
 export async function POST(request: Request) {
+  const { t } = await getServerTranslations();
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
   }
 
   const json = await request.json();
   const parsed = addFriendSchema.safeParse(json);
 
   if (!parsed.success) {
-    return NextResponse.json({ message: parsed.error.issues[0]?.message || "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ message: parsed.error.issues[0]?.message || t("api.invalidPayload") }, { status: 400 });
   }
 
   try {
@@ -71,6 +76,6 @@ export async function POST(request: Request) {
     const friend = await addFriendByCode(supabase, user.id, parsed.data.friendCode);
     return NextResponse.json({ friend }, { status: 201 });
   } catch (error) {
-    return toErrorResponse(error);
+    return toErrorResponse(error, t);
   }
 }

@@ -15,6 +15,8 @@ import {
 } from "@tanstack/react-table";
 import { Eye, EyeOff, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
+import { useLocale } from "@/components/i18n-provider";
+import { useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,6 +119,8 @@ export function RecordManager({
   onDelete,
   onToggleInclusion,
 }: RecordManagerProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
@@ -189,7 +193,7 @@ export function RecordManager({
       {
         accessorKey: "date",
         id: "date",
-        header: "日期",
+        header: t("records.manager.date"),
         meta: {
           mobileSlot: "hero",
           mobileRender: (record) => <h3 className="font-display text-[1.25rem] leading-none text-foreground">{formatCompactDate(record.date)}</h3>,
@@ -198,10 +202,10 @@ export function RecordManager({
       },
       {
         accessorKey: "weight",
-        header: "體重",
+        header: t("records.manager.weight"),
         meta: {
           mobileSlot: "metric",
-          mobileLabel: "體重",
+          mobileLabel: t("records.manager.weight"),
           mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
           mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.weight)} kg</p>,
         },
@@ -209,10 +213,10 @@ export function RecordManager({
       },
       {
         accessorKey: "muscle",
-        header: "骨骼肌",
+        header: t("records.manager.muscle"),
         meta: {
           mobileSlot: "metric",
-          mobileLabel: "骨骼肌",
+          mobileLabel: t("records.manager.muscle"),
           mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
           mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.muscle)} kg</p>,
         },
@@ -220,10 +224,10 @@ export function RecordManager({
       },
       {
         accessorKey: "fatPercent",
-        header: "體脂率",
+        header: t("records.manager.fatPercent"),
         meta: {
           mobileSlot: "metric",
-          mobileLabel: "體脂率",
+          mobileLabel: t("records.manager.fatPercent"),
           mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
           mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.fatPercent)}</p>,
         },
@@ -231,19 +235,19 @@ export function RecordManager({
       },
       {
         id: "analysis",
-        header: () => <div className="w-full text-center">分析</div>,
+        header: () => <div className="w-full text-center">{t("records.manager.analysis")}</div>,
         accessorFn: (record) => record.isIncludedInCharts,
         enableSorting: false,
         meta: {
           mobileSlot: "trailing",
           mobileRender: (record, isBusy) => (
             <Button
-              aria-label={record.isIncludedInCharts ? "排除出圖表分析" : "納入圖表分析"}
+              aria-label={record.isIncludedInCharts ? t("records.manager.excludeFromCharts") : t("records.manager.includeInCharts")}
               className="size-8"
               disabled={isBusy}
               onClick={() => onToggleInclusion(record, !record.isIncludedInCharts)}
               size="icon"
-              title={record.isIncludedInCharts ? "已納入圖表分析" : "已排除出圖表分析"}
+              title={record.isIncludedInCharts ? t("records.manager.included") : t("records.manager.excluded")}
               type="button"
               variant="outline"
             >
@@ -268,16 +272,16 @@ export function RecordManager({
       },
       {
         id: "actions",
-        header: () => <div className="w-full text-center">操作</div>,
+        header: () => <div className="w-full text-center">{t("records.manager.actions")}</div>,
         enableSorting: false,
         meta: {
           mobileSlot: "footer",
           mobileRender: (record, isBusy) => (
             <div className="flex items-center gap-1.5">
-              <Button aria-label="編輯紀錄" className="size-8" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+              <Button aria-label={t("records.manager.edit")} className="size-8" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
                 <PencilLine className="size-3.5" />
               </Button>
-              <Button aria-label="刪除紀錄" className="size-8" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
+              <Button aria-label={t("records.manager.delete")} className="size-8" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
                 <Trash2 className="size-3.5" />
               </Button>
             </div>
@@ -289,10 +293,10 @@ export function RecordManager({
 
           return (
             <div className="flex items-center justify-end gap-2">
-              <Button aria-label="編輯紀錄" className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+              <Button aria-label={t("records.manager.edit")} className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
                 <PencilLine className="size-4" />
               </Button>
-              <Button aria-label="刪除紀錄" className="size-9" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
+              <Button aria-label={t("records.manager.delete")} className="size-9" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
                 <Trash2 className="size-4" />
               </Button>
             </div>
@@ -300,7 +304,7 @@ export function RecordManager({
         },
       },
     ],
-    [busyRecordId, onDelete, onEdit, onToggleInclusion],
+    [busyRecordId, onDelete, onEdit, onToggleInclusion, t],
   );
 
   const table = useReactTable({
@@ -335,7 +339,7 @@ export function RecordManager({
           <Card className="gap-0 border-border/60 bg-card/90 p-2.5">
             <div className="flex min-w-0 items-center gap-2">
               <label className="sr-only" htmlFor="record-search">
-                搜尋日期或備註
+                {t("records.manager.searchLabel")}
               </label>
               <div className="relative min-w-[10rem] flex-1">
                 <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -343,18 +347,18 @@ export function RecordManager({
                   className="h-10 w-full rounded-full border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] pl-10 pr-3.5 shadow-none placeholder:text-muted-foreground/80 focus:border-primary/70 focus:ring-2 focus:ring-primary/15 sm:h-11"
                   id="record-search"
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="搜尋日期或備註"
+                  placeholder={t("records.manager.searchPlaceholder")}
                   value={searchQuery}
                 />
               </div>
 
               {hasSearchQuery ? (
                 <Button
-                  aria-label="清除搜尋"
+                  aria-label={t("records.manager.clearSearch")}
                   className="size-10 shrink-0 cursor-pointer px-0 sm:size-11"
                   onClick={clearSearch}
                   size="icon"
-                  title="清除搜尋"
+                  title={t("records.manager.clearSearch")}
                   type="button"
                   variant="ghost"
                 >
@@ -444,23 +448,23 @@ export function RecordManager({
             <div className="flex justify-center">
               <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:w-auto">
                 <Button className="w-full sm:w-auto" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()} size="sm" variant="outline">
-                  上一頁
+                  {locale === "en" ? "Previous" : "上一頁"}
                 </Button>
                 <div className="rounded-full border border-border/60 bg-card/86 px-4 py-2 text-center text-sm text-foreground">
-                  Page {page} / {totalPages}
+                  {locale === "en" ? "Page" : "頁次"} {page} / {totalPages}
                 </div>
                 <Button className="w-full sm:w-auto" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()} size="sm" variant="outline">
-                  下一頁
+                  {locale === "en" ? "Next" : "下一頁"}
                 </Button>
               </div>
             </div>
           </>
         ) : (
           <Card className="surface-state-panel items-center gap-2 p-8 text-center">
-            <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">找不到符合條件的紀錄</p>
-            <p className="max-w-xl text-sm leading-6 text-muted-foreground">可以調整搜尋關鍵字，重新縮小你要看的資料範圍。</p>
+            <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">{t("records.manager.noResultsTitle")}</p>
+            <p className="max-w-xl text-sm leading-6 text-muted-foreground">{t("records.manager.noResultsBody")}</p>
             <Button onClick={clearSearch} variant="outline">
-              清除搜尋
+              {t("records.manager.clearSearch")}
             </Button>
           </Card>
         )
@@ -471,10 +475,10 @@ export function RecordManager({
         <div className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 sm:inset-x-7 sm:bottom-7">
           <div className="mx-auto flex w-full max-w-6xl justify-end">
             <Button
-              aria-label="新增 InBody 紀錄"
+              aria-label={t("records.manager.addRecord")}
               className="pointer-events-auto relative size-12 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-14"
               onClick={handleAddClick}
-              title="新增 InBody 紀錄"
+              title={t("records.manager.addRecord")}
               type="button"
             >
               <span

@@ -1,3 +1,6 @@
+"use client";
+
+import { useLocale } from "@/components/i18n-provider";
 import { Card } from "@/components/ui/card";
 import type { ChartPayload } from "@/lib/inbody/types";
 import { formatMetricValue } from "@/lib/presentation";
@@ -7,6 +10,7 @@ interface MetricSummaryGridProps {
 }
 
 export function MetricSummaryGrid({ chart }: MetricSummaryGridProps) {
+  const locale = useLocale();
   const latest = chart.points.at(-1);
   const previous = chart.points.at(-2);
 
@@ -23,7 +27,7 @@ export function MetricSummaryGrid({ chart }: MetricSummaryGridProps) {
         const previousValue = getNumericValue(previous?.[metric.key]);
         const hasDelta = latestValue != null && previousValue != null;
         const delta = hasDelta ? latestValue - previousValue : null;
-        const deltaText = delta == null ? "無上一筆" : `${delta > 0 ? "+" : ""}${formatMetricValue(metric, delta)}`;
+        const deltaText = delta == null ? (locale === "en" ? "No previous record" : "無上一筆紀錄") : `${delta > 0 ? "+" : ""}${formatMetricValue(metric, delta)}`;
 
         return (
           <Card className="gap-3 p-5" key={metric.key}>
@@ -33,7 +37,10 @@ export function MetricSummaryGrid({ chart }: MetricSummaryGridProps) {
             </div>
             <div>
               <p className="font-display text-3xl text-foreground">{formatMetricValue(metric, latestValue)}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Compared with previous: {deltaText}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                {locale === "en" ? "Compared with previous: " : "與前一筆相比："}
+                {deltaText}
+              </p>
             </div>
           </Card>
         );

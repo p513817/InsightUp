@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useLocale } from "@/components/i18n-provider";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import type { RecordFormValues } from "@/lib/inbody/schema";
 import type { InbodyRecord } from "@/lib/inbody/types";
@@ -29,6 +30,7 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 
 export function RecordEditPage({ record }: RecordEditPageProps) {
   const router = useRouter();
+  const locale = useLocale();
 
   function returnToRecords() {
     router.replace("/records");
@@ -40,10 +42,10 @@ export function RecordEditPage({ record }: RecordEditPageProps) {
         body: JSON.stringify(values),
         method: "PATCH",
       });
-      toast.success("紀錄已更新。");
+      toast.success(locale === "en" ? "Record updated." : "紀錄已更新。");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "更新紀錄失敗。");
+      toast.error(error instanceof Error ? error.message : locale === "en" ? "Failed to update record." : "更新紀錄失敗。");
       throw error;
     }
   }

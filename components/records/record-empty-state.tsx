@@ -1,5 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useTranslations } from "@/components/i18n-provider";
 
 interface RecordEmptyStateProps {
   actionLabel?: string;
@@ -8,15 +11,17 @@ interface RecordEmptyStateProps {
 }
 
 export function RecordEmptyState({
-  actionLabel = "新增第一筆資料",
-  description = "先建立第一筆紀錄，之後就能切換整體與區域圖表、調整納入分析的資料範圍。",
+  actionLabel,
+  description,
   onAdd,
 }: RecordEmptyStateProps) {
+  const t = useTranslations();
+
   return (
     <Card className="surface-state-panel items-center gap-2 p-8 text-center">
-      <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">還沒有 InBody 紀錄</p>
-      <p className="max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
-      <Button onClick={onAdd}>{actionLabel}</Button>
+      <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">{t("records.empty.title")}</p>
+      <p className="max-w-xl text-sm leading-6 text-muted-foreground">{description || t("records.empty.description")}</p>
+      <Button onClick={onAdd}>{actionLabel || t("records.empty.action")}</Button>
     </Card>
   );
 }

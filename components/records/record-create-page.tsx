@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useLocale } from "@/components/i18n-provider";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import type { RecordFormValues } from "@/lib/inbody/schema";
 import type { InbodyRecord } from "@/lib/inbody/types";
@@ -29,6 +30,7 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 
 export function RecordCreatePage({ latestRecordForAutofill = null }: RecordCreatePageProps) {
   const router = useRouter();
+  const locale = useLocale();
 
   function returnToRecords() {
     router.replace("/records");
@@ -40,10 +42,10 @@ export function RecordCreatePage({ latestRecordForAutofill = null }: RecordCreat
         body: JSON.stringify(values),
         method: "POST",
       });
-      toast.success("已新增 InBody 紀錄");
+      toast.success(locale === "en" ? "Record created." : "已新增 InBody 紀錄");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "新增紀錄失敗");
+      toast.error(error instanceof Error ? error.message : locale === "en" ? "Failed to create record." : "新增紀錄失敗。");
       throw error;
     }
   }

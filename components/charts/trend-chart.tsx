@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/components/i18n-provider";
 import type { ChartPayload } from "@/lib/inbody/types";
 import { formatChartDate, formatMetricValue } from "@/lib/presentation";
 
@@ -20,6 +21,7 @@ interface TrendChartProps {
 }
 
 export function TrendChart({ chart }: TrendChartProps) {
+  const locale = useLocale();
   const [visibleKeys, setVisibleKeys] = useState(chart.metrics.map((metric) => metric.key));
 
   useEffect(() => {
@@ -35,7 +37,9 @@ export function TrendChart({ chart }: TrendChartProps) {
   if (!chart.points.length) {
     return (
       <div className="surface-state-panel flex min-h-72 items-center justify-center rounded-[1.5rem] text-sm text-muted-foreground">
-        尚無可納入圖表的紀錄。請先新增資料，或將紀錄標記為納入分析。
+        {locale === "en"
+          ? "There are no records yet to include in the chart. Add data first or mark records for chart analysis."
+          : "尚無可納入圖表的紀錄。請先新增資料，或將紀錄標記為納入分析。"}
       </div>
     );
   }

@@ -1,21 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { AlertTriangle, ClipboardList, Lightbulb, LoaderCircle, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
+import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { formatCompactDate } from "@/lib/presentation";
 
 interface TrendSummaryResponse {
   summary: string | null;
   structuredSummary?: {
     overview: string;
-    keyChanges: string[];
-    actionPlan: string[];
-    watchouts: string[];
+    keyChanges: string[] | string;
+    actionPlan: string[] | string;
+    watchouts: string[] | string;
   } | null;
   generatedAt: string | null;
   modelName?: string | null;
@@ -30,34 +31,9 @@ interface TrendSummaryResponse {
 
 type SectionKey = "overview" | "keyChanges" | "actionPlan" | "watchouts";
 
-const SECTIONS: Array<{ key: SectionKey; title: string; icon: React.ComponentType<{ className?: string }> }> = [
-  { key: "overview", title: "趨勢總結", icon: TrendingUp },
-  { key: "keyChanges", title: "重點變化", icon: ClipboardList },
-  { key: "actionPlan", title: "行動建議", icon: Lightbulb },
-  { key: "watchouts", title: "注意事項", icon: AlertTriangle },
-];
-
-function getSourceLabel(provider: TrendSummaryResponse["provider"], reused: boolean) {
-  if (provider === "gemini") {
-    return "Gemini";
-  }
-
-  return reused ? "今日快取摘要" : "快取摘要";
-}
-
-function getSectionContent(data: TrendSummaryResponse["structuredSummary"], key: SectionKey) {
-  if (!data) {
-    return null;
-  }
-
-  if (key === "overview") {
-    return data.overview || null;
-  }
-
-  return data[key]?.length ? data[key] : null;
-}
-
 export function TrendSummaryWorkspace() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [refreshingSummary, setRefreshingSummary] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -77,31 +53,37 @@ export function TrendSummaryWorkspace() {
     setStructuredSummary(data.structuredSummary ?? null);
     setRequestDate(data.requestDate);
     setCanGenerate(data.canGenerate ?? true);
-    setUsageBadge(`使用次數 ${data.usageCount ?? 0} / ${data.dailyLimit == null ? "不限" : data.dailyLimit}`);
-    setSourceLabel(getSourceLabel(data.provider, data.reused));
+    setUsageBadge(`${t("summary.usage.label")} ${data.usageCount ?? 0} / ${data.dailyLimit == null ? t("summary.usage.unlimited") : data.dailyLimit}`);
+    setSourceLabel(
+      data.provider === "gemini"
+        ? t("summary.source.gemini")
+        : data.reused
+          ? t("summary.source.cacheReused")
+          : t("summary.source.cache"),
+    );
     setModelLabel(data.modelName || null);
   }
 
-  async function fetchLatestSummary({ quiet = false } = {}) {
-    setLoadingSummary(!quiet);
-    setRefreshingSummary(quiet);
+  async function fetchLatestSummary() {
+    setLoadingSummary(true);
+    setRefreshingSummary(true);
 
     try {
       const response = await fetch("/api/trend-summary", { method: "GET" });
       const payload = (await response.json().catch(() => null)) as TrendSummaryResponse | { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message || "無法讀取摘要，請稍後再試。");
+        throw new Error(payload?.message || t("summary.errors.fetchFailed"));
       }
 
       const data = payload as TrendSummaryResponse;
       applySummaryResponse(data);
 
-      if (data.message && !quiet) {
+      if (data.message) {
         toast.message(data.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法讀取摘要，請稍後再試。");
+      toast.error(error instanceof Error ? error.message : t("summary.errors.fetchFailed"));
     } finally {
       setLoadingSummary(false);
       setRefreshingSummary(false);
@@ -124,7 +106,7 @@ export function TrendSummaryWorkspace() {
       const payload = (await response.json().catch(() => null)) as TrendSummaryResponse | { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message || "無法產生摘要，請稍後再試。");
+        throw new Error(payload?.message || t("summary.errors.generateFailed"));
       }
 
       const data = payload as TrendSummaryResponse;
@@ -134,7 +116,7 @@ export function TrendSummaryWorkspace() {
         toast.message(data.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法產生摘要，請稍後再試。");
+      toast.error(error instanceof Error ? error.message : t("summary.errors.generateFailed"));
     } finally {
       setGenerating(false);
     }
@@ -144,60 +126,48 @@ export function TrendSummaryWorkspace() {
     void fetchLatestSummary();
   }, []);
 
-  useEffect(() => {
-    if (confirmOpen) {
-      document.body.classList.add("dialog-overlay-no-blur");
-    } else {
-      document.body.classList.remove("dialog-overlay-no-blur");
-    }
+  const sections: Array<{ key: SectionKey; title: string; icon: ComponentType<{ className?: string }> }> = [
+    { key: "overview", title: t("summary.sections.overview"), icon: TrendingUp },
+    { key: "keyChanges", title: t("summary.sections.keyChanges"), icon: ClipboardList },
+    { key: "actionPlan", title: t("summary.sections.actionPlan"), icon: Lightbulb },
+    { key: "watchouts", title: t("summary.sections.watchouts"), icon: AlertTriangle },
+  ];
 
-    return () => {
-      document.body.classList.remove("dialog-overlay-no-blur");
-    };
-  }, [confirmOpen]);
-
-  function handleGenerateClick() {
-    if (loadingSummary || generating || !canGenerate) {
-      return;
-    }
-
-    if (hasSummary) {
-      setConfirmOpen(true);
-      return;
-    }
-
-    void regenerateSummary();
+  function renderContent(key: SectionKey) {
+    if (!structuredSummary) return null;
+    if (key === "overview") return structuredSummary.overview;
+    if (key === "keyChanges") return structuredSummary.keyChanges;
+    if (key === "actionPlan") return structuredSummary.actionPlan;
+    return structuredSummary.watchouts;
   }
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 pb-24 sm:pb-28">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-4xl space-y-3">
-          <StatsScrollbarRow
-            className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1fr_1fr_1fr_1.1fr]"
-          >
+          <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1fr_1fr_1fr_1.1fr]">
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">摘要日期</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{requestDate ? formatCompactDate(requestDate) : "尚未生成"}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.date")}</p>
+              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{requestDate ? formatCompactDate(requestDate, locale) : t("summary.errors.noContent")}</p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">今日額度</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{usageBadge || "讀取中"}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.limit")}</p>
+              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{usageBadge || t("common.loading")}</p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">摘要來源</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{sourceLabel || "尚無資料"}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.source")}</p>
+              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{sourceLabel || t("common.notAvailable")}</p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">模型</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{modelLabel || "尚無資料"}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.model")}</p>
+              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{modelLabel || t("common.notAvailable")}</p>
             </div>
           </StatsScrollbarRow>
 
           {refreshingSummary ? (
             <div className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
               <LoaderCircle className="size-3 animate-spin" />
-              更新最新摘要中
+              {t("summary.loading.refreshing")}
             </div>
           ) : null}
         </div>
@@ -206,25 +176,23 @@ export function TrendSummaryWorkspace() {
       {loadingSummary ? (
         <Card className="min-h-72 items-center justify-center gap-3 text-muted-foreground">
           <LoaderCircle className="size-5 animate-spin" />
-          <p className="text-sm">讀取最新摘要中...</p>
+          <p className="text-sm">{t("summary.loading.fetching")}</p>
         </Card>
       ) : !structuredSummary ? (
         <Card className="surface-state-panel min-h-72 items-center justify-center gap-2 p-8 text-center">
           <span className="grid size-11 place-items-center rounded-full bg-primary/7 text-primary">
             <Sparkles className="size-5" />
           </span>
-          <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">{summary ? "近期 5 筆趨勢摘要" : "生成第一筆 AI 摘要"}</p>
-          <p className="max-w-xl text-sm leading-6 text-muted-foreground">{summary || "目前尚無摘要內容。點擊右下角按鈕，根據最新納入圖表的 InBody 紀錄生成第一筆 AI 摘要。"}</p>
+          <p className="font-display text-[1.7rem] text-foreground sm:text-2xl">{summary ? t("summary.loading.emptyRecentTitle") : t("summary.loading.emptyTitle")}</p>
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground">{summary || t("summary.loading.emptyBody")}</p>
         </Card>
       ) : (
         <div className="grid gap-3">
-          {SECTIONS.map((section) => {
-            const content = getSectionContent(structuredSummary, section.key);
+          {sections.map((section) => {
+            const content = renderContent(section.key);
             const Icon = section.icon;
 
-            if (!content) {
-              return null;
-            }
+            if (!content) return null;
 
             return (
               <Card className="gap-3 border-border/55 bg-card/90 p-5" key={section.key}>
@@ -256,13 +224,13 @@ export function TrendSummaryWorkspace() {
       <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
         <div className="mx-auto flex w-full max-w-4xl justify-end">
           <Button
-            aria-label={hasSummary ? "重新生成 AI 趨勢摘要" : "生成 AI 趨勢摘要"}
+            aria-label={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
             className={`pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] ${
               !loadingSummary && !generating && canGenerate ? "ai-generate-pulse" : ""
             }`}
             disabled={loadingSummary || generating || !canGenerate}
-            onClick={handleGenerateClick}
-            title={hasSummary ? "重新生成 AI 趨勢摘要" : "生成 AI 趨勢摘要"}
+            onClick={hasSummary ? () => setConfirmOpen(true) : () => void regenerateSummary()}
+            title={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
             type="button"
           >
             {generating ? <LoaderCircle className="size-6 animate-spin" /> : <Sparkles className="size-6" />}
@@ -273,19 +241,17 @@ export function TrendSummaryWorkspace() {
       <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
         <DialogContent className="max-w-md" showCloseButton={false}>
           <DialogHeader className="border-b-0 pb-3">
-            <DialogTitle>重新生成 AI 摘要？</DialogTitle>
-            <DialogDescription>
-              這會使用今日額度產生新的趨勢摘要，並取代目前顯示的最新摘要。
-            </DialogDescription>
+            <DialogTitle>{t("summary.loading.regenerateConfirmTitle")}</DialogTitle>
+            <DialogDescription>{t("summary.loading.regenerateConfirmBody")}</DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col-reverse gap-3 px-6 pb-6 pt-1 sm:flex-row sm:justify-end">
             <Button className="h-12 sm:min-w-24" disabled={generating} onClick={() => setConfirmOpen(false)} type="button" variant="outline">
-              取消
+              {t("common.cancel")}
             </Button>
             <Button className="h-12 sm:min-w-24" disabled={generating || !canGenerate} onClick={() => void regenerateSummary()} type="button">
               {generating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-              <span>重新生成</span>
+              <span>{t("summary.loading.regenerate")}</span>
             </Button>
           </div>
         </DialogContent>

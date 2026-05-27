@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildChartPayload, listRecords } from "@/lib/inbody/records";
 import { CHART_VIEWS, type ChartViewKey } from "@/lib/inbody/types";
+import { detectLocaleFromAcceptLanguage } from "@/lib/i18n";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
   }
 
   const records = await listRecords(supabase, user.id);
-  const chart = buildChartPayload(records, availableView.key as ChartViewKey);
+  const chart = buildChartPayload(records, availableView.key as ChartViewKey, detectLocaleFromAcceptLanguage(request.headers.get("accept-language")));
 
   return NextResponse.json({ chart });
 }

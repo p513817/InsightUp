@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Activity, Check, LayoutTemplate, Pencil, Share2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useLocale } from "@/components/i18n-provider";
 import { MiniTrendGrid, type TrendGridLayout } from "@/components/charts/mini-trend-grid";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
@@ -150,6 +151,7 @@ export function RecordsWorkspace({
   mode,
 }: RecordsWorkspaceProps) {
   const router = useRouter();
+  const locale = useLocale();
   const [records, setRecords] = useState(sortRecords(initialRecords));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
@@ -160,10 +162,10 @@ export function RecordsWorkspace({
   const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
   const [trendEditMode, setTrendEditMode] = useState(false);
 
-  const overallChart = buildChartPayload(records, "overall");
+  const overallChart = buildChartPayload(records, "overall", locale);
   const segmentalCharts = SEGMENT_CHART_VIEWS.map((view) => ({
     ...view,
-    chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key)),
+    chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key, locale)),
   }));
   const latestRecord = records.at(-1);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
@@ -213,7 +215,7 @@ export function RecordsWorkspace({
           method: "PATCH",
         });
         setRecords((current) => sortRecords(current.map((record) => (record.id === response.record.id ? response.record : record))));
-        toast.success("紀錄已更新");
+        toast.success(locale === "en" ? "Record updated." : "紀錄已更新");
         setEditingRecord(null);
         return;
       }
@@ -223,9 +225,9 @@ export function RecordsWorkspace({
         method: "POST",
       });
       setRecords((current) => sortRecords([...current, response.record]));
-      toast.success("已新增 InBody 紀錄");
+      toast.success(locale === "en" ? "Record created." : "已新增 InBody 紀錄");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "儲存失敗");
+      toast.error(error instanceof Error ? error.message : locale === "en" ? "Save failed." : "儲存失敗");
       throw error;
     }
   }
@@ -238,18 +240,18 @@ export function RecordsWorkspace({
         method: "PATCH",
       });
       setRecords((current) => current.map((entry) => (entry.id === response.record.id ? response.record : entry)));
-      toast.success(nextValue ? "紀錄已納入圖表分析" : "紀錄已排除出圖表分析", {
-        description: nextValue ? "這筆資料會重新影響趨勢圖。" : "紀錄仍會保留，只是不納入趨勢計算。",
+      toast.success(nextValue ? (locale === "en" ? "Included in chart analysis." : "紀錄已納入圖表分析") : (locale === "en" ? "Excluded from chart analysis." : "紀錄已排除出圖表分析"), {
+        description: nextValue ? (locale === "en" ? "This record will affect the trend chart again." : "這筆資料會重新影響趨勢圖。") : (locale === "en" ? "The record stays, but is excluded from trend calculations." : "紀錄仍會保留，只是不納入趨勢計算。"),
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "更新圖表納入狀態失敗");
+      toast.error(error instanceof Error ? error.message : locale === "en" ? "Failed to update chart inclusion." : "更新圖表納入狀態失敗");
     } finally {
       setBusyRecordId(null);
     }
   }
 
   async function handleDelete(record: InbodyRecord) {
-    if (!window.confirm(`確定要刪除 ${formatLongDate(record.date)} 的紀錄嗎？這會以 soft delete 保留資料。`)) {
+    if (!window.confirm(locale === "en" ? `Delete ${formatLongDate(record.date)}? This keeps the data via soft delete.` : `確定要刪除 ${formatLongDate(record.date)} 的紀錄嗎？這會以 soft delete 保留資料。`)) {
       return;
     }
 
@@ -259,11 +261,11 @@ export function RecordsWorkspace({
         method: "DELETE",
       });
       setRecords((current) => current.filter((entry) => entry.id !== record.id));
-      toast.success("紀錄已刪除", {
-        description: "資料已用 soft delete 保留在資料庫中。",
+      toast.success(locale === "en" ? "Record deleted." : "紀錄已刪除", {
+        description: locale === "en" ? "The data is kept in the database via soft delete." : "資料已用 soft delete 保留在資料庫中。",
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "刪除失敗");
+      toast.error(error instanceof Error ? error.message : locale === "en" ? "Delete failed." : "刪除失敗");
     } finally {
       setBusyRecordId(null);
     }
@@ -294,8 +296,8 @@ export function RecordsWorkspace({
       return (
         <div className="pb-24 sm:pb-28">
           <RecordEmptyState
-            actionLabel="新增第一筆紀錄"
-            description="新增第一筆紀錄後，這裡會顯示體重、肌肉量、體脂與部位趨勢。"
+            actionLabel={locale === "en" ? "Add first record" : "新增第一筆紀錄"}
+            description={locale === "en" ? "After adding your first record, this area will show weight, muscle, body fat, and segment trends." : "新增第一筆紀錄後，這裡會顯示體重、肌肉量、體脂與部位趨勢。"}
             onAdd={openCreateDialog}
           />
         </div>
@@ -307,22 +309,22 @@ export function RecordsWorkspace({
         <section className="space-y-4">
           <div className="sticky top-[var(--app-header-sticky-offset,0px)] z-30 -mx-1 px-1 py-1 transition-[top] duration-[420ms] ease-out motion-reduce:transition-none">
             <div
-              aria-label="趨勢分析模式"
+              aria-label={locale === "en" ? "Trend analysis mode" : "趨勢分析模式"}
               className="mx-auto grid max-w-sm grid-cols-2 gap-1 rounded-full border border-border/70 bg-card/92 p-1 shadow-panel backdrop-blur"
               role="tablist"
             >
               <TrendModeButton active={trendMode === "overall"} icon={<Activity className="size-4" />} onClick={() => setTrendMode("overall")}>
-                整體趨勢
+                {locale === "en" ? "Overall trend" : "整體趨勢"}
               </TrendModeButton>
               <TrendModeButton active={trendMode === "segmental"} icon={<UserRound className="size-4" />} onClick={() => setTrendMode("segmental")}>
-                部位別趨勢
+                {locale === "en" ? "Segmental trend" : "部位別趨勢"}
               </TrendModeButton>
             </div>
           </div>
 
           <div className="-mt-1 flex justify-end px-1">
             <div className="relative flex items-center gap-1.5">
-              <TrendToolButton active={layoutMenuOpen} label="調整趨勢欄數" onClick={() => setLayoutMenuOpen((current) => !current)}>
+              <TrendToolButton active={layoutMenuOpen} label={locale === "en" ? "Adjust layout columns" : "調整趨勢欄數"} onClick={() => setLayoutMenuOpen((current) => !current)}>
                 <LayoutTemplate className="size-4" />
               </TrendToolButton>
 
@@ -341,7 +343,7 @@ export function RecordsWorkspace({
                         disabled={disabled}
                         key={option.value}
                         onClick={() => applyTrendLayout(option.value)}
-                        title={disabled ? "目前螢幕寬度不支援雙欄" : undefined}
+                        title={disabled ? (locale === "en" ? "Two columns are not supported on this screen width." : "目前螢幕寬度不支援雙欄") : undefined}
                         type="button"
                       >
                         <span>{option.label}</span>
@@ -354,12 +356,12 @@ export function RecordsWorkspace({
 
               <TrendToolButton
                 active={trendEditMode}
-                label={trendEditMode ? "結束編輯顯示指標" : "編輯顯示指標"}
+                label={trendEditMode ? (locale === "en" ? "Finish editing visible metrics" : "結束編輯顯示指標") : (locale === "en" ? "Edit visible metrics" : "編輯顯示指標")}
                 onClick={() => setTrendEditMode((current) => !current)}
               >
                 <Pencil className="size-4" />
               </TrendToolButton>
-              <TrendToolButton label="分享趨勢數據" onClick={() => router.push("/share")}>
+              <TrendToolButton label={locale === "en" ? "Share trend data" : "分享趨勢數據"} onClick={() => router.push("/share")}>
                 <Share2 className="size-4" />
               </TrendToolButton>
             </div>
@@ -400,19 +402,19 @@ export function RecordsWorkspace({
             className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]"
           >
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">最近量測</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Latest measurement" : "最近量測"}</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
                 {formatCompactDate(latestRecord?.date)}
               </p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">納入圖表</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Included in charts" : "納入圖表"}</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
                 {includedCount}/{records.length || 0}
               </p>
             </div>
             <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">已排除</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Excluded" : "已排除"}</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{excludedCount}</p>
             </div>
           </StatsScrollbarRow>

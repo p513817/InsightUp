@@ -10,6 +10,7 @@ import {
   type SegmentMap,
   SEGMENT_PARTS,
 } from "@/lib/inbody/types";
+import type { Locale } from "@/lib/i18n";
 
 const RECORD_SELECT = `
   id,
@@ -41,7 +42,7 @@ const RECORD_SELECT = `
   )
 `;
 
-const METRIC_LABEL_MAP: Record<
+const METRIC_LABEL_MAPS: Record<Locale, Record<
   | "weight"
   | "muscle"
   | "fat"
@@ -53,40 +54,58 @@ const METRIC_LABEL_MAP: Record<
   | "muscleRatio"
   | "fatRatio",
   string
-> = {
-  weight: "體重",
-  muscle: "骨骼肌",
-  fat: "體脂肪",
-  fatPercent: "體脂率",
-  score: "InBody 分數",
-  visceralFatLevel: "內臟脂肪",
-  bmr: "基礎代謝率",
-  recommendedCalories: "建議熱量",
-  muscleRatio: "肌肉比例",
-  fatRatio: "脂肪比例",
+>> = {
+  "zh-Hant": {
+    weight: "體重",
+    muscle: "骨骼肌量",
+    fat: "體脂肪量",
+    fatPercent: "體脂率",
+    score: "InBody 分數",
+    visceralFatLevel: "內臟脂肪",
+    bmr: "基礎代謝率",
+    recommendedCalories: "建議熱量",
+    muscleRatio: "肌肉比例",
+    fatRatio: "脂肪比例",
+  },
+  en: {
+    weight: "Weight",
+    muscle: "Skeletal muscle",
+    fat: "Body fat",
+    fatPercent: "Body fat %",
+    score: "InBody score",
+    visceralFatLevel: "Visceral fat",
+    bmr: "BMR",
+    recommendedCalories: "Recommended calories",
+    muscleRatio: "Muscle ratio",
+    fatRatio: "Fat ratio",
+  },
 };
 
-function getMetricLabel(metricKey: keyof typeof METRIC_LABEL_MAP) {
-  return METRIC_LABEL_MAP[metricKey];
+function getMetricLabel(metricKey: keyof typeof METRIC_LABEL_MAPS["zh-Hant"], locale: Locale = "zh-Hant") {
+  return METRIC_LABEL_MAPS[locale][metricKey];
 }
 
-const OVERALL_METRICS: ChartMetric[] = [
-  { key: "weight", label: getMetricLabel("weight"), color: "#1c365f", unit: "kg", axis: "mass" },
-  { key: "muscle", label: getMetricLabel("muscle"), color: "#3d7bb2", unit: "kg", axis: "mass" },
-  { key: "fat", label: getMetricLabel("fat"), color: "#b56878", unit: "kg", axis: "mass" },
-  { key: "fatPercent", label: getMetricLabel("fatPercent"), color: "#8a659f", unit: "%", axis: "ratio" },
-  { key: "score", label: getMetricLabel("score"), color: "#79d7c3", unit: "pt", axis: "ratio" },
-  { key: "visceralFatLevel", label: getMetricLabel("visceralFatLevel"), color: "#5e88a7", unit: "lvl", axis: "ratio" },
-  { key: "bmr", label: getMetricLabel("bmr"), color: "#71839a", unit: "kcal", axis: "ratio" },
-  { key: "recommendedCalories", label: getMetricLabel("recommendedCalories"), color: "#4d67a8", unit: "kcal", axis: "ratio" },
-];
+function getOverallMetrics(locale: Locale): ChartMetric[] {
+  return [
+    { key: "weight", label: getMetricLabel("weight", locale), color: "#1c365f", unit: "kg", axis: "mass" },
+    { key: "muscle", label: getMetricLabel("muscle", locale), color: "#3d7bb2", unit: "kg", axis: "mass" },
+    { key: "fat", label: getMetricLabel("fat", locale), color: "#b56878", unit: "kg", axis: "mass" },
+    { key: "fatPercent", label: getMetricLabel("fatPercent", locale), color: "#8a659f", unit: "%", axis: "ratio" },
+    { key: "score", label: getMetricLabel("score", locale), color: "#79d7c3", unit: "pt", axis: "ratio" },
+    { key: "visceralFatLevel", label: getMetricLabel("visceralFatLevel", locale), color: "#5e88a7", unit: "lvl", axis: "ratio" },
+    { key: "bmr", label: getMetricLabel("bmr", locale), color: "#71839a", unit: "kcal", axis: "ratio" },
+    { key: "recommendedCalories", label: getMetricLabel("recommendedCalories", locale), color: "#4d67a8", unit: "kcal", axis: "ratio" },
+  ];
+}
 
-const SEGMENTAL_METRICS: ChartMetric[] = [
-  { key: "muscle", label: getMetricLabel("muscle"), color: "#3d7bb2", unit: "kg", axis: "mass" },
-  { key: "fat", label: getMetricLabel("fat"), color: "#b56878", unit: "kg", axis: "mass" },
-  { key: "muscleRatio", label: getMetricLabel("muscleRatio"), color: "#79d7c3", unit: "%", axis: "ratio" },
-  { key: "fatRatio", label: getMetricLabel("fatRatio"), color: "#8a659f", unit: "%", axis: "ratio" },
-];
+function getSegmentalMetrics(locale: Locale): ChartMetric[] {
+  return [
+    { key: "muscle", label: getMetricLabel("muscle", locale), color: "#3d7bb2", unit: "kg", axis: "mass" },
+    { key: "fat", label: getMetricLabel("fat", locale), color: "#b56878", unit: "kg", axis: "mass" },
+    { key: "muscleRatio", label: getMetricLabel("muscleRatio", locale), color: "#79d7c3", unit: "%", axis: "ratio" },
+    { key: "fatRatio", label: getMetricLabel("fatRatio", locale), color: "#8a659f", unit: "%", axis: "ratio" },
+  ];
+}
 
 export function createSegmentalDataFromRecord(record: Partial<RecordInput>): SegmentMap {
   const muscle = Number(record?.muscle ?? 0);
@@ -321,12 +340,12 @@ export async function softDeleteRecord(supabase: SupabaseClient, userId: string,
   }
 }
 
-export function buildChartPayload(records: InbodyRecord[], view: ChartViewKey): ChartPayload {
+export function buildChartPayload(records: InbodyRecord[], view: ChartViewKey, locale: Locale = "zh-Hant"): ChartPayload {
   const filteredRecords = records
     .filter((record) => record.isIncludedInCharts)
     .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
 
-  const metrics = view === "overall" ? OVERALL_METRICS : SEGMENTAL_METRICS;
+  const metrics = view === "overall" ? getOverallMetrics(locale) : getSegmentalMetrics(locale);
   const points = filteredRecords.map((record) => {
     const point: Record<string, string | number | null> = {
       date: record.date,

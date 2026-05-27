@@ -7,6 +7,7 @@ import { Eye, EyeOff, GripVertical } from "lucide-react";
 import type { DotProps } from "recharts";
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
+import { useLocale } from "@/components/i18n-provider";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/page-loading";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
@@ -228,6 +229,7 @@ export function MiniTrendGrid({
   initialMetricOrder = EMPTY_INITIAL_METRIC_ORDER,
   layout = "auto",
 }: MiniTrendGridProps) {
+  const locale = useLocale();
   const [isChartReady, setIsChartReady] = useState(false);
   const [hiddenMetricKeys, setHiddenMetricKeys] = useState<string[]>([]);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
@@ -330,8 +332,8 @@ export function MiniTrendGrid({
 
     saveTimeoutIdRef.current = window.setTimeout(() => {
       void persistMetricOrder(nextMetricOrder).catch(() => {
-        toast.error("無法儲存卡片排序", {
-          description: "這次調整已保留在此裝置，重新登入後可能需要再調整一次。",
+        toast.error(locale === "en" ? "Unable to save card order" : "無法儲存卡片排序", {
+          description: locale === "en" ? "This adjustment is saved on this device, but you may need to adjust it again after signing in." : "這次調整已保留在此裝置，重新登入後可能需要再調整一次。",
         });
       });
     }, SAVE_ORDER_DEBOUNCE_MS);
@@ -384,7 +386,7 @@ export function MiniTrendGrid({
   if (!chart.points.length) {
     return (
       <div className="surface-state-panel flex min-h-72 items-center justify-center rounded-[1.75rem] text-sm text-muted-foreground">
-        尚無可納入圖表的紀錄。
+        {locale === "en" ? "There are no records yet to include in the chart." : "尚無可納入圖表的紀錄。"}
       </div>
     );
   }
@@ -431,13 +433,13 @@ export function MiniTrendGrid({
       {editMode && hiddenMetrics.length ? (
         <section className="rounded-[1.1rem] border border-dashed border-border/80 bg-card/55 px-3 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">已隱藏指標</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Hidden metrics" : "已隱藏指標"}</p>
             <button
               className="cursor-pointer rounded-lg px-2 py-1 text-xs font-semibold text-primary transition-colors duration-150 hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               onClick={restoreAllMetrics}
               type="button"
             >
-              全部復原
+              {locale === "en" ? "Restore all" : "全部復原"}
             </button>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">

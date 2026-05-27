@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
+import { useLocale } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { buildChartPayload } from "@/lib/inbody/records";
 import type { ChartMetric, InbodyRecord } from "@/lib/inbody/types";
@@ -35,99 +36,6 @@ const TIMELINE_CHART_MARGIN = { bottom: 0, left: 20, right: 20, top: 0 };
 const SHARE_COLOR_SWATCHES = ["#1c365f", "#3d7bb2", "#189b8c", "#79d7c3", "#b56878", "#8a659f", "#f59e0b", "#ef4444"];
 const TIMELINE_MONTH_LABELS = ["Jan.", "Feb.", "Mar.", "Apr.", "May.", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."];
 
-/*
-const OVERALL_LABELS: Record<string, string> = {
-  weight: "體重",
-  muscle: "骨骼肌量",
-  fat: "體脂肪量",
-  fatPercent: "體脂率",
-  score: "InBody 分數",
-  visceralFatLevel: "內臟脂肪等級",
-  bmr: "基礎代謝率",
-  recommendedCalories: "建議熱量",
-};
-
-const STYLE_OPTIONS: Array<{ value: ShareStyle; label: string }> = [
-  { value: "trend", label: "趨勢" },
-  { value: "current", label: "目前" },
-];
-
-const BACKGROUND_OPTIONS: Array<{ value: ShareBackground; label: string }> = [
-  { value: "light", label: "淺色" },
-  { value: "dark", label: "深色" },
-  { value: "transparent", label: "透明" },
-  { value: "custom", label: "自訂" },
-];
-
-const POSITION_OPTIONS: Array<{ value: SharePosition; label: string }> = [
-  { value: "top", label: "上方" },
-  { value: "center", label: "置中" },
-  { value: "bottom", label: "下方" },
-];
-
-const COLUMN_OPTIONS: Array<{ value: 1 | 2; label: string }> = [
-  { value: 1, label: "一欄" },
-  { value: 2, label: "兩欄" },
-];
-
-const TITLE_MODE_OPTIONS: Array<{ value: TitleMode; label: string }> = [
-  { value: "show", label: "顯示" },
-  { value: "hide", label: "隱藏" },
-];
-
-const TITLE_ALIGN_OPTIONS: Array<{ value: TitleAlign; label: string }> = [
-  { value: "left", label: "靠左" },
-  { value: "center", label: "置中" },
-  { value: "right", label: "靠右" },
-];
-*/
-/*
-const OVERALL_LABELS: Record<string, string> = {
-  weight: "體重",
-  muscle: "骨骼肌量",
-  fat: "體脂肪量",
-  fatPercent: "體脂率",
-  score: "InBody 分數",
-  visceralFatLevel: "內臟脂肪等級",
-  bmr: "基礎代謝率",
-  recommendedCalories: "建議熱量",
-};
-
-const STYLE_OPTIONS: Array<{ value: ShareStyle; label: string }> = [
-  { value: "trend", label: "趨勢" },
-  { value: "current", label: "目前" },
-];
-
-const BACKGROUND_OPTIONS: Array<{ value: ShareBackground; label: string }> = [
-  { value: "light", label: "淺色" },
-  { value: "dark", label: "深色" },
-  { value: "transparent", label: "透明" },
-  { value: "custom", label: "自訂" },
-];
-
-const POSITION_OPTIONS: Array<{ value: SharePosition; label: string }> = [
-  { value: "top", label: "上方" },
-  { value: "center", label: "置中" },
-  { value: "bottom", label: "下方" },
-];
-
-const COLUMN_OPTIONS: Array<{ value: 1 | 2; label: string }> = [
-  { value: 1, label: "一欄" },
-  { value: 2, label: "兩欄" },
-];
-
-const TITLE_MODE_OPTIONS: Array<{ value: TitleMode; label: string }> = [
-  { value: "show", label: "顯示" },
-  { value: "hide", label: "隱藏" },
-];
-
-const TITLE_ALIGN_OPTIONS: Array<{ value: TitleAlign; label: string }> = [
-  { value: "left", label: "靠左" },
-  { value: "center", label: "置中" },
-  { value: "right", label: "靠右" },
-];
-
-*/
 const OVERALL_LABELS: Record<string, string> = {
   weight: "\u9ad4\u91cd",
   muscle: "\u9aa8\u9abc\u808c\u91cf",
@@ -139,39 +47,16 @@ const OVERALL_LABELS: Record<string, string> = {
   recommendedCalories: "\u5efa\u8b70\u71b1\u91cf",
 };
 
-const STYLE_OPTIONS: Array<{ value: ShareStyle; label: string }> = [
-  { value: "trend", label: "\u8da8\u52e2" },
-  { value: "current", label: "\u76ee\u524d" },
-];
-
-const BACKGROUND_OPTIONS: Array<{ value: ShareBackground; label: string }> = [
-  { value: "light", label: "\u6dfa\u8272" },
-  { value: "dark", label: "\u6df1\u8272" },
-  { value: "transparent", label: "\u900f\u660e" },
-  { value: "custom", label: "\u81ea\u8a02" },
-];
-
-const POSITION_OPTIONS: Array<{ value: SharePosition; label: string }> = [
-  { value: "top", label: "\u4e0a\u65b9" },
-  { value: "center", label: "\u7f6e\u4e2d" },
-  { value: "bottom", label: "\u4e0b\u65b9" },
-];
-
-const COLUMN_OPTIONS: Array<{ value: 1 | 2; label: string }> = [
-  { value: 1, label: "\u4e00\u6b04" },
-  { value: 2, label: "\u5169\u6b04" },
-];
-
-const TITLE_MODE_OPTIONS: Array<{ value: TitleMode; label: string }> = [
-  { value: "show", label: "\u986f\u793a" },
-  { value: "hide", label: "\u96b1\u85cf" },
-];
-
-const TITLE_ALIGN_OPTIONS: Array<{ value: TitleAlign; label: string }> = [
-  { value: "left", label: "\u9760\u5de6" },
-  { value: "center", label: "\u7f6e\u4e2d" },
-  { value: "right", label: "\u9760\u53f3" },
-];
+const OVERALL_LABELS_EN: Record<string, string> = {
+  weight: "Weight",
+  muscle: "Skeletal muscle",
+  fat: "Body fat",
+  fatPercent: "Body fat %",
+  score: "InBody score",
+  visceralFatLevel: "Visceral fat level",
+  bmr: "BMR",
+  recommendedCalories: "Recommended calories",
+};
 
 function getNumericValue(value: string | number | null | undefined) {
   if (value == null || value === "") {
@@ -182,10 +67,10 @@ function getNumericValue(value: string | number | null | undefined) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function withReadableMetricLabel(metric: ChartMetric) {
+function withReadableMetricLabel(metric: ChartMetric, labels: Record<string, string>) {
   return {
     ...metric,
-    label: OVERALL_LABELS[metric.key] || metric.label,
+    label: labels[metric.key] || metric.label,
   };
 }
 
@@ -362,13 +247,13 @@ function TimelineTick({
   );
 }
 
-function buildOverallShareMetrics(records: InbodyRecord[]) {
-  const chart = buildChartPayload(records, "overall");
+function buildOverallShareMetrics(records: InbodyRecord[], labels: Record<string, string>, locale: string) {
+  const chart = buildChartPayload(records, "overall", locale === "en" ? "en" : "zh-Hant");
   const latestPoint = chart.points.at(-1);
   const previousPoint = chart.points.at(-2);
 
   return chart.metrics.map((metric) => {
-    const readableMetric = withReadableMetricLabel(metric);
+    const readableMetric = withReadableMetricLabel(metric, labels);
     const latestValue = getNumericValue(latestPoint?.[metric.key]);
     const previousValue = getNumericValue(previousPoint?.[metric.key]);
     const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
@@ -593,63 +478,6 @@ interface TrendShareWorkspaceProps {
   records: InbodyRecord[];
 }
 
-/*
-function BrokenSharePreviewContent({
-  background,
-  effectiveShareColumns,
-  selectedMetrics,
-  sharePosition,
-  shareStyle,
-  timelineDates,
-  timelinePoints,
-  titleAlign,
-  titleMode,
-}: {
-  background: ShareBackground;
-  effectiveShareColumns: 1 | 2;
-  selectedMetrics: ShareMetric[];
-  sharePosition: SharePosition;
-  shareStyle: ShareStyle;
-  timelineDates: string[];
-  timelinePoints: ShareMetric["points"];
-  titleAlign: TitleAlign;
-  titleMode: TitleMode;
-}) {
-  return (
-    <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
-      <div className="min-w-0">
-        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))}>
-          <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">我的身體趨勢</h2> : null}</div>
-        </div>
-      </div>
-
-      <div className={cn("grid w-full min-w-0 gap-1.5", effectiveShareColumns === 1 ? "grid-cols-1" : "grid-cols-2")}>
-        {selectedMetrics.length ? (
-          selectedMetrics.map((item) =>
-            shareStyle === "trend" ? (
-              <MetricTrendPreview background={background} item={item} key={item.id} />
-            ) : (
-              <MetricCurrentPreview background={background} item={item} key={item.id} />
-            ),
-          )
-        ) : (
-          <div className={cn("rounded-[1rem] border border-dashed px-4 py-12 text-center text-sm", background === "dark" ? "border-white/16 text-white/62" : "border-border/80 text-muted-foreground")}>
-            ??????頩????????????????
-          </div>
-        )}
-      </div>
-
-      <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
-        <div className="flex h-6 items-end pb-[3px]">
-          <p className={cn("truncate font-display text-sm leading-none", background === "dark" ? "text-white/55" : "text-muted-foreground/75")}>Insight Up</p>
-        </div>
-        {shareStyle === "trend" ? <ShareTimelineChart background={background} points={timelinePoints} ticks={timelineDates} /> : null}
-      </div>
-    </div>
-  );
-}
-
-*/
 function SharePreviewContent({
   background,
   effectiveShareColumns,
@@ -660,6 +488,7 @@ function SharePreviewContent({
   timelinePoints,
   titleAlign,
   titleMode,
+  isEnglish,
 }: {
   background: ShareBackground;
   effectiveShareColumns: 1 | 2;
@@ -670,12 +499,13 @@ function SharePreviewContent({
   timelinePoints: ShareMetric["points"];
   titleAlign: TitleAlign;
   titleMode: TitleMode;
+  isEnglish: boolean;
 }) {
   return (
     <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
       <div className="min-w-0">
         <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))}>
-          <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{"\u6211\u7684\u8eab\u9ad4\u8da8\u52e2"}</h2> : null}</div>
+          <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{isEnglish ? "Trend overview" : "我的身體趨勢"}</h2> : null}</div>
         </div>
       </div>
 
@@ -690,7 +520,7 @@ function SharePreviewContent({
           )
         ) : (
           <div className={cn("rounded-[1rem] border border-dashed px-4 py-12 text-center text-sm", background === "dark" ? "border-white/16 text-white/62" : "border-border/80 text-muted-foreground")}>
-            {"\u76ee\u524d\u6c92\u6709\u53ef\u5206\u4eab\u7684\u8da8\u52e2\u8cc7\u6599\u3002"}
+            {isEnglish ? "There are no trend records available to share right now." : "目前沒有可分享的趨勢資料。"}
           </div>
         )}
       </div>
@@ -707,7 +537,9 @@ function SharePreviewContent({
 
 export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const router = useRouter();
-  const shareMetrics = useMemo(() => buildOverallShareMetrics(records), [records]);
+  const locale = useLocale();
+  const isEnglish = locale === "en";
+  const shareMetrics = useMemo(() => buildOverallShareMetrics(records, isEnglish ? OVERALL_LABELS_EN : OVERALL_LABELS, locale), [isEnglish, locale, records]);
   const latestDate = records.filter((record) => record.isIncludedInCharts).at(-1)?.date ?? null;
   const defaultSelectedIds = useMemo(() => shareMetrics.slice(0, 4).map((item) => item.id), [shareMetrics]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -722,6 +554,68 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [titleAlign, setTitleAlign] = useState<TitleAlign>("left");
   const [isSaving, setIsSaving] = useState(false);
   const [activeControl, setActiveControl] = useState<ControlPanel | null>("style");
+  const styleOptions = isEnglish
+    ? [
+        { value: "trend" as const, label: "Trend" },
+        { value: "current" as const, label: "Current" },
+      ]
+    : [
+        { value: "trend" as const, label: "趨勢" },
+        { value: "current" as const, label: "目前" },
+      ];
+  const backgroundOptions = isEnglish
+    ? [
+        { value: "light" as const, label: "Light" },
+        { value: "dark" as const, label: "Dark" },
+        { value: "transparent" as const, label: "Transparent" },
+        { value: "custom" as const, label: "Custom" },
+      ]
+    : [
+        { value: "light" as const, label: "淺色" },
+        { value: "dark" as const, label: "深色" },
+        { value: "transparent" as const, label: "透明" },
+        { value: "custom" as const, label: "自訂" },
+      ];
+  const positionOptions = isEnglish
+    ? [
+        { value: "top" as const, label: "Top" },
+        { value: "center" as const, label: "Center" },
+        { value: "bottom" as const, label: "Bottom" },
+      ]
+    : [
+        { value: "top" as const, label: "上方" },
+        { value: "center" as const, label: "置中" },
+        { value: "bottom" as const, label: "下方" },
+      ];
+  const columnOptions = isEnglish
+    ? [
+        { value: 1 as const, label: "One column" },
+        { value: 2 as const, label: "Two columns" },
+      ]
+    : [
+        { value: 1 as const, label: "一欄" },
+        { value: 2 as const, label: "兩欄" },
+      ];
+  const titleModeOptions = isEnglish
+    ? [
+        { value: "show" as const, label: "Show" },
+        { value: "hide" as const, label: "Hide" },
+      ]
+    : [
+        { value: "show" as const, label: "顯示" },
+        { value: "hide" as const, label: "隱藏" },
+      ];
+  const titleAlignOptions = isEnglish
+    ? [
+        { value: "left" as const, label: "Left" },
+        { value: "center" as const, label: "Center" },
+        { value: "right" as const, label: "Right" },
+      ]
+    : [
+        { value: "left" as const, label: "靠左" },
+        { value: "center" as const, label: "置中" },
+        { value: "right" as const, label: "靠右" },
+      ];
 
   const previewRef = useRef<HTMLDivElement>(null);
   const coloredShareMetrics = useMemo(
@@ -771,62 +665,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     setActiveControl((current) => (current === panel ? null : panel));
   }
 
-  /*
-  const brokenSaveImage = useCallback(async () => {
-    if (!selectedMetrics.length) {
-      toast.error("請至少選擇一個指標。");
-      return;
-    }
-
-    const previewNode = previewRef.current;
-    if (!previewNode) return;
-
-    setIsSaving(true);
-    const toastId = toast.loading("正在產生圖片...");
-
-    try {
-      const { dataUrl, exportHeight, exportWidth } = await renderSharePreviewImage(previewNode);
-      const fileName = `insightup-trend-${latestDate ?? "share"}-${exportWidth}x${exportHeight}.png`;
-
-      try {
-        const imageFile = await dataUrlToImageFile(dataUrl, fileName);
-        if (canTryShareImageFile(imageFile)) {
-          try {
-            await navigator.share({
-              files: [imageFile],
-              title: "Insight Up",
-            });
-            toast.success("已開啟系統分享。", { id: toastId });
-            return;
-          } catch (error) {
-            if (error instanceof DOMException && error.name === "AbortError") {
-              toast.dismiss(toastId);
-              return;
-            }
-          }
-        }
-      } catch {
-        // File share support can fail independently; keep the download fallback available.
-      }
-
-      downloadDataUrl(dataUrl, fileName);
-      toast.success("圖片已下載。", { id: toastId });
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        toast.dismiss(toastId);
-        return;
-      }
-
-      toast.error("圖片下載失敗，請再試一次。", { id: toastId });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [latestDate, selectedMetrics]);
-  */
-
+  
   const saveImage = useCallback(async () => {
     if (!selectedMetrics.length) {
-      toast.error("\u8acb\u81f3\u5c11\u9078\u64c7\u4e00\u500b\u6307\u6a19\u3002");
+      toast.error(isEnglish ? "Select at least one metric." : "請至少選擇一個指標。");
       return;
     }
 
@@ -834,7 +676,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     if (!previewNode) return;
 
     setIsSaving(true);
-    const toastId = toast.loading("\u6b63\u5728\u7522\u751f\u5716\u7247...");
+    const toastId = toast.loading(isEnglish ? "Generating image..." : "正在產生圖片...");
 
     try {
       const { dataUrl, exportHeight, exportWidth } = await renderSharePreviewImage(previewNode);
@@ -848,7 +690,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               files: [imageFile],
               title: "Insight Up",
             });
-            toast.success("\u5df2\u958b\u555f\u7cfb\u7d71\u5206\u4eab\u3002", { id: toastId });
+            toast.success(isEnglish ? "System share opened." : "已開啟系統分享。", { id: toastId });
             return;
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") {
@@ -862,14 +704,14 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       }
 
       downloadDataUrl(dataUrl, fileName);
-      toast.success("\u5716\u7247\u5df2\u4e0b\u8f09\u3002", { id: toastId });
+      toast.success(isEnglish ? "Image downloaded." : "圖片已下載。", { id: toastId });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         toast.dismiss(toastId);
         return;
       }
 
-      toast.error("\u5716\u7247\u4e0b\u8f09\u5931\u6557\uff0c\u8acb\u518d\u8a66\u4e00\u6b21\u3002", { id: toastId });
+      toast.error(isEnglish ? "Image download failed. Please try again." : "圖片下載失敗，請再試一次。", { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -878,17 +720,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   if (!shareMetrics.length) {
     return (
       <div className="surface-state-panel flex min-h-[52vh] w-full max-w-full items-center justify-center overflow-hidden rounded-[1.75rem] px-6 text-center text-sm text-muted-foreground">
-        {"\u76ee\u524d\u6c92\u6709\u53ef\u5206\u4eab\u7684\u8da8\u52e2\u8cc7\u6599\u3002"}
+        {isEnglish ? "There are no trend records available to share right now." : "目前沒有可分享的趨勢資料。"}
       </div>
     );
-    /*
-    return (
-      <div className="surface-state-panel flex min-h-[52vh] w-full max-w-full items-center justify-center overflow-hidden rounded-[1.75rem] px-6 text-center text-sm text-muted-foreground">
-        ???????????????????獢撠???????????????????
-      </div>
-    );
-    */
-  }
+      }
 
   return (
     <div
@@ -897,7 +732,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         activeControl ? "pb-52" : "pb-24",
       )}
     >
-      <h1 className="sr-only">{"\u5206\u4eab\u8da8\u52e2\u6578\u64da"}</h1>
+      <h1 className="sr-only">{isEnglish ? "Share trend data" : "分享趨勢數據"}</h1>
 
       <section className="flex min-h-[calc(100vh-var(--app-header-offset,0px)-16.5rem)] min-w-0 shrink-0 items-start justify-center pt-2">
         <div
@@ -916,9 +751,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             shareStyle={shareStyle}
             timelineDates={timelineDates}
             timelinePoints={timelinePoints}
-          titleAlign={titleAlign}
-          titleMode={titleMode}
-        />
+            titleAlign={titleAlign}
+            titleMode={titleMode}
+            isEnglish={isEnglish}
+          />
         </div>
       </section>
 
@@ -940,9 +776,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur">
         {activeControl === "style" ? (
           <div className="min-w-0">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u6a23\u5f0f"}</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Style" : "樣式"}</p>
             <PillScrollGroup>
-              {STYLE_OPTIONS.map((option) => (
+              {styleOptions.map((option) => (
                 <OptionPill active={shareStyle === option.value} key={option.value} onClick={() => handleShareStyleChange(option.value)}>
                   {option.label}
                 </OptionPill>
@@ -953,9 +789,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
         {activeControl === "background" ? (
           <div className="min-w-0">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u80cc\u666f"}</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Background" : "背景"}</p>
             <PillScrollGroup>
-              {BACKGROUND_OPTIONS.map((option) => (
+              {backgroundOptions.map((option) => (
                 <OptionPill active={shareBackground === option.value} key={option.value} onClick={() => setShareBackground(option.value)}>
                   {option.label}
                 </OptionPill>
@@ -971,9 +807,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                     <span className="relative grid size-6 place-items-center rounded-full border border-white/80 shadow-sm" style={{ backgroundColor: customBackgroundColor }}>
                       <Pipette className="size-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
                     </span>
-                    <span>{"\u81ea\u8a02"}</span>
+                    <span>{isEnglish ? "Custom" : "自訂"}</span>
                     <input
-                      aria-label="\u81ea\u8a02\u80cc\u666f\u8272"
+                      aria-label={isEnglish ? "Custom background color" : "自訂背景色"}
                       className="pointer-events-none fixed left-1/2 top-[38vh] size-8 -translate-x-1/2 opacity-0"
                       onChange={(event) => setCustomBackgroundColor(event.target.value)}
                       type="color"
@@ -982,7 +818,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                   </label>
                 </div>
                 <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_3rem] items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">{"\u900f\u660e\u5ea6"}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{isEnglish ? "Opacity" : "透明度"}</span>
                   <input
                     aria-label="\u80cc\u666f\u900f\u660e\u5ea6"
                     className="w-full accent-primary"
@@ -1002,9 +838,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "title" ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u6a19\u984c"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Title" : "標題"}</p>
               <PillScrollGroup>
-                {TITLE_MODE_OPTIONS.map((option) => (
+              {titleModeOptions.map((option) => (
                   <OptionPill active={titleMode === option.value} key={option.value} onClick={() => setTitleMode(option.value)}>
                     {option.label}
                   </OptionPill>
@@ -1012,9 +848,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               </PillScrollGroup>
             </div>
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u5c0d\u9f4a"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Alignment" : "對齊"}</p>
               <PillScrollGroup>
-                {TITLE_ALIGN_OPTIONS.map((option) => (
+              {titleAlignOptions.map((option) => (
                   <OptionPill active={titleAlign === option.value} key={option.value} onClick={() => setTitleAlign(option.value)}>
                     {option.label}
                   </OptionPill>
@@ -1027,9 +863,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "layout" ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u4f4d\u7f6e"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Position" : "位置"}</p>
               <PillScrollGroup>
-                {POSITION_OPTIONS.map((option) => (
+              {positionOptions.map((option) => (
                   <OptionPill active={sharePosition === option.value} key={option.value} onClick={() => setSharePosition(option.value)}>
                     {option.label}
                   </OptionPill>
@@ -1037,9 +873,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               </PillScrollGroup>
             </div>
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u6b04\u4f4d"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Columns" : "欄位"}</p>
               <PillScrollGroup>
-                {COLUMN_OPTIONS.map((option) => (
+                {columnOptions.map((option) => (
                   <OptionPill
                     active={effectiveShareColumns === option.value}
                     disabled={shareStyle === "trend" && option.value === 2}
@@ -1057,13 +893,13 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "colors" ? (
           <div className="min-w-0">
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u5716\u8868\u984f\u8272"}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Chart colors" : "圖表顏色"}</p>
               <button
                 className="h-7 cursor-pointer rounded-full px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={resetMetricColors}
                 type="button"
               >
-                {"\u91cd\u8a2d"}
+                {isEnglish ? "Reset" : "重設"}
               </button>
             </div>
             <div className="max-h-32 min-w-0 overflow-y-auto pr-1">
@@ -1110,21 +946,21 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "metrics" ? (
           <div className="min-w-0">
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{"\u6578\u64da"}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Metrics" : "數據"}</p>
               <div className="flex shrink-0 gap-1.5">
                 <button
                   className="h-7 cursor-pointer rounded-full border border-border/70 bg-background/72 px-3 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => setSelectedIds(shareMetrics.map((item) => item.id))}
                   type="button"
                 >
-                  {"\u5168\u9078"}
+                  {isEnglish ? "Select all" : "全選"}
                 </button>
                 <button
                   className="h-7 cursor-pointer rounded-full px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/8 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => setSelectedIds([])}
                   type="button"
                 >
-                  {"\u6e05\u9664"}
+                  {isEnglish ? "Clear" : "清除"}
                 </button>
               </div>
             </div>
@@ -1160,7 +996,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       ) : null}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-between px-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-5">
-        <Button aria-label="\u53d6\u6d88" className="pointer-events-auto size-11 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
+        <Button aria-label={isEnglish ? "Cancel" : "取消"} className="pointer-events-auto size-11 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
           <X className="size-5" />
         </Button>
         <div className="pointer-events-auto grid grid-cols-6 rounded-full border border-border/75 bg-card/95 p-1 shadow-panel backdrop-blur">
@@ -1237,7 +1073,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <ListChecks className="size-4" />
           </button>
         </div>
-        <Button aria-label="\u4e0b\u8f09\u5716\u7247" className="pointer-events-auto size-11 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
+        <Button aria-label={isEnglish ? "Download image" : "下載圖片"} className="pointer-events-auto size-11 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
           <Download className="size-5" />
         </Button>
       </div>

@@ -9,6 +9,7 @@ import {
   toLegacySummaryText,
 } from "@/lib/llms";
 import { buildGeminiPrompt, getTodayTaipeiDate, listRecentRecordsForSummary } from "@/lib/inbody/trend-summary";
+import { getServerTranslations } from "@/lib/i18n/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface TrendSummaryEntitlement {
@@ -47,10 +48,7 @@ async function resolveTrendSummaryEntitlement(supabase: Awaited<ReturnType<typeo
   } satisfies TrendSummaryEntitlement;
 }
 
-async function getLatestTrendSummaryRow(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-) {
+async function getLatestTrendSummaryRow(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string) {
   const { data, error } = await supabase
     .from("llm_trend_daily_summaries")
     .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
@@ -70,11 +68,7 @@ async function getLatestTrendSummaryRow(
   return data as TrendSummaryRow | null;
 }
 
-async function getTodayTrendSummaryRow(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-  requestDate: string,
-) {
+async function getTodayTrendSummaryRow(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string, requestDate: string) {
   const { data, error } = await supabase
     .from("llm_trend_daily_summaries")
     .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
@@ -101,61 +95,63 @@ async function getAuthenticatedContext() {
 
 function mapLlmErrorResponse(error: LlmProviderError) {
   if (error.code === "missing_key") {
-    return NextResponse.json({ message: "缺少 GEMINI_API_KEY。", code: error.code }, { status: 500 });
+    return NextResponse.json({ message: "GEMINI_API_KEY is missing.", code: error.code }, { status: 500 });
   }
 
   if (error.code === "authentication") {
-    return NextResponse.json({ message: "Gemini API key 無效。", code: error.code, modelName: error.model }, { status: 401 });
+    return NextResponse.json({ message: "Gemini API key authentication failed.", code: error.code, modelName: error.model }, { status: 401 });
   }
 
   if (error.code === "permission_denied") {
-    return NextResponse.json({ message: "Gemini API key 沒有權限。", code: error.code, modelName: error.model }, { status: 403 });
+    return NextResponse.json({ message: "Gemini API key does not have permission.", code: error.code, modelName: error.model }, { status: 403 });
   }
 
   if (error.code === "invalid_request") {
-    return NextResponse.json({ message: "Gemini 拒絕這次請求內容。", code: error.code, modelName: error.model }, { status: 400 });
+    return NextResponse.json({ message: "The Gemini request was invalid.", code: error.code, modelName: error.model }, { status: 400 });
   }
 
   if (error.code === "not_found") {
-    return NextResponse.json({ message: "找不到設定的 Gemini 模型。", code: error.code, modelName: error.model }, { status: 404 });
+    return NextResponse.json({ message: "The configured Gemini model was not found.", code: error.code, modelName: error.model }, { status: 404 });
   }
 
   if (error.code === "quota") {
-    return NextResponse.json({ message: "Gemini 額度已用盡。", code: error.code, modelName: error.model }, { status: 429 });
+    return NextResponse.json({ message: "Gemini quota has been exhausted.", code: error.code, modelName: error.model }, { status: 429 });
   }
 
   if (error.code === "empty_response") {
-    return NextResponse.json({ message: "Gemini 回傳了空白內容。", code: error.code, modelName: error.model }, { status: 502 });
+    return NextResponse.json({ message: "Gemini returned an empty response.", code: error.code, modelName: error.model }, { status: 502 });
   }
 
   if (error.code === "internal") {
-    return NextResponse.json({ message: "Gemini 內部錯誤。", code: error.code, modelName: error.model }, { status: 500 });
+    return NextResponse.json({ message: "Gemini returned an internal error.", code: error.code, modelName: error.model }, { status: 500 });
   }
 
   if (error.code === "unavailable") {
-    return NextResponse.json({ message: "Gemini 暫時無法使用。", code: error.code, modelName: error.model }, { status: 503 });
+    return NextResponse.json({ message: "Gemini is currently unavailable.", code: error.code, modelName: error.model }, { status: 503 });
   }
 
   if (error.code === "timeout") {
-    return NextResponse.json({ message: "Gemini 請求逾時。", code: error.code, modelName: error.model }, { status: 504 });
+    return NextResponse.json({ message: "Gemini request timed out.", code: error.code, modelName: error.model }, { status: 504 });
   }
 
-  return NextResponse.json({ message: "Gemini 請求失敗。", code: error.code, modelName: error.model }, { status: 502 });
+  return NextResponse.json({ message: "Gemini provider error.", code: error.code, modelName: error.model }, { status: 502 });
 }
 
 export async function GET() {
+  const { t } = await getServerTranslations();
+
   try {
     const { supabase, user } = await getAuthenticatedContext();
 
     if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
     const requestDate = getTodayTaipeiDate();
     const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
     if (entitlement.dailyLimit === 0) {
-      return NextResponse.json({ message: "你目前的方案無法使用 AI 趨勢摘要。" }, { status: 403 });
+      return NextResponse.json({ message: t("api.trendSummary.notAllowed") }, { status: 403 });
     }
 
     const [latestSummary, todaySummary] = await Promise.all([
@@ -176,27 +172,29 @@ export async function GET() {
       dailyLimit: entitlement.dailyLimit,
       planCode: entitlement.planCode,
       canGenerate: entitlement.dailyLimit == null || (todaySummary?.usage_count ?? 0) < entitlement.dailyLimit,
-      message: latestSummary ? undefined : "目前還沒有快取摘要，可手動產生今日趨勢摘要。",
+      message: latestSummary ? undefined : t("summary.errors.noContent"),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected server error";
+    const message = error instanceof Error ? error.message : t("api.unexpected");
     return NextResponse.json({ message: message.slice(0, 300) }, { status: 500 });
   }
 }
 
 export async function POST() {
+  const { t } = await getServerTranslations();
+
   try {
     const { supabase, user } = await getAuthenticatedContext();
 
     if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
     const requestDate = getTodayTaipeiDate();
     const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
     if (entitlement.dailyLimit === 0) {
-      return NextResponse.json({ message: "你目前的方案無法使用 AI 趨勢摘要。" }, { status: 403 });
+      return NextResponse.json({ message: t("api.trendSummary.notAllowed") }, { status: 403 });
     }
 
     const todaySummary = await getTodayTrendSummaryRow(supabase, user.id, requestDate);
@@ -217,14 +215,14 @@ export async function POST() {
         dailyLimit: entitlement.dailyLimit,
         planCode: entitlement.planCode,
         canGenerate: false,
-        message: "今天的 AI 趨勢摘要次數已達上限。",
+        message: t("summary.errors.limitReached"),
       });
     }
 
     const records = await listRecentRecordsForSummary(supabase, user.id);
 
     if (records.length < 2) {
-      return NextResponse.json({ message: "至少需要 2 筆已納入圖表的紀錄才能產生趨勢摘要。" }, { status: 400 });
+      return NextResponse.json({ message: t("summary.errors.needMoreRecords") }, { status: 400 });
     }
 
     const prompt = buildGeminiPrompt(records);
@@ -254,7 +252,7 @@ export async function POST() {
     );
 
     if (upsertError) {
-      return NextResponse.json({ message: "摘要儲存失敗。" }, { status: 500 });
+      return NextResponse.json({ message: t("api.unexpected") }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -275,7 +273,7 @@ export async function POST() {
       return mapLlmErrorResponse(error);
     }
 
-    const message = error instanceof Error ? error.message : "Unexpected server error";
+    const message = error instanceof Error ? error.message : t("api.unexpected");
     return NextResponse.json({ message: message.slice(0, 300) }, { status: 500 });
   }
 }

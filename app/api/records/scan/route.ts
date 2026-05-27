@@ -3,6 +3,7 @@ import { DEFAULT_GEMINI_ROTATION_MODELS, LlmProviderError, generateText, toLegac
 import { consumeDailyFeatureUsage, getDailyFeatureUsage, resolveMyFeatureEntitlement } from "@/lib/llms/usage";
 import { buildRecordScanPrompt, parseRecordScanResult } from "@/lib/inbody/scan";
 import { getTodayTaipeiDate } from "@/lib/inbody/trend-summary";
+import { getServerTranslations } from "@/lib/i18n/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const FEATURE_KEY = "inbody_scan";
@@ -31,11 +32,13 @@ function mapLlmErrorStatus(error: LlmProviderError) {
 }
 
 export async function GET() {
+  const { t } = await getServerTranslations();
+
   try {
     const { supabase, user } = await getAuthenticatedContext();
 
     if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
     const requestDate = getTodayTaipeiDate();
@@ -50,20 +53,22 @@ export async function GET() {
       dailyLimit: entitlement.dailyLimit,
       usageCount,
       canScan,
-      message: canScan ? null : "今日 AI Scan 次數已達上限，請明天再試。",
+      message: canScan ? null : t("api.scan.dailyLimitReached"),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected server error";
+    const message = error instanceof Error ? error.message : t("api.unexpected");
     return NextResponse.json({ message: message.slice(0, 300) }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
+  const { t } = await getServerTranslations();
+
   try {
     const { supabase, user } = await getAuthenticatedContext();
 
     if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
     const requestDate = getTodayTaipeiDate();
@@ -74,7 +79,7 @@ export async function POST(request: Request) {
     if (entitlement.dailyLimit === 0) {
       return NextResponse.json(
         {
-          message: "你目前的方案無法使用 AI Scan。",
+          message: t("api.scan.notAllowed"),
           requestDate,
           planCode: entitlement.planCode,
           dailyLimit: entitlement.dailyLimit,
@@ -88,7 +93,7 @@ export async function POST(request: Request) {
     if (entitlement.dailyLimit != null && usageCount >= entitlement.dailyLimit) {
       return NextResponse.json(
         {
-          message: "今日 AI Scan 次數已達上限，請明天再試。",
+          message: t("api.scan.dailyLimitReached"),
           requestDate,
           planCode: entitlement.planCode,
           dailyLimit: entitlement.dailyLimit,
@@ -103,15 +108,15 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ message: "缺少上傳檔案。" }, { status: 400 });
+      return NextResponse.json({ message: t("api.scan.missingFile") }, { status: 400 });
     }
 
     if (!ALLOWED_MIME_TYPES.has(file.type)) {
-      return NextResponse.json({ message: "僅支援 JPG、PNG、WEBP 或 PDF 檔案。" }, { status: 400 });
+      return NextResponse.json({ message: t("api.scan.unsupportedFile") }, { status: 400 });
     }
 
     if (file.size <= 0 || file.size > MAX_UPLOAD_SIZE_BYTES) {
-      return NextResponse.json({ message: "檔案大小必須介於 1 byte 到 10 MB 之間。" }, { status: 400 });
+      return NextResponse.json({ message: t("api.scan.fileTooLarge") }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -182,7 +187,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const message = error instanceof Error ? error.message : "Unexpected server error";
+    const message = error instanceof Error ? error.message : t("api.unexpected");
     return NextResponse.json({ message: message.slice(0, 300) }, { status: 500 });
   }
 }

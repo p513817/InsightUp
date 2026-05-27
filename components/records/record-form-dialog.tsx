@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch, X } from "lucide-react";
 import { Controller, type Path, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
+import { useLocale } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -140,15 +141,15 @@ function hasValue(value: unknown) {
   return value !== null && value !== undefined && value !== "";
 }
 
-function buildScanNote(summary: StructuredSummary | null | undefined, uncertaintyNotes: string[]) {
+function buildScanNote(summary: StructuredSummary | null | undefined, uncertaintyNotes: string[], isEnglish: boolean) {
   const lines: string[] = [];
 
   if (summary?.overview) {
-    lines.push(`AI 掃描摘要：${summary.overview}`);
+    lines.push(isEnglish ? `AI scan summary: ${summary.overview}` : `AI 掃描摘要：${summary.overview}`);
   }
 
   if (uncertaintyNotes.length > 0) {
-    lines.push(`待人工確認：${uncertaintyNotes.join("；")}`);
+    lines.push(isEnglish ? `Needs manual review: ${uncertaintyNotes.join('; ')}` : `待人工確認：${uncertaintyNotes.join('；')}`);
   }
 
   return lines.length > 0 ? lines.join("\n") : null;
@@ -213,13 +214,15 @@ function mergeDraftIntoForm(
   };
 }
 
-function formatUsageText(usageCount: number, dailyLimit: number | null) {
-  return `今日已使用 ${usageCount} / ${dailyLimit == null ? "不限" : dailyLimit} 次`;
+function formatUsageText(usageCount: number, dailyLimit: number | null, isEnglish: boolean) {
+  return isEnglish
+    ? `Used today: ${usageCount} / ${dailyLimit == null ? 'Unlimited' : dailyLimit}`
+    : `今日已使用 ${usageCount} / ${dailyLimit == null ? '不限' : dailyLimit} 次`;
 }
 
-function formatRecordDate(date: string | null | undefined) {
+function formatRecordDate(date: string | null | undefined, isEnglish: boolean) {
   if (!date) {
-    return "尚無紀錄";
+    return isEnglish ? 'No record yet' : '尚無紀錄';
   }
 
   const parsed = new Date(date);
@@ -227,10 +230,10 @@ function formatRecordDate(date: string | null | undefined) {
     return date;
   }
 
-  return parsed.toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  return parsed.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
 }
 
@@ -292,11 +295,13 @@ function NumberInputWithAdjust({
   placeholder?: string;
   step: number;
 }) {
-  const precision = String(step).includes(".") ? String(step).split(".")[1].length : 0;
+  const locale = useLocale();
+  const isEnglish = locale === 'en';
+  const precision = String(step).includes('.') ? String(step).split('.')[1].length : 0;
 
   function adjustValue(direction: -1 | 1) {
     const currentValue = form.getValues(name);
-    const base = typeof currentValue === "number" ? currentValue : 0;
+    const base = typeof currentValue === 'number' ? currentValue : 0;
     const adjusted = Number((base + direction * step).toFixed(precision));
     form.setValue(name, adjusted as never, {
       shouldDirty: true,
@@ -309,10 +314,10 @@ function NumberInputWithAdjust({
     <div className="grid grid-cols-[1fr_auto] items-center gap-2">
       <Input className={className} placeholder={placeholder} step={step} type="number" {...form.register(name)} />
       <div className="flex items-center gap-1">
-        <Button aria-label="減少數值" className="size-8 rounded-[0.8rem]" onClick={() => adjustValue(-1)} size="icon" type="button" variant="outline">
+        <Button aria-label={isEnglish ? 'Decrease value' : '減少數值'} className="size-8 rounded-[0.8rem]" onClick={() => adjustValue(-1)} size="icon" type="button" variant="outline">
           -
         </Button>
-        <Button aria-label="增加數值" className="size-8 rounded-[0.8rem]" onClick={() => adjustValue(1)} size="icon" type="button" variant="outline">
+        <Button aria-label={isEnglish ? 'Increase value' : '增加數值'} className="size-8 rounded-[0.8rem]" onClick={() => adjustValue(1)} size="icon" type="button" variant="outline">
           +
         </Button>
       </div>
@@ -327,6 +332,9 @@ function QuickActionInfo({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const locale = useLocale();
+  const isEnglish = locale === 'en';
+
   return (
     <div
       className="relative"
@@ -335,7 +343,7 @@ function QuickActionInfo({
     >
       <button
         aria-expanded={open}
-        aria-label="查看快速導入說明"
+        aria-label={isEnglish ? 'View quick import guide' : '查看快速導入說明'}
         className="inline-flex size-8 items-center justify-center rounded-full border border-border/80 bg-card text-muted-foreground transition hover:border-primary/40 hover:text-primary"
         onClick={() => onOpenChange(!open)}
         type="button"
@@ -345,10 +353,10 @@ function QuickActionInfo({
 
       {open ? (
         <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-72 rounded-[1rem] border border-border/80 bg-card/95 p-3 shadow-panel backdrop-blur">
-          <p className="text-sm font-semibold text-foreground">快速導入說明</p>
+          <p className="text-sm font-semibold text-foreground">{isEnglish ? 'Quick import guide' : '快速導入說明'}</p>
           <div className="mt-2 space-y-2 text-xs leading-5 text-muted-foreground">
-            <p>`AI Scan` 會解析看得清楚的欄位，不確定的內容會保留空白。</p>
-            <p>`導入前一次紀錄` 會帶入最近一筆數值，保留今天日期與目前備註，適合快速微調。</p>
+            <p>{isEnglish ? '`AI Scan` reads the clearly visible fields and leaves uncertain values blank.' : '`AI Scan` 會辨識清楚可見的欄位，無法確認的值會保留空白。'}</p>
+            <p>{isEnglish ? '`Import previous record` brings over the latest values while keeping today\'s date and current notes, which is useful for quick adjustments.' : '`導入前一次紀錄` 會帶入最近一筆數值，保留今天日期與目前備註，適合快速微調。'}</p>
           </div>
         </div>
       ) : null}
@@ -364,6 +372,8 @@ export function RecordFormDialog({
   onSubmit,
   presentation = "dialog",
 }: RecordFormDialogProps) {
+  const locale = useLocale();
+  const isEnglish = locale === "en";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStage, setScanStage] = useState<ScanStage>(null);
@@ -449,7 +459,7 @@ export function RecordFormDialog({
         const payload = (await response.json().catch(() => null)) as ScanUsageResponse | { message?: string } | null;
 
         if (!response.ok) {
-          throw new Error(payload?.message || "無法取得 AI Scan 使用狀態。");
+          throw new Error(payload?.message || (isEnglish ? "Unable to load AI Scan usage status." : "無法取得 AI Scan 使用狀態。"));
         }
 
         if (!cancelled) {
@@ -457,7 +467,7 @@ export function RecordFormDialog({
         }
       } catch (error) {
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : "無法取得 AI Scan 使用狀態。");
+          toast.error(error instanceof Error ? error.message : isEnglish ? "Unable to load AI Scan usage status." : "無法取得 AI Scan 使用狀態。");
         }
       } finally {
         if (!cancelled) {
@@ -485,7 +495,7 @@ export function RecordFormDialog({
 
   async function handleScanUpload(file: File) {
     if (scanUsage && !scanUsage.canScan) {
-      toast.error(scanUsage.message || "今日 AI Scan 次數已達上限，請明天再試。");
+      toast.error(scanUsage.message || (isEnglish ? "Today's AI Scan quota has been reached. Please try again tomorrow." : "今日 AI Scan 次數已達上限，請明天再試。"));
       return;
     }
 
@@ -506,14 +516,14 @@ export function RecordFormDialog({
       const payload = (await response.json().catch(() => null)) as ScanResponse | { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message || "掃描解析失敗。");
+        throw new Error(payload?.message || (isEnglish ? "Scan parsing failed." : "掃描解析失敗。"));
       }
 
       const data = payload as ScanResponse;
       const nextValues = mergeDraftIntoForm(
         form.getValues(),
         data.draft,
-        buildScanNote(data.structuredSummary, data.uncertaintyNotes ?? []),
+        buildScanNote(data.structuredSummary, data.uncertaintyNotes ?? [], isEnglish),
       );
 
       form.reset(nextValues, { keepDefaultValues: false });
@@ -523,7 +533,7 @@ export function RecordFormDialog({
         dailyLimit: data.dailyLimit,
         usageCount: data.usageCount,
         canScan: data.canScan,
-        message: data.canScan ? null : "今日 AI Scan 次數已達上限，請明天再試。",
+        message: data.canScan ? null : (isEnglish ? "Today's AI Scan quota has been reached. Please try again tomorrow." : "今日 AI Scan 次數已達上限，請明天再試。"),
       });
       setOpenSections({
         additional: true,
@@ -537,17 +547,17 @@ export function RecordFormDialog({
         data.modelName ? `Gemini ${data.modelName}` : null,
         typeof data.scanConfidence === "number" ? `辨識信心 ${data.scanConfidence}%` : null,
       ].filter(Boolean);
-      setScanMeta(metaParts.length > 0 ? metaParts.join(" | ") : "已套用 Gemini 掃描結果");
+      setScanMeta(metaParts.length > 0 ? metaParts.join(" | ") : (isEnglish ? "Gemini scan result applied" : "已套用 Gemini 掃描結果"));
 
       if ((data.uncertaintyNotes ?? []).length > 0) {
-        toast.warning("部分欄位已保留空白", {
-          description: "Gemini 無法確認的內容不會自動填寫，請你再人工補上。",
+        toast.warning(isEnglish ? "Some fields were left blank" : "部分欄位已保留空白", {
+          description: isEnglish ? "Gemini could not confirm every field, so uncertain values were left blank for manual review." : "Gemini 無法確認的內容不會自動填寫，請你再人工補上。",
         });
       } else {
-        toast.success("已帶入 InBody 掃描結果");
+        toast.success(isEnglish ? "InBody scan result applied" : "已帶入 InBody 掃描結果");
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "掃描解析失敗。");
+      toast.error(error instanceof Error ? error.message : isEnglish ? "Scan parsing failed." : "掃描解析失敗。");
     } finally {
       setIsScanning(false);
       setScanStage(null);
@@ -561,7 +571,7 @@ export function RecordFormDialog({
     const nextValues = buildPreviousRecordValues(form.getValues(), latestRecordForAutofill);
 
     if (!nextValues) {
-      toast.error("目前沒有可導入的歷史紀錄。");
+      toast.error(isEnglish ? "No historical record available to import." : "目前沒有可導入的歷史紀錄。");
       return;
     }
 
@@ -574,8 +584,8 @@ export function RecordFormDialog({
       segmental: true,
     });
     setScanMeta(null);
-    toast.success("已帶入前一次紀錄", {
-      description: "已保留今天日期與目前備註，其餘數值請再快速檢查一次。",
+    toast.success(isEnglish ? "Previous record imported" : "已帶入前一次紀錄", {
+      description: isEnglish ? "Today's date and current notes were preserved. Please double-check the remaining values." : "已保留今天日期與目前備註，其餘數值請再快速檢查一次。",
     });
   }
 
@@ -663,10 +673,10 @@ export function RecordFormDialog({
     );
   }
 
-  const title = initialRecord ? "編輯 InBody 紀錄" : "新增 InBody 紀錄";
+  const title = initialRecord ? (isEnglish ? "Edit InBody record" : "編輯 InBody 紀錄") : (isEnglish ? "Add InBody record" : "新增 InBody 紀錄");
   const description = initialRecord
-    ? "調整這筆紀錄的數值與分析設定。"
-    : "手動輸入完整資料，或先用 AI Scan 建立草稿後再確認。";
+    ? (isEnglish ? "Adjust the values and analysis settings for this record." : "調整這筆紀錄的數值與分析設定。")
+    : (isEnglish ? "Enter the data manually, or use AI Scan to create a draft before confirming." : "手動輸入完整資料，或先用 AI Scan 建立草稿後再確認。");
   const formClassName = isPagePresentation ? "flex flex-col" : "flex min-h-0 flex-1 flex-col";
   const formBodyClassName =
     isPagePresentation
@@ -686,8 +696,8 @@ export function RecordFormDialog({
                 <section className={sectionClassName}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className={sectionTitleClassName}>快速導入</p>
-                      <p className="mt-1 text-xs text-muted-foreground">先導入，再人工確認。</p>
+                      <p className={sectionTitleClassName}>{isEnglish ? "Quick import" : "快速導入"}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{isEnglish ? "Import first, confirm manually after." : "先導入，再人工確認。"}</p>
                     </div>
                     <QuickActionInfo open={isQuickActionInfoOpen} onOpenChange={setIsQuickActionInfoOpen} />
                   </div>
@@ -704,23 +714,23 @@ export function RecordFormDialog({
                         {isScanning ? <LoaderCircle className="size-4 animate-spin" /> : <ScanSearch className="size-4" />}
                         <span>
                           {scanStage === "uploading"
-                            ? "上傳中..."
+                            ? (isEnglish ? "Uploading..." : "上傳中...")
                             : scanStage === "analyzing"
-                              ? "分析中..."
+                              ? (isEnglish ? "Analyzing..." : "分析中...")
                               : "AI Scan"}
                         </span>
                       </Button>
                       {scanStage === "uploading" ? (
-                        <p className="px-1 text-xs leading-5 text-muted-foreground">檔案正在上傳，完成後會自動進入分析。</p>
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">{isEnglish ? "The file is uploading, and analysis will start automatically when it finishes." : "檔案正在上傳，完成後會自動進入分析。"}</p>
                       ) : scanStage === "analyzing" ? (
-                        <p className="px-1 text-xs leading-5 text-muted-foreground">檔案已送出，Gemini 正在分析內容。</p>
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">{isEnglish ? "The file has been sent, and Gemini is analyzing it now." : "檔案已送出，Gemini 正在分析內容。"}</p>
                       ) : isLoadingScanStatus ? (
-                        <p className="px-1 text-xs leading-5 text-muted-foreground">正在讀取可用次數...</p>
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">{isEnglish ? "Loading available usage..." : "正在讀取可用次數..."}</p>
                       ) : scanUsage ? (
                         <div className="space-y-1.5 px-1">
                           <div className="flex flex-wrap gap-1.5">
                             <span className="inline-flex items-center rounded-full bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-primary">
-                              {formatUsageText(scanUsage.usageCount, scanUsage.dailyLimit)}
+                              {formatUsageText(scanUsage.usageCount, scanUsage.dailyLimit, isEnglish)}
                             </span>
                             {splitMetaParts(scanMeta).map((part) => (
                               <span
@@ -733,7 +743,7 @@ export function RecordFormDialog({
                           </div>
                         </div>
                       ) : (
-                        <p className="px-1 text-xs leading-5 text-muted-foreground">尚未取得使用狀態</p>
+                        <p className="px-1 text-xs leading-5 text-muted-foreground">{isEnglish ? "Usage status unavailable" : "尚未取得使用狀態"}</p>
                       )}
                     </div>
 
@@ -746,11 +756,11 @@ export function RecordFormDialog({
                         variant="outline"
                       >
                         <History className="size-4" />
-                        <span>導入前一次紀錄</span>
+                        <span>{isEnglish ? "Import previous record" : "導入前一次紀錄"}</span>
                       </Button>
                       <div className="px-1">
                         <span className="inline-flex items-center rounded-full bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                          {latestRecordForAutofill ? `最近一次：${formatRecordDate(latestRecordForAutofill.date)}` : "目前沒有可導入的歷史紀錄"}
+                          {latestRecordForAutofill ? `${isEnglish ? "Latest: " : "最近一次："}${formatRecordDate(latestRecordForAutofill.date, isEnglish)}` : (isEnglish ? "No historical record available to import" : "目前沒有可導入的歷史紀錄")}
                         </span>
                       </div>
                     </div>
@@ -772,10 +782,10 @@ export function RecordFormDialog({
               ) : null}
 
               <section className={sectionClassName}>
-                {renderSectionToggle("basic", "基本設定", isBasicComplete)}
+                {renderSectionToggle("basic", isEnglish ? "Basic settings" : "基本設定", isBasicComplete)}
                 {isSectionOpen("basic") ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <FieldShell error={form.formState.errors.date?.message} label="日期" required>
+                    <FieldShell error={form.formState.errors.date?.message} label={isEnglish ? "Date" : "日期"} required>
                       <Controller
                         control={form.control}
                         name="date"
@@ -797,7 +807,7 @@ export function RecordFormDialog({
                               <div className="grid grid-cols-3 gap-2">
                                 <SelectShell>
                                   <select className={selectClassName} onChange={(event) => updateDate({ year: event.target.value })} value={parts.year}>
-                                    <option value="">年</option>
+                                    <option value="">{isEnglish ? "Year" : "年"}</option>
                                     {yearOptions.map((optionYear) => (
                                       <option key={optionYear} value={optionYear}>
                                         {optionYear}
@@ -807,7 +817,7 @@ export function RecordFormDialog({
                                 </SelectShell>
                                 <SelectShell>
                                   <select className={selectClassName} onChange={(event) => updateDate({ month: event.target.value })} value={parts.month}>
-                                    <option value="">月</option>
+                                    <option value="">{isEnglish ? "Month" : "月"}</option>
                                     {monthOptions.map((optionMonth) => (
                                       <option key={optionMonth} value={optionMonth}>
                                         {optionMonth}
@@ -817,7 +827,7 @@ export function RecordFormDialog({
                                 </SelectShell>
                                 <SelectShell>
                                   <select className={selectClassName} onChange={(event) => updateDate({ day: event.target.value })} value={parts.day}>
-                                    <option value="">日</option>
+                                    <option value="">{isEnglish ? "Day" : "日"}</option>
                                     {dayOptions.map((optionDay) => (
                                       <option key={optionDay} value={optionDay}>
                                         {optionDay}
@@ -829,12 +839,12 @@ export function RecordFormDialog({
 
                               <div className="flex flex-wrap items-center gap-2">
                                 <Button className="h-8 rounded-full px-3 text-xs" onClick={() => field.onChange(getRelativeDateValue(0))} type="button" variant="outline">
-                                  今天
+                                  {isEnglish ? "Today" : "今天"}
                                 </Button>
                                 <Button className="h-8 rounded-full px-3 text-xs" onClick={() => field.onChange(getRelativeDateValue(-1))} type="button" variant="outline">
-                                  昨天
+                                  {isEnglish ? "Yesterday" : "昨天"}
                                 </Button>
-                                <p className="text-xs text-muted-foreground">{field.value ? field.value.replace(/-/g, "/") : "請先選擇日期"}</p>
+                                <p className="text-xs text-muted-foreground">{field.value ? field.value.replace(/-/g, "/") : (isEnglish ? "Please choose a date first" : "請先選擇日期")}</p>
                               </div>
                             </div>
                           );
@@ -842,9 +852,9 @@ export function RecordFormDialog({
                       />
                     </FieldShell>
 
-                    <FieldShell label="納入圖表分析">
+                    <FieldShell label={isEnglish ? "Include in charts" : "納入圖表分析"}>
                       <div className="flex h-10 items-center justify-between rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5">
-                        <span className="text-sm text-foreground">這筆資料會出現在圖表中</span>
+                        <span className="text-sm text-foreground">{isEnglish ? "This record will appear in charts." : "這筆資料會出現在圖表中"}</span>
                         <Controller
                           control={form.control}
                           name="isIncludedInCharts"
@@ -857,19 +867,19 @@ export function RecordFormDialog({
               </section>
 
               <section className={sectionClassName}>
-                {renderSectionToggle("primary", "主要數值", isPrimaryComplete)}
+                {renderSectionToggle("primary", isEnglish ? "Primary values" : "主要數值", isPrimaryComplete)}
                 {isSectionOpen("primary") ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <FieldShell error={form.formState.errors.weight?.message} label="體重 (kg)" required>
+                    <FieldShell error={form.formState.errors.weight?.message} label={isEnglish ? "Weight (kg)" : "體重 (kg)"} required>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="weight" placeholder="66.1" step={0.1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.muscle?.message} label="肌肉量 (kg)" required>
+                    <FieldShell error={form.formState.errors.muscle?.message} label={isEnglish ? "Muscle mass (kg)" : "肌肉量 (kg)"} required>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="muscle" placeholder="30.5" step={0.1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.fat?.message} label="脂肪量 (kg)" required>
+                    <FieldShell error={form.formState.errors.fat?.message} label={isEnglish ? "Fat mass (kg)" : "脂肪量 (kg)"} required>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="fat" placeholder="11.9" step={0.1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.fatPercent?.message} label="體脂率 (%)" required>
+                    <FieldShell error={form.formState.errors.fatPercent?.message} label={isEnglish ? "Body fat (%)" : "體脂率 (%)"} required>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="fatPercent" placeholder="18.0" step={0.1} />
                     </FieldShell>
                   </div>
@@ -877,35 +887,35 @@ export function RecordFormDialog({
               </section>
 
               <section className={sectionClassName}>
-                {renderSectionToggle("additional", "補充數值", isAdditionalComplete)}
+                {renderSectionToggle("additional", isEnglish ? "Additional values" : "補充數值", isAdditionalComplete)}
                 {isSectionOpen("additional") ? (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    <FieldShell error={form.formState.errors.height?.message} label="身高 (cm)">
+                    <FieldShell error={form.formState.errors.height?.message} label={isEnglish ? "Height (cm)" : "身高 (cm)"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="height" placeholder="170" step={0.1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.age?.message} label="年齡">
+                    <FieldShell error={form.formState.errors.age?.message} label={isEnglish ? "Age" : "年齡"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="age" placeholder="29" step={1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.gender?.message} label="性別">
+                    <FieldShell error={form.formState.errors.gender?.message} label={isEnglish ? "Gender" : "性別"}>
                       <SelectShell>
                         <select className={selectClassName} {...form.register("gender")}>
-                          <option value="unknown">未知</option>
-                          <option value="male">男性</option>
-                          <option value="female">女性</option>
-                          <option value="other">其他</option>
+                          <option value="unknown">{isEnglish ? "Unknown" : "未知"}</option>
+                          <option value="male">{isEnglish ? "Male" : "男性"}</option>
+                          <option value="female">{isEnglish ? "Female" : "女性"}</option>
+                          <option value="other">{isEnglish ? "Other" : "其他"}</option>
                         </select>
                       </SelectShell>
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.score?.message} label="InBody 分數">
+                    <FieldShell error={form.formState.errors.score?.message} label={isEnglish ? "InBody score" : "InBody 分數"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="score" placeholder="81" step={1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.visceralFatLevel?.message} label="內臟脂肪等級">
+                    <FieldShell error={form.formState.errors.visceralFatLevel?.message} label={isEnglish ? "Visceral fat level" : "內臟脂肪等級"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="visceralFatLevel" placeholder="6" step={1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.bmr?.message} label="基礎代謝率 (kcal)">
+                    <FieldShell error={form.formState.errors.bmr?.message} label={isEnglish ? "BMR (kcal)" : "基礎代謝率 (kcal)"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="bmr" placeholder="1508" step={1} />
                     </FieldShell>
-                    <FieldShell error={form.formState.errors.recommendedCalories?.message} label="建議熱量 (kcal)">
+                    <FieldShell error={form.formState.errors.recommendedCalories?.message} label={isEnglish ? "Recommended calories (kcal)" : "建議熱量 (kcal)"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="recommendedCalories" placeholder="2140" step={1} />
                     </FieldShell>
                   </div>
@@ -913,23 +923,23 @@ export function RecordFormDialog({
               </section>
 
               <section className={sectionClassName}>
-                {renderSectionToggle("segmental", "部位數值", isSegmentalComplete)}
+                {renderSectionToggle("segmental", isEnglish ? "Segment values" : "部位數值", isSegmentalComplete)}
                 {isSectionOpen("segmental") ? (
                   <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                     {SEGMENT_PARTS.map((part) => (
                       <div className="grid gap-2.5" key={part.key}>
                         <h4 className="text-sm font-semibold text-foreground">{part.label}</h4>
                         <div className="grid gap-2.5">
-                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label="肌肉量 (kg)">
+                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label={isEnglish ? "Muscle mass (kg)" : "肌肉量 (kg)"}>
                             <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.muscle` as const} step={0.01} />
                           </FieldShell>
-                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.fat?.message} label="脂肪量 (kg)">
+                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.fat?.message} label={isEnglish ? "Fat mass (kg)" : "脂肪量 (kg)"}>
                             <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.fat` as const} step={0.01} />
                           </FieldShell>
-                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscleRatio?.message} label="肌肉比例 (%)">
+                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscleRatio?.message} label={isEnglish ? "Muscle ratio (%)" : "肌肉比例 (%)"}>
                             <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.muscleRatio` as const} step={0.1} />
                           </FieldShell>
-                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.fatRatio?.message} label="脂肪比例 (%)">
+                          <FieldShell error={form.formState.errors.segmental?.[part.key]?.fatRatio?.message} label={isEnglish ? "Fat ratio (%)" : "脂肪比例 (%)"}>
                             <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.fatRatio` as const} step={0.1} />
                           </FieldShell>
                         </div>
@@ -940,12 +950,12 @@ export function RecordFormDialog({
               </section>
 
               <section className={sectionClassName}>
-                {renderSectionToggle("notes", "備註", isNotesComplete)}
+                {renderSectionToggle("notes", isEnglish ? "Notes" : "備註", isNotesComplete)}
                 {isSectionOpen("notes") ? (
-                  <FieldShell className="block" error={form.formState.errors.notes?.message} label="備註">
+                  <FieldShell className="block" error={form.formState.errors.notes?.message} label={isEnglish ? "Notes" : "備註"}>
                     <Textarea
                       className={textareaClassName}
-                      placeholder="例如：今天訓練狀態、飲食調整、AI 掃描後需要人工補上的欄位，或其他觀察紀錄。"
+                      placeholder={isEnglish ? "For example: today's training status, diet changes, fields left blank after AI Scan, or other observations." : "例如：今天訓練狀態、飲食調整、AI 掃描後需要人工補上的欄位，或其他觀察紀錄。"}
                       {...form.register("notes")}
                     />
                   </FieldShell>
@@ -957,10 +967,10 @@ export function RecordFormDialog({
           <div className={formFooterClassName}>
             <div className={formFooterInnerClassName}>
               <Button
-                aria-label={isPagePresentation ? (initialRecord ? "取消編輯紀錄" : "取消新增紀錄") : undefined}
+                aria-label={isPagePresentation ? (initialRecord ? (isEnglish ? "Cancel editing record" : "取消編輯紀錄") : (isEnglish ? "Cancel creating record" : "取消新增紀錄")) : undefined}
                 className={cancelButtonClassName}
                 onClick={handleCancelClick}
-                title={isPagePresentation ? "取消" : undefined}
+                title={isPagePresentation ? (isEnglish ? "Cancel" : "取消") : undefined}
                 type="button"
                 variant="outline"
               >
@@ -972,14 +982,14 @@ export function RecordFormDialog({
                       : "pointer-events-none absolute inset-0 rounded-[0.9rem] bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.3)_0%,rgb(var(--brand-sky-400)/0.18)_34%,transparent_74%)] opacity-0 scale-[0.8] transition duration-200"
                   }
                 />
-                {isPagePresentation ? <X className="relative z-10 size-6" /> : <span className="relative z-10">取消</span>}
+                {isPagePresentation ? <X className="relative z-10 size-6" /> : <span className="relative z-10">{isEnglish ? "Cancel" : "取消"}</span>}
               </Button>
               <Button
-                aria-label={isPagePresentation ? (initialRecord ? "更新紀錄" : "建立紀錄") : undefined}
+                aria-label={isPagePresentation ? (initialRecord ? (isEnglish ? "Update record" : "更新紀錄") : (isEnglish ? "Create record" : "建立紀錄")) : undefined}
                 className={submitButtonClassName}
                 disabled={isSubmitting || isScanning || !canSubmitRecord}
                 onClick={handleSubmitPress}
-                title={isPagePresentation ? (initialRecord ? "更新紀錄" : "建立紀錄") : undefined}
+                title={isPagePresentation ? (initialRecord ? (isEnglish ? "Update record" : "更新紀錄") : (isEnglish ? "Create record" : "建立紀錄")) : undefined}
                 type="submit"
               >
                 <span
@@ -997,7 +1007,7 @@ export function RecordFormDialog({
                     <Check className="relative z-10 size-6" />
                   )
                 ) : (
-                  <span className="relative z-10">{isSubmitting ? "儲存中..." : initialRecord ? "更新紀錄" : "建立紀錄"}</span>
+                  <span className="relative z-10">{isSubmitting ? (isEnglish ? "Saving..." : "儲存中...") : initialRecord ? (isEnglish ? "Update record" : "更新紀錄") : (isEnglish ? "Create record" : "建立紀錄")}</span>
                 )}
               </Button>
             </div>
