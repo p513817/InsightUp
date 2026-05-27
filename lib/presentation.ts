@@ -22,50 +22,46 @@ export function summarizeUser(user: User): AppUserSummary {
 }
 
 export function getUserInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "IU";
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("") || "IU"
+  );
 }
 
-export function formatLongDate(value: string | null | undefined) {
+function formatDate(value: string | null | undefined, locale = "zh-Hant", options: Intl.DateTimeFormatOptions = {}) {
   if (!value) return "-";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
 
-  return new Intl.DateTimeFormat("zh-TW", {
+  return new Intl.DateTimeFormat(locale, options).format(date);
+}
+
+export function formatLongDate(value: string | null | undefined, locale = "zh-Hant") {
+  return formatDate(value, locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
-  }).format(date);
+  });
 }
 
-export function formatShortDate(value: string | null | undefined) {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("zh-TW", {
+export function formatShortDate(value: string | null | undefined, locale = "zh-Hant") {
+  return formatDate(value, locale, {
     month: "2-digit",
     day: "2-digit",
-  }).format(date);
+  });
 }
 
-export function formatCompactDate(value: string | null | undefined) {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("zh-TW", {
+export function formatCompactDate(value: string | null | undefined, locale = "zh-Hant") {
+  return formatDate(value, locale, {
     year: "numeric",
     month: "numeric",
     day: "numeric",
-  }).format(date);
+  });
 }
 
 export function formatChartDate(value: string | null | undefined) {
@@ -99,5 +95,5 @@ export function formatSourceType(sourceType: InbodyRecord["sourceType"]) {
 }
 
 export function formatRecordCountLabel(count: number) {
-  return `${count} 筆紀錄`;
+  return `${count} records`;
 }

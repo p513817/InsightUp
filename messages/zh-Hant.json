@@ -1,0 +1,322 @@
+{
+  "meta": {
+    "title": "InsightUp",
+    "description": "追蹤 InBody 紀錄、檢視趨勢圖表，並管理穩定的身體組成歷史。"
+  },
+  "common": {
+    "login": "登入",
+    "logout": "登出",
+    "loggingOut": "登出中",
+    "cancel": "取消",
+    "close": "關閉",
+    "retry": "再試一次",
+    "loading": "載入中",
+    "notAvailable": "-",
+    "english": "English",
+    "traditionalChinese": "繁體中文",
+    "language": "語言",
+    "settings": "設定",
+    "feedback": "問題回饋",
+    "profile": "個人資訊",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "search": "搜尋",
+    "searchHint": "搜尋日期或備註"
+  },
+  "home": {
+    "tagline": "See Deeper, Move Upward",
+    "productType": "InBody 追蹤工具",
+    "loginFailed": "登入失敗",
+    "loginFailedReason": "登入失敗",
+    "productIntro": "產品介紹",
+    "googleLogin": "使用 Google 開始使用"
+  },
+  "auth": {
+    "signal": {
+      "insightTitle": "Insight",
+      "insightDescription": "一眼看懂變化。",
+      "controlTitle": "Control",
+      "controlDescription": "掌握分析範圍。",
+      "evidenceTitle": "Evidence",
+      "evidenceDescription": "保留歷史脈絡。"
+    },
+    "intro": {
+      "title": "InsightUp 產品介紹",
+      "description": "把 InBody 紀錄整理成可判讀的趨勢畫面，協助你快速讀懂變化、保留脈絡，並建立更穩定的追蹤習慣。",
+      "sections": {
+        "insightTitle": "快速看懂變化",
+        "insightBody": "Dashboard 讓每張卡片只承擔一個指標，避免資訊混在一起，讓趨勢更容易閱讀。",
+        "controlTitle": "管理資料脈絡",
+        "controlBody": "Records 集中處理新增、編輯與納入圖表規則，讓資料整理與趨勢閱讀清楚分工。",
+        "evidenceTitle": "保留每次上升證據",
+        "evidenceBody": "排除圖表分析不等於刪除紀錄，完整歷史仍會保留，方便你回頭比對與判斷。",
+        "workflowTitle": "從紀錄到判斷，流程保持單純。",
+        "workflowBody": "先用 Records 整理 InBody 紀錄，再進到 Dashboard 觀察趨勢。兩個頁面分工明確，能降低理解成本，也更符合日常使用節奏。",
+        "step1": "新增或更新紀錄",
+        "step2": "決定哪些資料納入分析",
+        "step3": "在 Dashboard 讀取趨勢",
+        "audienceTitle": "適合想持續追蹤，但不想被資料淹沒的人。",
+        "audienceBody1": "你會固定量 InBody，但希望更快看懂這次變化值不值得解讀。",
+        "audienceBody2": "你主要用手機回看紀錄，希望登入後第一屏就能給出有價值的資訊。",
+        "audienceBody3": "你想保留完整歷史，但又想控制哪些資料應該進入圖表分析。",
+        "principlesTitle": "產品原則",
+        "principle1Title": "先讀趨勢，再進行整理",
+        "principle1Body": "Dashboard 優先服務判讀，不把表單和維護操作混進來。",
+        "principle2Title": "排除分析不是刪除資料",
+        "principle2Body": "產品保留完整紀錄，讓你可以調整圖表訊號，同時維持歷史脈絡。",
+        "principle3Title": "手機優先，不代表功能簡化",
+        "principle3Body": "重要資訊先濃縮成易讀版面，更多背景再放進次層說明與管理頁。",
+        "rulesTitle": "資料規則",
+        "rule1Title": "完整保留",
+        "rule1Body": "原始量測紀錄保留在資料庫，不會因為圖表排除而消失。",
+        "rule2Title": "分析可控",
+        "rule2Body": "你可以決定哪些紀錄進圖表，哪些只留作背景參考。",
+        "rule3Title": "掃描保守導入",
+        "rule3Body": "照片掃描仍維持 review-first，避免錯誤資料直接污染主圖表。"
+      }
+    }
+  },
+  "navigation": {
+    "brandTagline": "InBody 追蹤工具",
+    "menu": "開啟側邊選單",
+    "closeMenu": "關閉側邊選單",
+    "mainNav": "主要導覽",
+    "dashboard": {
+      "label": "趨勢",
+      "description": "查看圖表與近期變化"
+    },
+    "records": {
+      "label": "紀錄",
+      "description": "新增、編輯與管理分析資料"
+    },
+    "friends": {
+      "label": "朋友",
+      "description": "管理好友與查看快照"
+    },
+    "summary": {
+      "label": "AI 摘要",
+      "description": "查看近期趨勢分析"
+    }
+  },
+  "account": {
+    "title": "個人資訊",
+    "joinedAt": "加入日期",
+    "feedback": "問題回饋",
+    "signOut": "登出",
+    "signingOut": "登出中",
+    "language": "語言",
+    "feedbackSubject": "[InsightUp] 產品問題回報 / 功能建議",
+    "feedbackBody": "請描述：\n1) 問題或建議\n2) 發生頁面與操作步驟\n3) 期望結果\n4) 畫面截圖（可選）"
+  },
+  "dashboard": {
+    "welcomeTitle": "歡迎回來",
+    "welcomeBody": "先看趨勢，再回到紀錄整理細節。",
+    "recordCount": "{count} 筆紀錄"
+  },
+  "summary": {
+    "sections": {
+      "overview": "趨勢總結",
+      "keyChanges": "重點變化",
+      "actionPlan": "行動建議",
+      "watchouts": "注意事項"
+    },
+    "source": {
+      "gemini": "來源：Gemini",
+      "cache": "來源：快取摘要",
+      "cacheReused": "來源：今日快取摘要"
+    },
+    "usage": {
+      "label": "使用次數",
+      "unlimited": "不限",
+      "date": "摘要日期",
+      "limit": "今日額度",
+      "source": "摘要來源",
+      "model": "模型"
+    },
+    "loading": {
+      "fetching": "讀取最新摘要中...",
+      "refreshing": "背景更新中",
+      "emptyTitle": "生成第一筆 AI 摘要",
+      "emptyBody": "目前尚無摘要內容。點擊右下角按鈕，根據最新納入圖表的 InBody 紀錄生成第一筆 AI 摘要。",
+      "emptyRecentTitle": "近期 5 筆趨勢摘要",
+      "regenerateConfirmTitle": "重新生成 AI 摘要？",
+      "regenerateConfirmBody": "這會使用今日額度產生新的趨勢摘要，並取代目前顯示的最新摘要。",
+      "regenerate": "重新生成",
+      "generating": "生成中...",
+      "regenerating": "重新生成中...",
+      "close": "關閉",
+      "open": "摘要",
+      "openWithSummary": "開啟 AI 趨勢摘要"
+    },
+    "errors": {
+      "fetchFailed": "無法讀取摘要，請稍後再試。",
+      "generateFailed": "無法產生摘要，請稍後再試。",
+      "unauthorized": "Unauthorized",
+      "limitReached": "今日額度已達上限，請明天再試。",
+      "needMoreRecords": "至少需要 2 筆已納入圖表的紀錄才能生成摘要。",
+      "noContent": "目前尚無摘要內容"
+    }
+  },
+  "records": {
+    "empty": {
+      "title": "還沒有 InBody 紀錄",
+      "description": "先建立第一筆紀錄，之後就能切換整體與區域圖表、調整納入分析的資料範圍。",
+      "action": "新增第一筆資料"
+    },
+    "manager": {
+      "date": "日期",
+      "weight": "體重",
+      "muscle": "骨骼肌",
+      "fatPercent": "體脂率",
+      "analysis": "分析",
+      "actions": "操作",
+      "includeInCharts": "納入圖表分析",
+      "excludeFromCharts": "排除出圖表分析",
+      "included": "已納入圖表分析",
+      "excluded": "已排除出圖表分析",
+      "edit": "編輯紀錄",
+      "delete": "刪除紀錄",
+      "searchLabel": "搜尋日期或備註",
+      "searchPlaceholder": "搜尋日期或備註",
+      "clearSearch": "清除搜尋",
+      "prevPage": "上一頁",
+      "nextPage": "下一頁",
+      "noResultsTitle": "找不到符合條件的紀錄",
+      "noResultsBody": "可以調整搜尋關鍵字，重新縮小你要看的資料範圍。",
+      "addRecord": "新增 InBody 紀錄"
+    },
+    "form": {
+      "createTitle": "新增 InBody 紀錄",
+      "editTitle": "編輯 InBody 紀錄",
+      "createDescription": "手動輸入完整資料，或先用 AI Scan 建立草稿後再確認。",
+      "editDescription": "調整這筆紀錄的數值與分析設定。",
+      "quickImport": "快速導入",
+      "quickImportHint": "先導入，再人工確認。",
+      "scanButton": "AI Scan",
+      "importPrevious": "導入前一次紀錄",
+      "basic": "基本設定",
+      "primary": "主要數值",
+      "additional": "補充數值",
+      "segmental": "部位數值",
+      "notes": "備註",
+      "date": "日期",
+      "includeInCharts": "納入圖表分析",
+      "includedInCharts": "這筆資料會出現在圖表中",
+      "weight": "體重 (kg)",
+      "muscle": "肌肉量 (kg)",
+      "fat": "脂肪量 (kg)",
+      "fatPercent": "體脂率 (%)",
+      "height": "身高 (cm)",
+      "age": "年齡",
+      "gender": "性別",
+      "unknown": "未知",
+      "male": "男性",
+      "female": "女性",
+      "other": "其他",
+      "score": "InBody 分數",
+      "visceralFatLevel": "內臟脂肪等級",
+      "bmr": "基礎代謝率 (kcal)",
+      "recommendedCalories": "建議熱量 (kcal)",
+      "notePlaceholder": "例如：今天訓練狀態、飲食調整、AI 掃描後需要人工補上的欄位，或其他觀察紀錄。",
+      "cancel": "取消",
+      "save": "建立紀錄",
+      "saveChanges": "更新紀錄",
+      "saving": "儲存中...",
+      "quickImportTitle": "快速導入說明",
+      "quickImportBody1": "AI Scan 會解析看得清楚的欄位，不確定的內容會保留空白。",
+      "quickImportBody2": "導入前一次紀錄 會帶入最近一筆數值，保留今天日期與目前備註，適合快速微調。",
+      "today": "今天",
+      "yesterday": "昨天",
+      "chooseDate": "請先選擇日期",
+      "scanUsage": "今日已使用 {usageCount} / {dailyLimit} 次",
+      "scanUnlimited": "今日已使用 {usageCount} / 不限 次",
+      "none": "尚無紀錄",
+      "uploading": "上傳中...",
+      "analyzing": "分析中...",
+      "uploadingHint": "檔案正在上傳，完成後會自動進入分析。",
+      "analyzingHint": "檔案已送出，Gemini 正在分析內容。",
+      "loadingUsage": "正在讀取可用次數...",
+      "usageUnavailable": "尚未取得使用狀態",
+      "importing": "導入前一次紀錄",
+      "latestRecord": "最近一次：{date}",
+      "noHistory": "目前沒有可導入的歷史紀錄",
+      "scanMeta": "已套用 Gemini 掃描結果",
+      "confidence": "辨識信心 {percent}%",
+      "partialEmpty": "部分欄位已保留空白",
+      "partialEmptyBody": "Gemini 無法確認的內容不會自動填寫，請你再人工補上。",
+      "scanSuccess": "已帶入 InBody 掃描結果",
+      "previousSuccess": "已帶入前一次紀錄",
+      "previousSuccessBody": "已保留今天日期與目前備註，其餘數值請再快速檢查一次。",
+      "scanUsageLimitReached": "今日 AI Scan 次數已達上限，請明天再試。",
+      "scanUsageUnavailable": "無法取得 AI Scan 使用狀態。",
+      "scanParseFailed": "掃描解析失敗。",
+      "scanParseError": "掃描解析失敗。",
+      "importNone": "目前沒有可導入的歷史紀錄。",
+      "invalidPayload": "Invalid payload",
+      "missingFile": "缺少上傳檔案。",
+      "unsupportedFile": "僅支援 JPG、PNG、WEBP 或 PDF 檔案。",
+      "fileTooLarge": "檔案大小必須介於 1 byte 到 10 MB 之間。",
+      "aiScanSummary": "AI 掃描摘要：{summary}",
+      "pendingManual": "待人工確認：{notes}",
+      "dailyLimitReached": "今日 AI Scan 次數已達上限，請明天再試。"
+    }
+  },
+  "friends": {
+    "title": "朋友",
+    "count": "共 {count} 位好友",
+    "add": "新增好友",
+    "emptyTitle": "還沒有好友",
+    "emptyBody": "新增好友後，這裡會顯示對方最新 InBody 紀錄與變化。",
+    "addFirst": "新增第一位好友",
+    "friendCode": "好友編號",
+    "latestDate": "最新日期",
+    "snapshotCount": "快照",
+    "addedOn": "新增於",
+    "latestSource": "來源",
+    "fat": "體脂肪",
+    "score": "分數",
+    "actions": "操作",
+    "remove": "移除",
+    "removeConfirm": "確定要從清單移除 {name} 嗎？",
+    "friendAdded": "好友已加入。",
+    "friendAddedBody": "{name} 的最新 InBody 資訊已加入清單。",
+    "friendRemoved": "好友已移除。",
+    "addFailed": "新增好友失敗。",
+    "removeFailed": "移除好友失敗。",
+    "copyCode": "好友 ID 已複製。",
+    "copyCodeBody": "把這組 ID 傳給對方即可讓他加入你。",
+    "copyCodeFailed": "目前無法複製好友 ID。",
+    "myFriendCodeHint": "在 Friends 頁面輸入這組 ID，對方就能把你加入好友清單。",
+    "labels": {
+      "weight": "體重",
+      "muscle": "骨骼肌",
+      "fatPercent": "體脂率"
+    }
+  },
+  "loading": {
+    "label": "載入中"
+  },
+  "api": {
+    "unauthorized": "Unauthorized",
+    "unexpected": "Unexpected server error",
+    "invalidPayload": "Invalid payload",
+    "friendNotFound": "找不到好友 ID 為 {friendCode} 的使用者。",
+    "friendDuplicate": "這位好友已經在清單中了。",
+    "friendSelf": "不能把自己加入好友清單。",
+    "friendsInfraMissing": "Friends 功能所需的資料表尚未就緒。",
+    "trendSummary": {
+      "notAllowed": "你目前的方案無法使用 AI 趨勢摘要。",
+      "dailyLimitReached": "今日額度已達上限，請明天再試。",
+      "needMoreRecords": "至少需要 2 筆已納入圖表的紀錄才能生成摘要。",
+      "noSummary": "目前尚無摘要內容"
+    },
+    "scan": {
+      "notAllowed": "你目前的方案無法使用 AI Scan。",
+      "dailyLimitReached": "今日 AI Scan 次數已達上限，請明天再試。",
+      "missingFile": "缺少上傳檔案。",
+      "unsupportedFile": "僅支援 JPG、PNG、WEBP 或 PDF 檔案。",
+      "fileTooLarge": "檔案大小必須介於 1 byte 到 10 MB 之間。"
+    }
+  }
+}

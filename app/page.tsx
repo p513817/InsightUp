@@ -3,6 +3,7 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { LoginProductIntroModal } from "@/components/auth/login-product-intro-modal";
 import { LoginSignalBadges } from "@/components/auth/login-signal-badges";
+import { getServerTranslations } from "@/lib/i18n/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface HomePageProps {
@@ -14,6 +15,7 @@ function pickFirst(value: string | string[] | undefined) {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
+  const { t } = await getServerTranslations();
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -36,25 +38,25 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <LogoAnimated className="size-14 rounded-full sm:size-16" size={64} />
             <div className="text-left">
               <p className="font-display text-[1.75rem] leading-none text-foreground sm:text-[2rem]">InsightUp</p>
-              <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground sm:text-[11px]">InBody tracker</p>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground sm:text-[11px]">{t("home.productType")}</p>
             </div>
           </div>
 
           <div className="animate-fade-up-delay-2 mt-5 flex items-center justify-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-primary-strong sm:text-[0.76rem]">
             <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgb(var(--accent)/0.25),rgb(var(--primary-strong)/0.75))] sm:w-10" />
-            <p className="font-display text-center text-[0.82rem] tracking-[0.18em] sm:text-[0.88rem]">See Deeper, Move Upward</p>
+            <p className="font-display text-center text-[0.82rem] tracking-[0.18em] sm:text-[0.88rem]">{t("home.tagline")}</p>
             <span className="inline-block h-px w-8 rounded-full bg-[linear-gradient(90deg,rgb(var(--primary-strong)/0.75),rgb(var(--accent)/0.25))] sm:w-10" />
           </div>
 
           <LoginSignalBadges />
 
           <div className="animate-fade-up-delay-4 mt-5 grid gap-2.5 sm:max-w-md sm:mx-auto">
-            <GoogleSignInButton className="h-[46px] w-full justify-center rounded-[1.05rem] bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-[0.94rem] shadow-[0_8px_16px_rgba(23,52,93,0.14)] hover:brightness-105" label="登入" nextPath="/dashboard" />
+            <GoogleSignInButton className="h-[46px] w-full justify-center rounded-[1.05rem] bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-[0.94rem] shadow-[0_8px_16px_rgba(23,52,93,0.14)] hover:brightness-105" label={t("common.login")} nextPath="/dashboard" />
           </div>
 
           {authState === "failed" ? (
             <div className="mx-auto mt-4 max-w-md rounded-[1.1rem] border border-danger/30 bg-danger/10 px-4 py-3 text-left text-sm leading-6 text-danger">
-              <p>{authMessage ?? "登入失敗"}</p>
+              <p>{authMessage ?? t("home.loginFailed")}</p>
             </div>
           ) : null}
 
