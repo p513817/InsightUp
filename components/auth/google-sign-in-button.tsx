@@ -13,7 +13,7 @@ interface GoogleSignInButtonProps {
   label?: string;
 }
 
-export function GoogleSignInButton({ nextPath = "/dashboard", className, label = "使用 Google 開始使用" }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ nextPath = "/dashboard", className, label = "Continue with Google" }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSignIn() {

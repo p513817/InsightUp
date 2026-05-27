@@ -42,21 +42,21 @@ export class MissingFriendsInfrastructureError extends Error {
 
 export class FriendNotFoundError extends Error {
   constructor(friendCode: string) {
-    super(`找不到好友 ID 為 ${friendCode} 的使用者。`);
+    super(`No user found for friend code ${friendCode}.`);
     this.name = "FriendNotFoundError";
   }
 }
 
 export class DuplicateFriendshipError extends Error {
   constructor() {
-    super("這位好友已經在清單中了。");
+    super("This friend is already in the list.");
     this.name = "DuplicateFriendshipError";
   }
 }
 
 export class SelfFriendshipError extends Error {
   constructor() {
-    super("不能把自己加入好友清單。");
+    super("You cannot add yourself as a friend.");
     this.name = "SelfFriendshipError";
   }
 }

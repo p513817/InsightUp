@@ -5,10 +5,12 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTranslations } from "@/components/i18n-provider";
 
 const WELCOME_DIALOG_SESSION_KEY = "insightup.dashboardWelcomeShown";
 
 export function DashboardWelcomeDialog() {
+  const t = useTranslations();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -35,16 +37,14 @@ export function DashboardWelcomeDialog() {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogContent className="max-w-[25rem] p-0" showCloseButton>
         <DialogHeader className="border-b-0 px-5 pb-2 pt-5 sm:px-6 sm:pt-6">
-          <DialogTitle className="text-[1.65rem] leading-tight">歡迎回來</DialogTitle>
-          <DialogDescription className="text-sm leading-6">
-            新增最新 InBody 紀錄，讓趨勢圖與 AI 摘要保持在最有參考價值的狀態。
-          </DialogDescription>
+          <DialogTitle className="text-[1.65rem] leading-tight">{t("dashboard.welcomeTitle")}</DialogTitle>
+          <DialogDescription className="text-sm leading-6">{t("dashboard.welcomeBody")}</DialogDescription>
         </DialogHeader>
 
         <div className="px-5 pb-5 pt-2 sm:px-6 sm:pb-6">
           <Button className="h-12 w-full rounded-[1rem]" onClick={goToNewRecord} type="button">
             <Plus className="size-5" />
-            新增紀錄
+            {t("records.empty.action")}
           </Button>
         </div>
       </DialogContent>

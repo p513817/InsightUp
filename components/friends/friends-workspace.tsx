@@ -7,6 +7,7 @@ import { AddFriendDialog } from "@/components/friends/add-friend-dialog";
 import { FriendsTable } from "@/components/friends/friends-table";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { Button } from "@/components/ui/button";
+import { useLocale, useTranslations } from "@/components/i18n-provider";
 import type { FriendSnapshot } from "@/lib/friends/types";
 import { formatCompactDate } from "@/lib/presentation";
 
@@ -40,6 +41,8 @@ function sortFriends(friends: FriendSnapshot[]) {
 }
 
 export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const [friends, setFriends] = useState(() => sortFriends(initialFriends));
   const [busyFriendId, setBusyFriendId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,17 +58,17 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
       });
 
       setFriends((current) => sortFriends([...current.filter((entry) => entry.friendUserId !== response.friend.friendUserId), response.friend]));
-      toast.success("好友已加入。", {
-        description: `${response.friend.displayName} 的最新 InBody 資訊已加入清單。`,
+      toast.success(t("friends.friendAdded"), {
+        description: t("friends.friendAddedBody").replace("{name}", response.friend.displayName),
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "新增好友失敗。");
+      toast.error(error instanceof Error ? error.message : t("friends.addFailed"));
       throw error;
     }
   }
 
   async function handleRemoveFriend(friend: FriendSnapshot) {
-    if (!window.confirm(`確定要從清單移除 ${friend.displayName} 嗎？`)) {
+    if (!window.confirm(t("friends.removeConfirm").replace("{name}", friend.displayName))) {
       return;
     }
 
@@ -76,9 +79,9 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
         method: "DELETE",
       });
       setFriends((current) => current.filter((entry) => entry.friendUserId !== friend.friendUserId));
-      toast.success("好友已移除。");
+      toast.success(t("friends.friendRemoved"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "移除好友失敗。");
+      toast.error(error instanceof Error ? error.message : t("friends.removeFailed"));
     } finally {
       setBusyFriendId(null);
     }
@@ -88,20 +91,20 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
     <div className="space-y-3 pb-24 sm:space-y-8 sm:pb-28">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl space-y-4 sm:space-y-5">
-          <StatsScrollbarRow
-            className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.2fr_0.9fr_0.9fr]"
-          >
+          <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.2fr_0.9fr_0.9fr]">
             <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">人脈</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("friends.title")}</p>
               <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{friends.length}</p>
             </div>
             <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">快照</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{activeSnapshots}/{friends.length || 0}</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("friends.snapshotCount")}</p>
+              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
+                {activeSnapshots}/{friends.length || 0}
+              </p>
             </div>
             <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">最新</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatCompactDate(freshestFriend?.latestRecordedAt)}</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("friends.latestDate")}</p>
+              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatCompactDate(freshestFriend?.latestRecordedAt, locale)}</p>
             </div>
           </StatsScrollbarRow>
         </div>
@@ -109,7 +112,7 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
 
       <section className="space-y-2.5 sm:space-y-3">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm leading-6 text-muted-foreground">共 {friends.length} 位好友</p>
+          <p className="text-sm leading-6 text-muted-foreground">{t("friends.count").replace("{count}", String(friends.length))}</p>
         </div>
 
         <FriendsTable busyFriendId={busyFriendId} friends={friends} onAdd={() => setDialogOpen(true)} onRemove={handleRemoveFriend} />
@@ -119,10 +122,10 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
         <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
           <div className="mx-auto flex w-full max-w-5xl justify-end">
             <Button
-              aria-label="新增好友"
+              aria-label={t("friends.add")}
               className="pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96]"
               onClick={() => setDialogOpen(true)}
-              title="新增好友"
+              title={t("friends.add")}
               type="button"
             >
               <Plus className="size-6" />

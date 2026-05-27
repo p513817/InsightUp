@@ -2,29 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { Eye, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { useTranslations } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
-const signalItems = [
-  {
-    title: "Insight",
-    description: "一眼判讀變化。",
-    icon: Eye,
-  },
-  {
-    title: "Control",
-    description: "掌握分析範圍。",
-    icon: SlidersHorizontal,
-  },
-  {
-    title: "Evidence",
-    description: "保存歷史脈絡。",
-    icon: ShieldCheck,
-  },
-] as const;
+const signalKeys = ["insight", "control", "evidence"] as const;
 
 export function LoginSignalBadges() {
+  const t = useTranslations();
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeItem = signalItems[activeIndex];
+  const activeKey = signalKeys[activeIndex];
+
+  const signalItems = [
+    {
+      title: t("auth.signal.insightTitle"),
+      description: t("auth.signal.insightDescription"),
+      icon: Eye,
+    },
+    {
+      title: t("auth.signal.controlTitle"),
+      description: t("auth.signal.controlDescription"),
+      icon: SlidersHorizontal,
+    },
+    {
+      title: t("auth.signal.evidenceTitle"),
+      description: t("auth.signal.evidenceDescription"),
+      icon: ShieldCheck,
+    },
+  ] as const;
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -32,7 +36,7 @@ export function LoginSignalBadges() {
     }, 2400);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [signalItems.length]);
 
   return (
     <div className="animate-fade-up-delay-3 mt-5 space-y-3">
@@ -43,7 +47,7 @@ export function LoginSignalBadges() {
 
           return (
             <button
-              key={item.title}
+              key={signalKeys[index]}
               aria-pressed={isActive}
               className={cn(
                 "flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-[1.1rem] border px-2 py-2.5 text-center shadow-[0_8px_18px_rgba(16,35,63,0.04)] transition-all duration-200 ease-out sm:inline-flex sm:min-w-[9.2rem] sm:flex-row sm:items-center sm:justify-start sm:gap-2 sm:rounded-full sm:px-3 sm:py-2.5 sm:text-left",
@@ -73,9 +77,9 @@ export function LoginSignalBadges() {
       </div>
 
       <div className="mx-auto w-full max-w-md rounded-full border border-white/75 bg-[rgba(255,255,255,0.74)] px-4 py-2.5 text-center shadow-[0_8px_18px_rgba(16,35,63,0.04)]">
-        <div key={activeItem.title} className="animate-fade-up">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{activeItem.title}</p>
-          <p className="mt-1 text-sm leading-6 text-foreground/78">{activeItem.description}</p>
+        <div key={activeKey} className="animate-fade-up">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{signalItems[activeIndex].title}</p>
+          <p className="mt-1 text-sm leading-6 text-foreground/78">{signalItems[activeIndex].description}</p>
         </div>
       </div>
     </div>

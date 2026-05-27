@@ -1,14 +1,15 @@
 "use client";
 
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Files, LayoutDashboard, Menu, Sparkles, UsersRound, X } from "lucide-react";
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 import type { AppUserSummary } from "@/lib/presentation";
-import { Files, LayoutDashboard, Menu, Sparkles, UsersRound, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 interface AppHeaderProps {
   user: AppUserSummary;
@@ -64,6 +65,7 @@ function SidebarNavLink({ active, description, href, icon, label, onNavigate }: 
 }
 
 export function AppHeader({ user }: AppHeaderProps) {
+  const t = useTranslations();
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -71,7 +73,6 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname.startsWith("/records") || pathname === "/profile";
   const isFriends = pathname === "/friends";
-  const isAccount = pathname === "/account";
   const isSummary = pathname === "/summary";
   const headerStyle: HeaderStyle = {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
@@ -83,29 +84,29 @@ export function AppHeader({ user }: AppHeaderProps) {
   const navItems: NavItem[] = [
     {
       href: "/dashboard",
-      label: "趨勢",
-      description: "查看圖表與近期變化",
+      label: t("navigation.dashboard.label"),
+      description: t("navigation.dashboard.description"),
       icon: <LayoutDashboard className="size-4" />,
       active: isDashboard,
     },
     {
       href: "/records",
-      label: "紀錄",
-      description: "新增、編輯與管理分析資料",
+      label: t("navigation.records.label"),
+      description: t("navigation.records.description"),
       icon: <Files className="size-4" />,
       active: isRecords,
     },
     {
       href: "/friends",
-      label: "朋友",
-      description: "管理好友與查看快照",
+      label: t("navigation.friends.label"),
+      description: t("navigation.friends.description"),
       icon: <UsersRound className="size-4" />,
       active: isFriends,
     },
     {
       href: "/summary",
-      label: "AI 摘要",
-      description: "查看近期趨勢分析",
+      label: t("navigation.summary.label"),
+      description: t("navigation.summary.description"),
       icon: <Sparkles className="size-4" />,
       active: isSummary,
     },
@@ -221,7 +222,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         <div className="relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <div className="surface-pill flex h-[2.625rem] min-w-0 items-center rounded-full bg-card/78 p-[0.3125rem] shadow-none">
             <button
-              aria-label="開啟側邊選單"
+              aria-label={t("navigation.menu")}
               className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary transition hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               onClick={() => setIsSidebarOpen(true)}
               type="button"
@@ -231,7 +232,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
 
           <p className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[44vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center font-display text-xl leading-none text-foreground shadow-none sm:text-2xl">
-            Insight Up
+            InsightUp
           </p>
 
           <div className="flex shrink-0 justify-end">
@@ -250,7 +251,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       />
 
       <aside
-        aria-label="主要導覽"
+        aria-label={t("navigation.mainNav")}
         className={cn(
           "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.98)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] transition-transform duration-[180ms] ease-out will-change-transform",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full",
@@ -261,10 +262,10 @@ export function AppHeader({ user }: AppHeaderProps) {
             <LogoAnimated className="size-9 rounded-full" playOnce size={40} />
             <div className="min-w-0">
               <p className="truncate font-display text-lg text-foreground">InsightUp</p>
-              <p className="text-xs text-muted-foreground">InBody tracker</p>
+              <p className="text-xs text-muted-foreground">{t("navigation.brandTagline")}</p>
             </div>
           </div>
-          <Button aria-label="關閉側邊選單" className="size-10 px-0" onClick={() => setIsSidebarOpen(false)} size="icon" type="button" variant="ghost">
+          <Button aria-label={t("navigation.closeMenu")} className="size-10 px-0" onClick={() => setIsSidebarOpen(false)} size="icon" type="button" variant="ghost">
             <X className="size-5" />
           </Button>
         </div>
