@@ -114,6 +114,19 @@
     "welcomeBody": "先看趨勢，再回到紀錄整理細節。",
     "recordCount": "{count} 筆紀錄"
   },
+  "dashboardTrendUi": {
+    "overall": "整體",
+    "segmental": "部位別",
+    "toolsLabel": "趨勢工具",
+    "layout": "版面",
+    "layoutOne": "單欄",
+    "layoutTwo": "雙欄",
+    "visibility": "顯示",
+    "visibleMetrics": "顯示指標",
+    "shareTrendData": "分享趨勢",
+    "twoColumnsUnsupported": "目前螢幕寬度不支援雙欄",
+    "shareShort": "分享"
+  },
   "summary": {
     "sections": {
       "overview": "趨勢總結",

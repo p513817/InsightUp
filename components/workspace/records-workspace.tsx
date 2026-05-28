@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, Check, LayoutTemplate, Pencil, Share2, UserRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Columns2, Eye, EyeOff, RectangleHorizontal, Share2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useLocale } from "@/components/i18n-provider";
+import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { MiniTrendGrid, type TrendGridLayout } from "@/components/charts/mini-trend-grid";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
@@ -24,12 +24,6 @@ interface RecordsWorkspaceProps {
 type TrendMode = "overall" | "segmental";
 
 const TREND_LAYOUT_STORAGE_KEY = "insightup.dashboard.trend-layout";
-
-const TREND_LAYOUT_OPTIONS: Array<{ value: TrendGridLayout; label: string }> = [
-  { value: "auto", label: "自動" },
-  { value: "one", label: "單欄" },
-  { value: "two", label: "雙欄" },
-];
 
 const MIN_TWO_COLUMN_WIDTH = 360;
 
@@ -87,43 +81,16 @@ function keepPrimarySegmentMetrics(chart: ChartPayload): ChartPayload {
   };
 }
 
-function TrendModeButton({
-  active,
-  children,
-  icon,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  icon: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      aria-selected={active}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition sm:px-4 ${
-        active
-          ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-          : "text-muted-foreground hover:bg-primary/7 hover:text-foreground"
-      }`}
-      onClick={onClick}
-      role="tab"
-      type="button"
-    >
-      {icon}
-      <span>{children}</span>
-    </button>
-  );
-}
-
 function TrendToolButton({
   active,
   children,
   label,
+  edge,
   onClick,
 }: {
   active?: boolean;
   children: ReactNode;
+  edge?: "left" | "right";
   label: string;
   onClick: () => void;
 }) {
@@ -131,16 +98,23 @@ function TrendToolButton({
     <button
       aria-label={label}
       aria-pressed={active}
-      className={`grid size-10 cursor-pointer place-items-center rounded-xl border text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      className={`flex h-9 min-w-[4.7rem] cursor-pointer items-center justify-center gap-1.5 border px-3.5 text-muted-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+        edge === "left"
+          ? "rounded-l-[1rem] rounded-r-[0.8rem]"
+          : edge === "right"
+            ? "rounded-l-[0.8rem] rounded-r-[1rem]"
+            : "rounded-[0.9rem]"
+      } ${
         active
-          ? "border-primary/45 bg-primary/10 text-primary"
-          : "border-border/70 bg-card/92 hover:border-border/90 hover:bg-accent/6 hover:text-muted-foreground"
+          ? "border-primary/28 bg-white/88 text-primary shadow-[0_6px_14px_rgba(16,35,63,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]"
+          : "border-transparent bg-transparent text-muted-foreground/82 hover:bg-white/44 hover:text-foreground"
       }`}
       onClick={onClick}
       title={label}
       type="button"
     >
-      {children}
+      <span className="grid size-4 shrink-0 place-items-center">{children}</span>
+      <span className="truncate text-[0.74rem] font-semibold leading-none">{label}</span>
     </button>
   );
 }
@@ -152,13 +126,15 @@ export function RecordsWorkspace({
 }: RecordsWorkspaceProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations();
+  const searchParams = useSearchParams();
   const [records, setRecords] = useState(sortRecords(initialRecords));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<InbodyRecord | null>(null);
   const [busyRecordId, setBusyRecordId] = useState<string | null>(null);
-  const [trendMode, setTrendMode] = useState<TrendMode>("overall");
-  const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("auto");
-  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
+  const searchTrendMode = searchParams.get("trend");
+  const trendMode: TrendMode = searchTrendMode === "segmental" ? "segmental" : "overall";
+  const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("one");
   const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
   const [trendEditMode, setTrendEditMode] = useState(false);
 
@@ -174,8 +150,13 @@ export function RecordsWorkspace({
   useEffect(() => {
     const savedLayout = window.localStorage.getItem(TREND_LAYOUT_STORAGE_KEY);
 
-    if (savedLayout === "auto" || savedLayout === "one" || savedLayout === "two") {
+    if (savedLayout === "one" || savedLayout === "two") {
       setTrendLayout(savedLayout);
+      return;
+    }
+
+    if (savedLayout === "auto") {
+      setTrendLayout("one");
     }
   }, []);
 
@@ -185,7 +166,7 @@ export function RecordsWorkspace({
       setSupportsTwoColumnLayout(nextSupportsTwoColumnLayout);
 
       if (!nextSupportsTwoColumnLayout) {
-        setTrendLayout((current) => (current === "two" ? "auto" : current));
+        setTrendLayout((current) => (current === "two" ? "one" : current));
       }
     }
 
@@ -203,8 +184,14 @@ export function RecordsWorkspace({
     }
 
     setTrendLayout(nextLayout);
-    setLayoutMenuOpen(false);
     window.localStorage.setItem(TREND_LAYOUT_STORAGE_KEY, nextLayout);
+  }
+
+  function cycleTrendLayout() {
+    const allowedLayouts = supportsTwoColumnLayout ? ["one", "two"] : ["one"];
+    const currentIndex = allowedLayouts.indexOf(trendLayout);
+    const nextLayout = allowedLayouts[(currentIndex + 1) % allowedLayouts.length] as TrendGridLayout;
+    applyTrendLayout(nextLayout);
   }
 
   async function handleSave(values: RecordFormValues) {
@@ -305,68 +292,8 @@ export function RecordsWorkspace({
     }
 
     return (
-      <div className="space-y-4 pb-24 sm:space-y-5 sm:pb-28">
+      <div className="space-y-4 pb-20 sm:space-y-5 sm:pb-24">
         <section className="space-y-4">
-          <div className="sticky top-[var(--app-header-sticky-offset,0px)] z-30 -mx-1 px-1 py-1 transition-[top] duration-[420ms] ease-out motion-reduce:transition-none">
-            <div
-              aria-label={locale === "en" ? "Trend analysis mode" : "趨勢分析模式"}
-              className="mx-auto grid max-w-sm grid-cols-2 gap-1 rounded-full border border-border/70 bg-card/92 p-1 shadow-panel backdrop-blur"
-              role="tablist"
-            >
-              <TrendModeButton active={trendMode === "overall"} icon={<Activity className="size-4" />} onClick={() => setTrendMode("overall")}>
-                {locale === "en" ? "Overall trend" : "整體趨勢"}
-              </TrendModeButton>
-              <TrendModeButton active={trendMode === "segmental"} icon={<UserRound className="size-4" />} onClick={() => setTrendMode("segmental")}>
-                {locale === "en" ? "Segmental trend" : "部位別趨勢"}
-              </TrendModeButton>
-            </div>
-          </div>
-
-          <div className="-mt-1 flex justify-end px-1">
-            <div className="relative flex items-center gap-1.5">
-              <TrendToolButton active={layoutMenuOpen} label={locale === "en" ? "Adjust layout columns" : "調整趨勢欄數"} onClick={() => setLayoutMenuOpen((current) => !current)}>
-                <LayoutTemplate className="size-4" />
-              </TrendToolButton>
-
-              {layoutMenuOpen ? (
-                <div className="absolute right-0 top-12 z-40 w-36 rounded-2xl border border-border/80 bg-card/98 p-1.5 shadow-panel backdrop-blur">
-                  {TREND_LAYOUT_OPTIONS.map((option) => {
-                    const disabled = option.value === "two" && !supportsTwoColumnLayout;
-
-                    return (
-                      <button
-                        className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground/45 ${
-                          disabled
-                            ? ""
-                            : `cursor-pointer hover:bg-primary/8 ${trendLayout === option.value ? "text-primary" : "text-foreground"}`
-                        }`}
-                        disabled={disabled}
-                        key={option.value}
-                        onClick={() => applyTrendLayout(option.value)}
-                        title={disabled ? (locale === "en" ? "Two columns are not supported on this screen width." : "目前螢幕寬度不支援雙欄") : undefined}
-                        type="button"
-                      >
-                        <span>{option.label}</span>
-                        {trendLayout === option.value ? <Check className="size-4" /> : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              <TrendToolButton
-                active={trendEditMode}
-                label={trendEditMode ? (locale === "en" ? "Finish editing visible metrics" : "結束編輯顯示指標") : (locale === "en" ? "Edit visible metrics" : "編輯顯示指標")}
-                onClick={() => setTrendEditMode((current) => !current)}
-              >
-                <Pencil className="size-4" />
-              </TrendToolButton>
-              <TrendToolButton label={locale === "en" ? "Share trend data" : "分享趨勢數據"} onClick={() => router.push("/share")}>
-                <Share2 className="size-4" />
-              </TrendToolButton>
-            </div>
-          </div>
-
           {trendMode === "overall" ? (
             <MiniTrendGrid
               chart={overallChart}
@@ -375,14 +302,14 @@ export function RecordsWorkspace({
               layout={trendLayout}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {segmentalCharts.map((segment) => (
-                <section className="space-y-3" key={segment.key}>
+                <section className="space-y-2.5" key={segment.key}>
                   <div className="flex items-center gap-2 px-1">
-                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
                       <SegmentIcon view={segment.key} />
                     </span>
-                    <h3 className="font-display text-lg leading-tight text-foreground">{segment.label}</h3>
+                    <h3 className="font-display text-[1.02rem] leading-tight text-foreground">{segment.label}</h3>
                   </div>
                   <MiniTrendGrid chart={segment.chart} editMode={trendEditMode} layout={trendLayout} />
                 </section>
@@ -390,6 +317,25 @@ export function RecordsWorkspace({
             </div>
           )}
         </section>
+
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-30 flex justify-center px-3 sm:bottom-3">
+          <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/84 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)] backdrop-blur-md">
+            <TrendToolButton
+              active={trendLayout === "two"}
+              edge="left"
+              label={t("dashboardTrendUi.layout")}
+              onClick={cycleTrendLayout}
+            >
+              {trendLayout === "two" ? <Columns2 className="size-4" /> : <RectangleHorizontal className="size-4" />}
+            </TrendToolButton>
+            <TrendToolButton active={trendEditMode} label={t("dashboardTrendUi.visibility")} onClick={() => setTrendEditMode((current) => !current)}>
+              {trendEditMode ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </TrendToolButton>
+            <TrendToolButton edge="right" label={t("dashboardTrendUi.shareShort")} onClick={() => router.push("/share")}>
+              <Share2 className="size-4" />
+            </TrendToolButton>
+          </div>
+        </div>
       </div>
     );
   }

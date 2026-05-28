@@ -119,6 +119,19 @@
     "welcomeBody": "Review the trends first, then go back to the records for details.",
     "recordCount": "{count} records"
   },
+  "dashboardTrendUi": {
+    "overall": "Overall trend",
+    "segmental": "Segmental trend",
+    "toolsLabel": "Trend tools",
+    "layout": "Layout",
+    "layoutOne": "Single",
+    "layoutTwo": "Double",
+    "visibility": "Display",
+    "visibleMetrics": "Visible metrics",
+    "shareShort": "Share",
+    "shareTrendData": "Share trend data",
+    "twoColumnsUnsupported": "Two columns are not supported on this screen width."
+  },
   "summary": {
     "sections": {
       "overview": "Trend summary",

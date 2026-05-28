@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Files, LayoutDashboard, Menu, Sparkles, UsersRound, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Activity, Files, LayoutDashboard, Menu, Sparkles, UsersRound, UserRound, X } from "lucide-react";
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,8 @@ function SidebarNavLink({ active, description, href, icon, label, onNavigate }: 
 export function AppHeader({ user }: AppHeaderProps) {
   const t = useTranslations();
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -74,6 +76,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isRecords = pathname.startsWith("/records") || pathname === "/profile";
   const isFriends = pathname === "/friends";
   const isSummary = pathname === "/summary";
+  const dashboardTrendMode = searchParams.get("trend") === "segmental" ? "segmental" : "overall";
   const headerStyle: HeaderStyle = {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
     "--brand-gap": "0rem",
@@ -111,6 +114,12 @@ export function AppHeader({ user }: AppHeaderProps) {
       active: isSummary,
     },
   ];
+
+  function setDashboardTrendMode(nextMode: "overall" | "segmental") {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("trend", nextMode);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -231,9 +240,48 @@ export function AppHeader({ user }: AppHeaderProps) {
             </button>
           </div>
 
-          <p className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[44vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center font-display text-xl leading-none text-foreground shadow-none sm:text-2xl">
-            InsightUp
-          </p>
+          {isDashboard ? (
+            <div
+              aria-label={t("navigation.dashboard.label")}
+              className="surface-pill absolute left-1/2 grid h-[2.625rem] max-w-[min(32rem,52vw)] -translate-x-1/2 grid-cols-2 gap-1 rounded-full bg-card/78 p-[0.3125rem] shadow-none"
+              role="tablist"
+            >
+              <button
+                aria-selected={dashboardTrendMode === "overall"}
+                className={cn(
+                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
+                  dashboardTrendMode === "overall"
+                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
+                )}
+                onClick={() => setDashboardTrendMode("overall")}
+                role="tab"
+                type="button"
+              >
+                <Activity className="size-4" />
+                <span className="truncate">{t("dashboardTrendUi.overall")}</span>
+              </button>
+              <button
+                aria-selected={dashboardTrendMode === "segmental"}
+                className={cn(
+                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
+                  dashboardTrendMode === "segmental"
+                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
+                )}
+                onClick={() => setDashboardTrendMode("segmental")}
+                role="tab"
+                type="button"
+              >
+                <UserRound className="size-4" />
+                <span className="truncate">{t("dashboardTrendUi.segmental")}</span>
+              </button>
+            </div>
+          ) : (
+            <p className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[44vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center font-display text-xl leading-none text-foreground shadow-none sm:text-2xl">
+              InsightUp
+            </p>
+          )}
 
           <div className="flex shrink-0 justify-end">
             <AccountMenu compact user={user} />

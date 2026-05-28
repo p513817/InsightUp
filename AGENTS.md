@@ -121,6 +121,7 @@ These migrations assume `public.set_updated_at()` and `gen_random_uuid()` are al
 
 - Prefer extending the route handlers and shared `lib/inbody/*` helpers before adding feature-specific logic inside page components.
 - Keep the current button/card/form visual system consistent with the existing UI primitives in `components/ui/`.
+- For user-facing UI copy, do not hardcode bilingual strings directly inside components. Add or update localized keys in `messages/*.json` and resolve them through the existing i18n helpers/hooks so both language modes stay consistent.
 - For AI summary changes, update DB entitlements/migrations first when behavior depends on plan limits or model configuration.
 - Do not reintroduce hardcoded developer bypass rules; use subscription or entitlement data instead.
 - Production deploy target is now Vercel; do not assume Fly-specific config still exists in the repository.
