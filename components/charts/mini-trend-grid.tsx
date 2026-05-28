@@ -213,7 +213,6 @@ function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) 
 
 interface SortableMetricCardProps {
   canHide: boolean;
-  deltaToneClass: string;
   editMode: boolean;
   formattedDelta: string;
   headerValueText?: string | null;
@@ -222,7 +221,7 @@ interface SortableMetricCardProps {
   points: Array<{ date: string; label: string; value: number | null }>;
 }
 
-function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta, headerValueText, metric, onHide, points }: SortableMetricCardProps) {
+function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText, metric, onHide, points }: SortableMetricCardProps) {
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
     id: metric.key,
     transition: {
@@ -312,12 +311,12 @@ function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta,
           <div className="flex min-w-0 items-baseline gap-2">
             <p className="truncate text-sm font-medium leading-none text-muted-foreground">{metric.label}</p>
             {headerValueText ? (
-              <p className="truncate font-display text-base leading-none tabular-nums text-foreground">{headerValueText}</p>
+              <p className="truncate font-display text-base leading-none tabular-nums" style={{ color: metric.color }}>{headerValueText}</p>
             ) : null}
           </div>
         </div>
         <div className="flex min-w-0 items-center justify-end text-right">
-          <p className={`whitespace-nowrap text-sm font-semibold leading-none tabular-nums ${deltaToneClass}`}>{formattedDelta}</p>
+          <p className="whitespace-nowrap text-sm font-semibold leading-none tabular-nums" style={{ color: metric.color }}>{formattedDelta}</p>
         </div>
       </div>
 
@@ -557,7 +556,6 @@ export function MiniTrendGrid({
               const latestValue = getNumericValue(latestPoint?.[metric.key]);
               const previousValue = getNumericValue(previousPoint?.[metric.key]);
               const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
-              const deltaToneClass = delta == null ? "text-muted-foreground" : delta >= 0 ? "text-primary" : "text-danger";
               const points = chart.points.map((point) => ({
                 date: String(point.date || ""),
                 label: String(point.label || ""),
@@ -566,7 +564,6 @@ export function MiniTrendGrid({
               return (
                 <SortableMetricCard
                   canHide={canHideVisibleMetric}
-                  deltaToneClass={deltaToneClass}
                   editMode={editMode}
                   formattedDelta={formatDelta(metric, delta)}
                   headerValueText={showHeaderValue ? formatMetricValue(metric, latestValue) : null}
