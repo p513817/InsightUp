@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Noto_Sans_TC } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -15,6 +15,12 @@ const fontBody = Noto_Sans_TC({
   subsets: ["latin"],
   variable: "--font-body",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslations();
