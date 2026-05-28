@@ -367,7 +367,7 @@ function getPreviewBackgroundClass(background: ShareBackground) {
   }
 
   if (background === "transparent") {
-    return "border-border/60 bg-transparent text-foreground shadow-none";
+    return "bg-transparent text-foreground shadow-none";
   }
 
   if (background === "custom") {
@@ -919,7 +919,11 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       <section className="flex min-h-[calc(100vh-var(--app-header-offset,0px)-16.5rem)] min-w-0 shrink-0 items-start justify-center pt-2">
         <div
           ref={previewRef}
-          className={cn("relative mx-auto aspect-[9/16] h-[min(58vh,34rem)] max-w-full min-w-0 overflow-hidden border p-3 shadow-panel sm:p-4", getPreviewBackgroundClass(shareBackground))}
+          className={cn(
+            "relative mx-auto aspect-[9/16] h-[min(58vh,34rem)] max-w-full min-w-0 overflow-hidden p-3 shadow-panel sm:p-4",
+            shareBackground !== "transparent" && "border",
+            getPreviewBackgroundClass(shareBackground),
+          )}
           style={{
             ...getPreviewBackgroundStyle(shareBackground, customBackgroundColor, customBackgroundOpacity),
             color: getAutomaticTextColor(shareBackground, customBackgroundColor, customBackgroundOpacity),
