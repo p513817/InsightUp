@@ -134,7 +134,7 @@ function TrendToolButton({
       className={`grid size-10 cursor-pointer place-items-center rounded-xl border text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
         active
           ? "border-primary/45 bg-primary/10 text-primary"
-          : "border-border/70 bg-card/92 hover:border-accent/55 hover:bg-accent/10 hover:text-foreground"
+          : "border-border/70 bg-card/92 hover:border-border/90 hover:bg-accent/6 hover:text-muted-foreground"
       }`}
       onClick={onClick}
       title={label}
