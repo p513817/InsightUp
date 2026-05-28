@@ -326,7 +326,14 @@ export function RecordsWorkspace({
           )}
         </section>
 
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-[calc(7rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-[rgb(var(--background)/0.95)] via-[rgb(var(--background)/0.68)] to-transparent sm:h-[calc(8rem+env(safe-area-inset-bottom))]" />
+                {/* Radial glow centred on the dock pill — fades outward in all directions */}
+        <div
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-40 sm:h-44"
+          style={{
+            background:
+              "radial-gradient(ellipse 68% 80% at 50% 100%, rgb(var(--background)/0.85) 0%, rgb(var(--background)/0.38) 52%, transparent 68%)",
+          }}
+        />
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-30 flex justify-center px-3 sm:bottom-3">
           <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/90 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)]">
             <TrendToolButton
