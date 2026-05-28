@@ -289,7 +289,7 @@ export function RecordsWorkspace({
   if (mode === "dashboard") {
     if (!records.length) {
       return (
-        <div className="pb-24 sm:pb-28">
+        <div className="pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-[calc(7rem+env(safe-area-inset-bottom))]">
           <RecordEmptyState
             actionLabel={locale === "en" ? "Add first record" : "新增第一筆紀錄"}
             description={locale === "en" ? "After adding your first record, this area will show weight, muscle, body fat, and segment trends." : "新增第一筆紀錄後，這裡會顯示體重、肌肉量、體脂與部位趨勢。"}
@@ -300,7 +300,7 @@ export function RecordsWorkspace({
     }
 
     return (
-      <div className="space-y-4 pb-20 sm:space-y-5 sm:pb-24">
+      <div className="space-y-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <section className="space-y-4">
           {trendMode === "overall" ? (
             <MiniTrendGrid
@@ -326,7 +326,7 @@ export function RecordsWorkspace({
           )}
         </section>
 
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 bg-gradient-to-t from-[rgb(var(--background)/0.95)] via-[rgb(var(--background)/0.68)] to-transparent sm:h-32" />
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-[calc(7rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-[rgb(var(--background)/0.95)] via-[rgb(var(--background)/0.68)] to-transparent sm:h-[calc(8rem+env(safe-area-inset-bottom))]" />
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-30 flex justify-center px-3 sm:bottom-3">
           <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/90 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)]">
             <TrendToolButton
