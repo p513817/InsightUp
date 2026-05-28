@@ -27,8 +27,8 @@ const EMPTY_INITIAL_METRIC_ORDER: string[] = [];
 
 export type TrendGridLayout = "auto" | "one" | "two";
 
-const COMPACT_CARD_CLASS = "min-h-[8.75rem] gap-2 py-3 pl-3 pr-3";
-const COMPACT_CHART_CLASS = "h-20 rounded-[0.9rem] px-1.5 py-1 sm:h-24";
+const COMPACT_CARD_CLASS = "min-h-[8rem] gap-1.5 py-2.5 pl-3 pr-3";
+const COMPACT_CHART_CLASS = "h-[4.5rem] rounded-[0.9rem] px-1.5 py-0.5 sm:h-[5.25rem]";
 const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
 
 const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
