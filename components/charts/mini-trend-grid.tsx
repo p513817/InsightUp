@@ -27,8 +27,8 @@ const EMPTY_INITIAL_METRIC_ORDER: string[] = [];
 
 export type TrendGridLayout = "auto" | "one" | "two";
 
-const COMPACT_CARD_CLASS = "min-h-[8rem] gap-1.5 py-2.5 pl-3 pr-3";
-const COMPACT_CHART_CLASS = "h-[4.5rem] rounded-[0.9rem] px-1.5 py-0.5 sm:h-[5.25rem]";
+const COMPACT_CARD_CLASS = "min-h-[7.4rem] gap-1 py-2 pl-3 pr-3";
+const COMPACT_CHART_CLASS = "h-[4rem] rounded-[0.9rem] px-1 py-0 sm:h-[4.75rem]";
 const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
 
 const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
@@ -284,7 +284,7 @@ function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta,
       }}
     >
 
-      <div className="grid h-8 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+      <div className="grid h-7 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {editMode ? (
             <button
