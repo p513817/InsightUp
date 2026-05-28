@@ -958,7 +958,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       */}
 
       {activeControl ? (
-        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur">
+        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur sm:bottom-[calc(env(safe-area-inset-bottom)+5rem)]">
         {activeControl === "style" ? (
           <div className="min-w-0">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Style" : "樣式"}</p>
