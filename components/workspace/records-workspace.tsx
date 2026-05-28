@@ -98,7 +98,7 @@ function TrendToolButton({
     <button
       aria-label={label}
       aria-pressed={active}
-      className={`flex h-9 min-w-[4.7rem] cursor-pointer items-center justify-center gap-1.5 border px-3.5 text-muted-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      className={`flex h-9 min-w-[4.7rem] cursor-pointer items-center justify-center gap-1.5 border px-3.5 text-accent-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-foreground/70 ${
         edge === "left"
           ? "rounded-l-[1rem] rounded-r-[0.8rem]"
           : edge === "right"
@@ -326,6 +326,7 @@ export function RecordsWorkspace({
           )}
         </section>
 
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 bg-gradient-to-t from-[rgb(var(--background)/0.95)] via-[rgb(var(--background)/0.68)] to-transparent sm:h-32" />
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-30 flex justify-center px-3 sm:bottom-3">
           <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/84 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)] backdrop-blur-md">
             <TrendToolButton

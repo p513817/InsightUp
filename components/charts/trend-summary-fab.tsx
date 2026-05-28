@@ -183,7 +183,12 @@ export function TrendSummaryFab({
   const triggerButton = (
     <Button
       aria-label={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
-      className={triggerClassName || (embedded ? "h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4" : "size-12 rounded-full p-0 shadow-panel")}
+      className={
+        triggerClassName ||
+        (embedded
+          ? "ai-trend-fab h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
+          : "ai-trend-fab size-12 rounded-full p-0 shadow-panel")
+      }
       disabled={loadingSummary || generating}
       onClick={handleOpenDialog}
       type="button"

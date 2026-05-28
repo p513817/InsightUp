@@ -315,7 +315,27 @@ body.dialog-overlay-no-blur .dialog-overlay {
   .ai-trend-fab {
     position: relative;
     isolation: isolate;
-    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, transform 180ms ease;
+    border-color: rgb(var(--primary) / 0.4);
+    background: linear-gradient(145deg, rgb(var(--brand-navy-950) / 0.96) 0%, rgb(var(--primary)) 62%, rgb(var(--primary-strong) / 0.95) 100%);
+    color: rgb(var(--primary-foreground));
+    box-shadow:
+      0 12px 26px rgba(11, 28, 52, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease, transform 180ms ease, filter 180ms ease;
+  }
+
+  .ai-trend-fab:hover,
+  .ai-trend-fab:focus-visible {
+    border-color: rgb(var(--primary) / 0.58);
+    background: linear-gradient(145deg, rgb(var(--primary)) 0%, rgb(var(--primary-strong)) 100%);
+    box-shadow:
+      0 14px 30px rgba(11, 28, 52, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  .ai-trend-fab:active {
+    background: linear-gradient(145deg, rgb(var(--primary-strong)) 0%, rgb(var(--brand-navy-700)) 100%);
+    filter: brightness(1.04);
   }
 
   .ai-trend-fab::after {
@@ -323,16 +343,16 @@ body.dialog-overlay-no-blur .dialog-overlay {
     position: absolute;
     inset: -1px;
     border-radius: inherit;
-    border: 1px solid rgba(24, 155, 140, 0.18);
-    opacity: 0.72;
+    border: 1px solid rgb(var(--brand-sky-100) / 0.22);
+    opacity: 0.86;
     pointer-events: none;
     transition: opacity 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   }
 
   .ai-trend-fab:hover::after,
   .ai-trend-fab:focus-visible::after {
-    border-color: rgba(24, 155, 140, 0.34);
-    box-shadow: 0 0 0 1px rgba(24, 155, 140, 0.08);
+    border-color: rgb(var(--brand-sky-100) / 0.32);
+    box-shadow: 0 0 0 1px rgb(var(--primary) / 0.14);
   }
 
   .ai-generate-pulse {
