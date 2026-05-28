@@ -328,7 +328,7 @@ export function RecordsWorkspace({
 
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-28 bg-gradient-to-t from-[rgb(var(--background)/0.95)] via-[rgb(var(--background)/0.68)] to-transparent sm:h-32" />
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-30 flex justify-center px-3 sm:bottom-3">
-          <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/84 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)] backdrop-blur-md">
+          <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/90 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)]">
             <TrendToolButton
               active={trendLayout === "two"}
               edge="left"
