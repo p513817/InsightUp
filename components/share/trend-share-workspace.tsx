@@ -987,7 +987,33 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               ))}
             </PillScrollGroup>
             {shareBackground === "custom" ? (
-              <div className="mt-3 grid gap-3">
+              <>
+                <div className="mt-3 grid gap-3">
+                  <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2">
+                    <span className="truncate text-sm font-semibold text-foreground">{isEnglish ? "Color" : "顏色"}</span>
+                    <ColorSwatchPicker
+                      color={customBackgroundColor}
+                      customLabel={isEnglish ? "Custom" : "自訂"}
+                      inputAriaLabel={isEnglish ? "Custom background color" : "自訂背景顏色"}
+                      onChange={setCustomBackgroundColor}
+                      swatchAriaLabelPrefix={isEnglish ? "Background color" : "背景顏色"}
+                    />
+                  </div>
+                  <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)_3rem] items-center gap-3 rounded-xl border border-border/65 bg-background/64 px-3 py-2">
+                    <span className="text-sm font-semibold text-foreground">{isEnglish ? "Opacity" : "透明度"}</span>
+                    <input
+                      aria-label={isEnglish ? "Background opacity" : "背景透明度"}
+                      className="w-full accent-primary"
+                      max="100"
+                      min="0"
+                      onChange={(event) => setCustomBackgroundOpacity(Number(event.target.value))}
+                      type="range"
+                      value={customBackgroundOpacity}
+                    />
+                    <span className="text-right text-xs font-semibold tabular-nums text-muted-foreground">{customBackgroundOpacity}%</span>
+                  </div>
+                </div>
+                {false ? <div className="mt-3 grid gap-3">
                 <div className="flex min-w-0 items-center justify-start gap-3">
                   <label
                     className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/70 bg-background/72 px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-within:ring-2 focus-within:ring-primary"
@@ -1019,7 +1045,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                   />
                   <span className="text-right text-xs font-semibold tabular-nums text-muted-foreground">{customBackgroundOpacity}%</span>
                 </div>
-              </div>
+              </div> : null}
+              </>
             ) : null}
           </div>
         ) : null}
