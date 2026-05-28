@@ -331,5 +331,12 @@
       "unsupportedFile": "僅支援 JPG、PNG、WEBP 或 PDF 檔案。",
       "fileTooLarge": "檔案大小必須介於 1 byte 到 10 MB 之間。"
     }
+  },
+  "segmentParts": {
+    "leftArm": "左臂",
+    "rightArm": "右臂",
+    "trunk": "軀幹",
+    "leftLeg": "左腿",
+    "rightLeg": "右腿"
   }
 }

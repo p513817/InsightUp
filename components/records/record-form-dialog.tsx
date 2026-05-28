@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronDown, CircleHelp, History, LoaderCircle, ScanSearch, X } from "lucide-react";
 import { Controller, type Path, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { useLocale } from "@/components/i18n-provider";
+import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -361,7 +361,15 @@ export function RecordFormDialog({
   presentation = "dialog",
 }: RecordFormDialogProps) {
   const locale = useLocale();
+  const t = useTranslations();
   const isEnglish = locale === "en";
+  const segmentPartLabels = {
+    leftArm: t("segmentParts.leftArm"),
+    rightArm: t("segmentParts.rightArm"),
+    trunk: t("segmentParts.trunk"),
+    leftLeg: t("segmentParts.leftLeg"),
+    rightLeg: t("segmentParts.rightLeg"),
+  } as const;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStage, setScanStage] = useState<ScanStage>(null);
@@ -916,7 +924,7 @@ export function RecordFormDialog({
                   <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                     {SEGMENT_PARTS.map((part) => (
                       <div className="grid gap-2.5" key={part.key}>
-                        <h4 className="text-sm font-semibold text-foreground">{part.label}</h4>
+                        <h4 className="text-sm font-semibold text-foreground">{segmentPartLabels[part.key]}</h4>
                         <div className="grid gap-2.5">
                           <FieldShell error={form.formState.errors.segmental?.[part.key]?.muscle?.message} label={isEnglish ? "Muscle mass (kg)" : "肌肉量 (kg)"}>
                             <NumberInputWithAdjust className={controlClassName} form={form} name={`segmental.${part.key}.muscle` as const} step={0.01} />

@@ -137,10 +137,18 @@ export function RecordsWorkspace({
   const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("one");
   const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
   const [trendEditMode, setTrendEditMode] = useState(false);
+  const segmentPartLabels: Record<SegmentPartKey, string> = {
+    leftArm: t("segmentParts.leftArm"),
+    rightArm: t("segmentParts.rightArm"),
+    trunk: t("segmentParts.trunk"),
+    leftLeg: t("segmentParts.leftLeg"),
+    rightLeg: t("segmentParts.rightLeg"),
+  };
 
   const overallChart = buildChartPayload(records, "overall", locale);
   const segmentalCharts = SEGMENT_CHART_VIEWS.map((view) => ({
     ...view,
+    label: segmentPartLabels[view.key],
     chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key, locale)),
   }));
   const latestRecord = records.at(-1);

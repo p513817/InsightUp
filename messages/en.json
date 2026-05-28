@@ -29,6 +29,13 @@
     "next": "Next",
     "page": "Page"
   },
+  "segmentParts": {
+    "leftArm": "Left arm",
+    "rightArm": "Right arm",
+    "trunk": "Trunk",
+    "leftLeg": "Left leg",
+    "rightLeg": "Right leg"
+  },
   "home": {
     "tagline": "See Deeper, Move Upward",
     "productType": "InBody tracker",
