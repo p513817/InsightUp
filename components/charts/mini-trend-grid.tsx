@@ -29,9 +29,10 @@ export type TrendGridLayout = "auto" | "one" | "two";
 
 const COMPACT_CARD_CLASS = "min-h-[8.75rem] gap-2 py-3 pl-3 pr-3";
 const COMPACT_CHART_CLASS = "h-20 rounded-[0.9rem] px-1.5 py-1 sm:h-24";
+const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
 
 const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
-  auto: "grid grid-cols-2 gap-2 xl:grid-cols-3 2xl:grid-cols-4",
+  auto: `grid grid-cols-1 gap-2 ${AUTO_TWO_COLUMN_BREAKPOINT_CLASS}`,
   one: "grid gap-2 grid-cols-1",
   two: "grid grid-cols-2 gap-2",
 };
@@ -62,22 +63,26 @@ function formatDelta(metric: ChartMetric, delta: number | null) {
   return `${delta > 0 ? "+" : delta < 0 ? "-" : ""}${formatted}`;
 }
 
-type MiniChartDotProps = DotProps & { metric: ChartMetric; payload?: any };
+type MiniChartDotProps = DotProps & { index?: number; labelStep?: number; metric: ChartMetric; payload?: any; totalPoints?: number };
 
 function MiniChartDot(props: MiniChartDotProps) {
-  const { cx, cy, payload, metric } = props;
+  const { cx, cy, index = 0, labelStep = 1, metric, payload, totalPoints = 0 } = props;
   const value = payload?.value as number | null | undefined;
 
   if (typeof cx !== "number" || typeof cy !== "number" || value == null) {
     return null;
   }
 
+  const shouldShowLabel = labelStep <= 1 || index % labelStep === 0 || index === totalPoints - 1;
+
   return (
     <g>
       <circle cx={cx} cy={cy} fill={metric.color} r={4} stroke="#f7fbff" strokeWidth={2} />
-      <text fill="#61758f" fontSize="10" fontWeight="600" textAnchor="middle" x={cx} y={cy - 10}>
-        {formatDecimal(value)}
-      </text>
+      {shouldShowLabel ? (
+        <text fill="#61758f" fontSize="10" fontWeight="600" textAnchor="middle" x={cx} y={cy - 10}>
+          {formatDecimal(value)}
+        </text>
+      ) : null}
     </g>
   );
 }
@@ -122,17 +127,23 @@ function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) 
   return `translate3d(${transform.x}px, ${transform.y}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`;
 }
 
+function getDotLabelStepForCardWidth(cardWidth: number) {
+  return cardWidth < 280 ? 3 : 2;
+}
+
 interface SortableMetricCardProps {
   canHide: boolean;
   deltaToneClass: string;
+  dotLabelStep: number;
   editMode: boolean;
   formattedDelta: string;
+  headerValueText?: string | null;
   metric: ChartMetric;
   onHide: (metricKey: string) => void;
   points: Array<{ date: string; label: string; value: number | null }>;
 }
 
-function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta, metric, onHide, points }: SortableMetricCardProps) {
+function SortableMetricCard({ canHide, deltaToneClass, dotLabelStep, editMode, formattedDelta, headerValueText, metric, onHide, points }: SortableMetricCardProps) {
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
     id: metric.key,
     transition: {
@@ -140,6 +151,46 @@ function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta,
       easing: "cubic-bezier(0.2, 0, 0, 1)",
     },
   });
+  const cardElementRef = useRef<HTMLDivElement | null>(null);
+  const [responsiveDotLabelStep, setResponsiveDotLabelStep] = useState(dotLabelStep);
+
+  useEffect(() => {
+    setResponsiveDotLabelStep(dotLabelStep);
+  }, [dotLabelStep]);
+
+  useEffect(() => {
+    const node = cardElementRef.current;
+
+    if (!node || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const syncDotLabelStep = (width: number) => {
+      setResponsiveDotLabelStep(getDotLabelStepForCardWidth(width));
+    };
+
+    syncDotLabelStep(node.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+
+      syncDotLabelStep(entry.contentRect.width);
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  function handleCardRef(node: HTMLDivElement | null) {
+    cardElementRef.current = node;
+    setNodeRef(node);
+  }
 
   return (
     <Card
@@ -149,7 +200,7 @@ function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta,
       data-dashboard-metric-key={metric.key}
       data-dragging={isDragging ? "true" : undefined}
       data-editing={editMode ? "true" : undefined}
-      ref={setNodeRef}
+      ref={handleCardRef}
       style={{
         transform: transformToCss(transform),
         transition: isDragging ? "none" : transition,
@@ -181,7 +232,12 @@ function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta,
               <GripVertical className="size-4" />
             </button>
           )}
-          <p className="truncate text-sm font-medium leading-none text-muted-foreground">{metric.label}</p>
+          <div className="flex min-w-0 items-baseline gap-2">
+            <p className="truncate text-sm font-medium leading-none text-muted-foreground">{metric.label}</p>
+            {headerValueText ? (
+              <p className="truncate font-display text-base leading-none tabular-nums text-foreground">{headerValueText}</p>
+            ) : null}
+          </div>
         </div>
         <div className="flex min-w-0 items-center justify-end text-right">
           <p className={`whitespace-nowrap text-sm font-semibold leading-none tabular-nums ${deltaToneClass}`}>{formattedDelta}</p>
@@ -209,7 +265,7 @@ function SortableMetricCard({ canHide, deltaToneClass, editMode, formattedDelta,
             />
             <Line
               dataKey="value"
-              dot={<MiniChartDot metric={metric} />}
+              dot={<MiniChartDot labelStep={responsiveDotLabelStep} metric={metric} totalPoints={points.length} />}
               isAnimationActive={false}
               stroke={metric.color}
               strokeLinecap="round"
@@ -396,6 +452,7 @@ export function MiniTrendGrid({
   const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
   const hiddenMetrics = orderedMetrics.filter((metric) => hiddenMetricKeys.includes(metric.key));
   const canHideVisibleMetric = visibleMetrics.length > 1;
+  const showHeaderValue = layout === "one";
 
   return (
     <div className="space-y-2">
@@ -412,13 +469,14 @@ export function MiniTrendGrid({
                 label: String(point.label || ""),
                 value: getNumericValue(point[metric.key]),
               }));
-
               return (
                 <SortableMetricCard
                   canHide={canHideVisibleMetric}
                   deltaToneClass={deltaToneClass}
+                  dotLabelStep={2}
                   editMode={editMode}
                   formattedDelta={formatDelta(metric, delta)}
+                  headerValueText={showHeaderValue ? formatMetricValue(metric, latestValue) : null}
                   key={metric.key}
                   metric={metric}
                   onHide={hideMetric}
