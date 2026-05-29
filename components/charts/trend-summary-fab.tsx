@@ -187,21 +187,21 @@ export function TrendSummaryFab({
         triggerClassName ||
         (embedded
           ? "ai-trend-fab h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
-          : "ai-trend-fab size-12 rounded-full p-0 shadow-panel")
+          : "ai-trend-fab size-14 rounded-full p-0 shadow-panel sm:size-[3.75rem]")
       }
       disabled={loadingSummary || generating}
       onClick={handleOpenDialog}
       type="button"
       variant={triggerVariant}
     >
-      {loadingSummary ? <LoaderCircle className={`${embedded ? "size-4" : "size-6"} animate-spin`} /> : <Sparkles className={embedded ? "size-4" : "size-6"} />}
+      {loadingSummary ? <LoaderCircle className={`${embedded ? "size-4" : "size-7"} animate-spin`} /> : <Sparkles className={embedded ? "size-4" : "size-7"} />}
       {embedded ? <span className="text-sm font-semibold">{triggerLabel || t("summary.loading.open")}</span> : null}
     </Button>
   );
 
   return (
     <>
-      {!open ? (embedded ? triggerButton : <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 sm:bottom-7 sm:right-7">{triggerButton}</div>) : null}
+      {!open ? (embedded ? triggerButton : <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-5 z-40 sm:bottom-7 sm:right-7">{triggerButton}</div>) : null}
 
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent

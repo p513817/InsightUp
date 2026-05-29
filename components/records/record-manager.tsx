@@ -472,11 +472,11 @@ export function RecordManager({
         <RecordEmptyState onAdd={onAdd} />
       )}
       {records.length ? (
-        <div className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 sm:inset-x-7 sm:bottom-7">
+        <div className="pointer-events-none fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-40 sm:inset-x-7 sm:bottom-7">
           <div className="mx-auto flex w-full max-w-6xl justify-end">
             <Button
               aria-label={t("records.manager.addRecord")}
-              className="pointer-events-auto relative size-12 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-14"
+              className="pointer-events-auto relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
               onClick={handleAddClick}
               title={t("records.manager.addRecord")}
               type="button"
@@ -485,7 +485,7 @@ export function RecordManager({
                 aria-hidden
                 className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
               />
-              <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-6 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-6 transition-transform duration-200"} />
+              <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-7 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-7 transition-transform duration-200"} />
             </Button>
           </div>
         </div>

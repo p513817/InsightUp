@@ -1242,8 +1242,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         </div>
       ) : null}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-between px-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-5">
-        <Button aria-label={isEnglish ? "Cancel" : "取消"} className="pointer-events-auto size-11 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+1.1rem)] sm:px-5">
+        <Button aria-label={isEnglish ? "Cancel" : "取消"} className="pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
           <X className="size-5" />
         </Button>
         <div className="pointer-events-auto grid grid-cols-6 rounded-full border border-border/75 bg-card/95 p-1 shadow-panel backdrop-blur">
@@ -1320,7 +1320,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <ListChecks className="size-4" />
           </button>
         </div>
-        <Button aria-label={isEnglish ? "Download image" : "下載圖片"} className="pointer-events-auto size-11 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
+        <Button aria-label={isEnglish ? "Download image" : "下載圖片"} className="pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
           <Download className="size-5" />
         </Button>
       </div>
