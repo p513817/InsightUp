@@ -29,12 +29,16 @@ type NavItem = {
   active: boolean;
 };
 
-const sidebarNavClassName = (active: boolean) =>
+const SIDEBAR_NAV_FEEDBACK_MS = 120;
+const SIDEBAR_NAV_TRANSITION_MS = 180;
+
+const sidebarNavClassName = (active: boolean, pending = false) =>
   cn(
-    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition",
+    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition-[background-color,border-color,box-shadow,transform] duration-150 active:scale-[0.985]",
     active
-      ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)]"
-      : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62",
+      ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)] active:bg-accent/22"
+      : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62 active:border-border/70 active:bg-white/78",
+    pending ? "scale-[0.985] border-border/70 bg-white/78" : "",
   );
 
 function SidebarNavContent({ active, description, icon, label }: Pick<NavItem, "active" | "description" | "icon" | "label">) {
@@ -56,9 +60,25 @@ function SidebarNavContent({ active, description, icon, label }: Pick<NavItem, "
   );
 }
 
-function SidebarNavLink({ active, description, href, icon, label, onNavigate }: NavItem & { onNavigate: () => void }) {
+function SidebarNavLink({
+  active,
+  description,
+  href,
+  icon,
+  label,
+  onNavigate,
+  pending,
+}: NavItem & { onNavigate: (href: string) => void; pending?: boolean }) {
   return (
-    <Link aria-current={active ? "page" : undefined} className={sidebarNavClassName(active)} href={href} onClick={onNavigate}>
+    <Link
+      aria-current={active ? "page" : undefined}
+      className={sidebarNavClassName(active, pending)}
+      href={href}
+      onClick={(event) => {
+        event.preventDefault();
+        onNavigate(href);
+      }}
+    >
       <SidebarNavContent active={active} description={description} icon={icon} label={label} />
     </Link>
   );
@@ -72,6 +92,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const headerRef = useRef<HTMLElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarLogoPlaySignal, setSidebarLogoPlaySignal] = useState(0);
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname.startsWith("/records") || pathname === "/profile";
@@ -124,7 +145,24 @@ export function AppHeader({ user }: AppHeaderProps) {
 
   useEffect(() => {
     setIsSidebarOpen(false);
+    setPendingNavHref(null);
   }, [pathname]);
+
+  function handleSidebarNavigate(href: string) {
+    if (pendingNavHref) {
+      return;
+    }
+
+    setPendingNavHref(href);
+    window.setTimeout(() => {
+      setIsSidebarOpen(false);
+
+      window.setTimeout(() => {
+        router.push(href);
+        setPendingNavHref(null);
+      }, SIDEBAR_NAV_TRANSITION_MS);
+    }, SIDEBAR_NAV_FEEDBACK_MS);
+  }
 
   useEffect(() => {
     if (!isSidebarOpen) {
@@ -301,8 +339,8 @@ export function AppHeader({ user }: AppHeaderProps) {
       <div
         aria-hidden={!isSidebarOpen}
         className={cn(
-          "fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.16)] transition-opacity duration-150 ease-out",
-          isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+          "fixed inset-0 z-50 cursor-pointer bg-[rgb(var(--overlay)/0.2)] backdrop-blur-[1.5px] transition-[opacity,backdrop-filter,background-color] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] active:bg-[rgb(var(--overlay)/0.26)] motion-reduce:transition-none",
+          isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0 backdrop-blur-0",
         )}
         onClick={() => setIsSidebarOpen(false)}
       />
@@ -310,11 +348,16 @@ export function AppHeader({ user }: AppHeaderProps) {
       <aside
         aria-label={t("navigation.mainNav")}
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.98)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] transition-transform duration-[180ms] ease-out will-change-transform",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.98)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] transition-[transform,opacity] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none",
+          isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-[104%] opacity-95",
         )}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5">
+        <div
+          className={cn(
+            "flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5 transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            isSidebarOpen ? "translate-x-0 opacity-100 delay-50" : "-translate-x-1 opacity-0",
+          )}
+        >
           <div className="flex min-w-0 items-center gap-3">
             <LogoAnimated className="size-9 rounded-full" playSignal={sidebarLogoPlaySignal} size={40} />
             <div className="min-w-0">
@@ -322,14 +365,26 @@ export function AppHeader({ user }: AppHeaderProps) {
               <p className="text-xs text-muted-foreground">{t("navigation.brandTagline")}</p>
             </div>
           </div>
-          <Button aria-label={t("navigation.closeMenu")} className="size-10 px-0" onClick={() => setIsSidebarOpen(false)} size="icon" type="button" variant="ghost">
+          <Button
+            aria-label={t("navigation.closeMenu")}
+            className="size-10 px-0 transition-[transform,background-color] duration-150 active:scale-[0.94] active:bg-primary/12"
+            onClick={() => setIsSidebarOpen(false)}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
             <X className="size-5" />
           </Button>
         </div>
 
-        <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-3">
+        <nav
+          className={cn(
+            "flex-1 space-y-1.5 overflow-y-auto px-3 py-3 transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            isSidebarOpen ? "translate-x-0 opacity-100 delay-75" : "-translate-x-1 opacity-0",
+          )}
+        >
           {navItems.map((item) => (
-            <SidebarNavLink key={item.href} {...item} onNavigate={() => setIsSidebarOpen(false)} />
+            <SidebarNavLink key={item.href} {...item} onNavigate={handleSidebarNavigate} pending={pendingNavHref === item.href} />
           ))}
         </nav>
       </aside>
