@@ -127,3 +127,17 @@ These migrations assume `public.set_updated_at()` and `gen_random_uuid()` are al
 - Production deploy target is now Vercel; do not assume Fly-specific config still exists in the repository.
 - If the user later requests a split deployment, the current route handlers are the natural extraction point into a separate API service.
 - Preserve the English-for-agents / Chinese-for-humans documentation split.
+
+## UI/UX Execution Baseline (Mandatory)
+
+For every future UI change in this project, agents must apply the Apple HIG mobile interaction baseline and the `ui-ux-pro-max` ergonomic touch rules by default.
+
+- Minimum tappable area: `44x44pt` (Apple baseline).
+- Floating corner primary action size: `56px`; secondary corner action size: `48px`.
+- Edge spacing for corner floating controls: prefer `20px` (minimum `16px`).
+- Bottom offset for floating controls must include safe area using `env(safe-area-inset-bottom)`.
+- Spacing between adjacent tappable controls: minimum `8px`.
+- Keep one primary floating action per screen; secondary floating actions should be visually demoted by size/contrast.
+- Do not upscale every floating action blindly; preserve visual hierarchy and content-first layout.
+
+When user feedback conflicts with these defaults, user feedback wins, but changes should still remain within accessibility-safe bounds.
