@@ -98,7 +98,7 @@ function TrendToolButton({
     <button
       aria-label={label}
       aria-pressed={active}
-      className={`flex h-9 min-w-[4.7rem] cursor-pointer items-center justify-center gap-1.5 border px-3.5 text-accent-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-foreground/70 ${
+      className={`flex h-9 min-w-[4.7rem] cursor-pointer items-center justify-center gap-1.5 border px-3.5 text-primary-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 ${
         edge === "left"
           ? "rounded-l-[1rem] rounded-r-[0.8rem]"
           : edge === "right"
@@ -106,8 +106,8 @@ function TrendToolButton({
             : "rounded-[0.9rem]"
       } ${
         active
-          ? "border-primary/28 bg-white/88 text-primary shadow-[0_6px_14px_rgba(16,35,63,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]"
-          : "border-transparent bg-transparent text-muted-foreground/82 hover:bg-white/44 hover:text-foreground"
+          ? "border-white/34 bg-white/24 text-primary-foreground shadow-[0_6px_14px_rgba(11,28,52,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]"
+          : "border-transparent bg-transparent text-primary-foreground/88 hover:bg-white/18 hover:text-primary-foreground"
       }`}
       onClick={onClick}
       title={label}
@@ -326,16 +326,8 @@ export function RecordsWorkspace({
           )}
         </section>
 
-                {/* Radial glow centred on the dock pill — fades outward in all directions */}
-        <div
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-40 sm:h-44"
-          style={{
-            background:
-              "radial-gradient(ellipse 68% 80% at 50% 100%, rgb(var(--background)/0.85) 0%, rgb(var(--background)/0.38) 52%, transparent 68%)",
-          }}
-        />
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-30 flex justify-center px-3 sm:bottom-3">
-          <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-border/65 bg-card/90 px-0.5 py-0.5 shadow-[0_12px_22px_rgba(16,35,63,0.1)]">
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 sm:bottom-4">
+          <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-primary/38 bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] px-0.5 py-0.5 text-primary-foreground shadow-[0_12px_24px_rgba(23,52,93,0.22)]">
             <TrendToolButton
               active={trendLayout === "two"}
               edge="left"
