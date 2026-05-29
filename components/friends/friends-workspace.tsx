@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AddFriendDialog } from "@/components/friends/add-friend-dialog";
 import { FriendsTable } from "@/components/friends/friends-table";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
-import { Button } from "@/components/ui/button";
+import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import type { FriendSnapshot } from "@/lib/friends/types";
 import { formatCompactDate } from "@/lib/presentation";
@@ -119,19 +119,9 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
       </section>
 
       {friends.length ? (
-        <div className="pointer-events-none fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-40 sm:inset-x-7 sm:bottom-7">
-          <div className="mx-auto flex w-full max-w-5xl justify-end">
-            <Button
-              aria-label={t("friends.add")}
-              className="ai-generate-pulse pointer-events-auto relative size-14 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
-              onClick={() => setDialogOpen(true)}
-              title={t("friends.add")}
-              type="button"
-            >
-              <Plus className="size-7" />
-            </Button>
-          </div>
-        </div>
+        <FloatingActionButton ariaLabel={t("friends.add")} onClick={() => setDialogOpen(true)} title={t("friends.add")}>
+          <Plus className="size-7" />
+        </FloatingActionButton>
       ) : null}
 
       <AddFriendDialog onConfirm={handleAddFriend} onOpenChange={setDialogOpen} open={dialogOpen} />

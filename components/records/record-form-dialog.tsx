@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -398,13 +399,13 @@ export function RecordFormDialog({
   const textareaClassName =
     "min-h-24 rounded-[0.95rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 shadow-none placeholder:text-muted-foreground/55 focus:border-primary/70 focus:ring-2 focus:ring-primary/15";
   const footerButtonClassName = isPagePresentation
-    ? "pointer-events-auto relative size-12 overflow-hidden rounded-full p-0 transition-[box-shadow,transform] duration-200 active:scale-[0.96]"
+    ? `pointer-events-auto relative ${FAB_BASE_CLASS}`
     : "relative overflow-hidden";
   const cancelButtonClassName = isPagePresentation
-    ? `${footerButtonClassName} border-border/80 bg-card/92 text-muted-foreground shadow-[0_8px_18px_rgb(15_23_42/0.10)] backdrop-blur hover:bg-card hover:text-foreground hover:shadow-[0_10px_22px_rgb(15_23_42/0.13)]`
+    ? `${footerButtonClassName} ${FAB_OUTLINE_TONE_CLASS}`
     : footerButtonClassName;
   const submitButtonClassName = isPagePresentation
-    ? `${footerButtonClassName} shadow-[0_12px_28px_rgb(23_52_93/0.20)] hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] disabled:shadow-[0_8px_18px_rgb(15_23_42/0.10)]`
+    ? `${footerButtonClassName} ${FAB_PRIMARY_TONE_CLASS} disabled:shadow-[0_8px_18px_rgb(15_23_42/0.10)]`
     : footerButtonClassName;
   const dialogContentClassName = initialRecord
     ? "!top-[calc(env(safe-area-inset-top)+0.5rem)] !bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] !h-auto !max-h-none !translate-y-0"

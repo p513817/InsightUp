@@ -5,6 +5,7 @@ import { AlertTriangle, ChevronDown, ClipboardList, Lightbulb, LoaderCircle, Spa
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FAB_BASE_CLASS, FAB_FIXED_POSITION_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { formatCompactDate } from "@/lib/presentation";
 
@@ -187,7 +188,7 @@ export function TrendSummaryFab({
         triggerClassName ||
         (embedded
           ? "ai-trend-fab h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
-          : "ai-trend-fab ai-generate-pulse size-14 rounded-full p-0 shadow-panel sm:size-[3.75rem]")
+          : `ai-trend-fab ai-generate-pulse ${FAB_BASE_CLASS} ${FAB_PRIMARY_TONE_CLASS}`)
       }
       disabled={loadingSummary || generating}
       onClick={handleOpenDialog}
@@ -201,7 +202,7 @@ export function TrendSummaryFab({
 
   return (
     <>
-      {!open ? (embedded ? triggerButton : <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-5 z-40 sm:bottom-7 sm:right-7">{triggerButton}</div>) : null}
+      {!open ? (embedded ? triggerButton : <div className={FAB_FIXED_POSITION_CLASS}>{triggerButton}</div>) : null}
 
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent

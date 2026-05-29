@@ -19,6 +19,7 @@ import { useLocale } from "@/components/i18n-provider";
 import { useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { InbodyRecord } from "@/lib/inbody/types";
@@ -472,23 +473,13 @@ export function RecordManager({
         <RecordEmptyState onAdd={onAdd} />
       )}
       {records.length ? (
-        <div className="pointer-events-none fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-40 sm:inset-x-7 sm:bottom-7">
-          <div className="mx-auto flex w-full max-w-6xl justify-end">
-            <Button
-              aria-label={t("records.manager.addRecord")}
-              className="ai-generate-pulse pointer-events-auto relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
-              onClick={handleAddClick}
-              title={t("records.manager.addRecord")}
-              type="button"
-            >
-              <span
-                aria-hidden
-                className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
-              />
-              <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-7 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-7 transition-transform duration-200"} />
-            </Button>
-          </div>
-        </div>
+        <FloatingActionButton ariaLabel={t("records.manager.addRecord")} onClick={handleAddClick} title={t("records.manager.addRecord")}>
+            <span
+              aria-hidden
+              className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
+            />
+            <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-7 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-7 transition-transform duration-200"} />
+        </FloatingActionButton>
       ) : null}
     </div>
   );
