@@ -185,8 +185,20 @@ function sortMetricsBySavedOrder(metrics: ChartMetric[], savedOrder: string[]) {
   });
 }
 
-function hasSameMetricOrder(left: ChartMetric[], right: ChartMetric[]) {
-  return left.length === right.length && left.every((metric, index) => metric.key === right[index]?.key);
+function hasSameMetricState(left: ChartMetric[], right: ChartMetric[]) {
+  return (
+    left.length === right.length &&
+    left.every((metric, index) => {
+      const candidate = right[index];
+      return (
+        metric.key === candidate?.key &&
+        metric.label === candidate?.label &&
+        metric.color === candidate?.color &&
+        metric.unit === candidate?.unit &&
+        metric.axis === candidate?.axis
+      );
+    })
+  );
 }
 
 async function persistMetricOrder(metricOrder: string[]) {
@@ -431,7 +443,7 @@ export function MiniTrendGrid({
     const preferredOrder = chart.view === "overall" && initialMetricOrder.length ? initialMetricOrder : savedOrder;
     const nextMetrics = sortMetricsBySavedOrder(chart.metrics, preferredOrder);
 
-    if (!hasSameMetricOrder(orderedMetricsRef.current, nextMetrics)) {
+    if (!hasSameMetricState(orderedMetricsRef.current, nextMetrics)) {
       orderedMetricsRef.current = nextMetrics;
       setOrderedMetrics(nextMetrics);
     }
