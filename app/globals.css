@@ -356,6 +356,7 @@ body.dialog-overlay-no-blur .dialog-overlay {
   }
 
   .ai-generate-pulse {
+    position: relative;
     isolation: isolate;
     animation: ai-generate-button-glow 3.2s ease-in-out infinite;
   }

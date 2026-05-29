@@ -1320,7 +1320,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <ListChecks className="size-4" />
           </button>
         </div>
-        <Button aria-label={isEnglish ? "Download image" : "下載圖片"} className="pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
+        <Button aria-label={isEnglish ? "Download image" : "下載圖片"} className="ai-generate-pulse pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
           <Download className="size-5" />
         </Button>
       </div>

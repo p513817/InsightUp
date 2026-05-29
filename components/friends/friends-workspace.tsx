@@ -123,7 +123,7 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
           <div className="mx-auto flex w-full max-w-5xl justify-end">
             <Button
               aria-label={t("friends.add")}
-              className="pointer-events-auto relative size-14 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
+              className="ai-generate-pulse pointer-events-auto relative size-14 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
               onClick={() => setDialogOpen(true)}
               title={t("friends.add")}
               type="button"

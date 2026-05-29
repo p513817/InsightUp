@@ -187,7 +187,7 @@ export function TrendSummaryFab({
         triggerClassName ||
         (embedded
           ? "ai-trend-fab h-10 rounded-full px-3.5 shadow-panel sm:h-11 sm:px-4"
-          : "ai-trend-fab size-14 rounded-full p-0 shadow-panel sm:size-[3.75rem]")
+          : "ai-trend-fab ai-generate-pulse size-14 rounded-full p-0 shadow-panel sm:size-[3.75rem]")
       }
       disabled={loadingSummary || generating}
       onClick={handleOpenDialog}

@@ -476,7 +476,7 @@ export function RecordManager({
           <div className="mx-auto flex w-full max-w-6xl justify-end">
             <Button
               aria-label={t("records.manager.addRecord")}
-              className="pointer-events-auto relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
+              className="ai-generate-pulse pointer-events-auto relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem]"
               onClick={handleAddClick}
               title={t("records.manager.addRecord")}
               type="button"
