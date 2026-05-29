@@ -71,6 +71,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarLogoPlaySignal, setSidebarLogoPlaySignal] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname.startsWith("/records") || pathname === "/profile";
@@ -124,6 +125,14 @@ export function AppHeader({ user }: AppHeaderProps) {
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isSidebarOpen) {
+      return;
+    }
+
+    setSidebarLogoPlaySignal((current) => current + 1);
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -307,7 +316,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       >
         <div className="flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5">
           <div className="flex min-w-0 items-center gap-3">
-            <LogoAnimated className="size-9 rounded-full" playOnce size={40} />
+            <LogoAnimated className="size-9 rounded-full" playSignal={sidebarLogoPlaySignal} size={40} />
             <div className="min-w-0">
               <p className="truncate font-display text-lg text-foreground">InsightUp</p>
               <p className="text-xs text-muted-foreground">{t("navigation.brandTagline")}</p>

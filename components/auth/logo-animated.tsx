@@ -5,20 +5,29 @@ import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
 const LOGO_ANIMATION_PLAYED_KEY = "insightup.logoAnimationPlayed";
+const LOGO_PLAYBACK_RATE = 1.5;
 let logoAnimationPlayedInRuntime = false;
 
 interface LogoAnimatedProps {
   className?: string;
   playOnce?: boolean;
   size?: number;
+  playSignal?: number;
 }
 
-export function LogoAnimated({ className, playOnce = false, size = 56 }: LogoAnimatedProps) {
+export function LogoAnimated({ className, playOnce = false, size = 56, playSignal }: LogoAnimatedProps) {
   const [done, setDone] = useState(false);
   const [shouldRenderVideo, setShouldRenderVideo] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasMountedRef = useRef(false);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDone(true);
+      setShouldRenderVideo(false);
+      return;
+    }
+
     const hasPlayed =
       playOnce &&
       (logoAnimationPlayedInRuntime ||
@@ -35,10 +44,34 @@ export function LogoAnimated({ className, playOnce = false, size = 56 }: LogoAni
   }, [playOnce]);
 
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    if (playSignal == null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    setDone(false);
+    setShouldRenderVideo(true);
+
+    if (videoRef.current) {
+      videoRef.current.playbackRate = LOGO_PLAYBACK_RATE;
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {
+        setDone(true);
+        setShouldRenderVideo(false);
+      });
+    }
+  }, [playSignal]);
+
+  useEffect(() => {
     if (!shouldRenderVideo || !videoRef.current) {
       return;
     }
 
+    videoRef.current.playbackRate = LOGO_PLAYBACK_RATE;
     videoRef.current.currentTime = 0;
     videoRef.current.play().catch(() => {
       setDone(true);
