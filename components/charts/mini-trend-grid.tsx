@@ -31,6 +31,7 @@ export type TrendGridLayout = "auto" | "one" | "two";
 const COMPACT_CARD_CLASS = "min-h-[7.4rem] gap-1 py-2 pl-3 pr-3";
 const COMPACT_CHART_CLASS = "h-[4rem] rounded-[0.9rem] px-1 py-0 sm:h-[4.75rem]";
 const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
+const METRIC_REVEAL_INTERVAL_MS = 150;
 
 const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
   auto: `grid grid-cols-1 gap-2 ${AUTO_TWO_COLUMN_BREAKPOINT_CLASS}`,
@@ -387,6 +388,14 @@ export function MiniTrendGrid({
   const renderStartKeyRef = useRef("");
   const didNotifyRenderCompleteRef = useRef(false);
   const renderCompleteKeyRef = useRef("");
+  const onRenderStartRef = useRef(onRenderStart);
+  const onRenderCompleteRef = useRef(onRenderComplete);
+  const visibleMetricKeys = useMemo(
+    () => orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key)).map((metric) => metric.key),
+    [hiddenMetricKeys, orderedMetrics],
+  );
+  const visibleMetricKey = visibleMetricKeys.join(",");
+  const visibleMetricTotal = visibleMetricKeys.length;
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -404,6 +413,14 @@ export function MiniTrendGrid({
   );
 
   useEffect(() => {
+    onRenderStartRef.current = onRenderStart;
+  }, [onRenderStart]);
+
+  useEffect(() => {
+    onRenderCompleteRef.current = onRenderComplete;
+  }, [onRenderComplete]);
+
+  useEffect(() => {
     let firstFrame = 0;
     const renderStartKey = `${chart.view}:${chart.points.length}`;
 
@@ -413,7 +430,7 @@ export function MiniTrendGrid({
     firstFrame = window.requestAnimationFrame(() => {
       if (renderStartKeyRef.current !== renderStartKey) {
         renderStartKeyRef.current = renderStartKey;
-        onRenderStart?.();
+        onRenderStartRef.current?.();
       }
 
       setIsChartReady(true);
@@ -422,26 +439,25 @@ export function MiniTrendGrid({
     return () => {
       window.cancelAnimationFrame(firstFrame);
     };
-  }, [chart.points.length, chart.view, onRenderStart]);
+  }, [chart.points.length, chart.view]);
 
   useEffect(() => {
     if (!isChartReady) {
       return;
     }
 
-    const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
     setVisibleMetricCount(1);
 
-    const timers = visibleMetrics.map((_, index) =>
+    const timers = Array.from({ length: visibleMetricTotal }, (_, index) =>
       window.setTimeout(() => {
         setVisibleMetricCount((current) => Math.max(current, index + 1));
-      }, index * 90),
+      }, index * METRIC_REVEAL_INTERVAL_MS),
     );
 
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
     };
-  }, [hiddenMetricKeys, isChartReady, orderedMetrics]);
+  }, [isChartReady, visibleMetricKey, visibleMetricTotal]);
 
   useEffect(() => {
     if (!isChartReady) {
@@ -449,9 +465,8 @@ export function MiniTrendGrid({
       return;
     }
 
-    const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
-    const isComplete = !chart.points.length || visibleMetricCount >= visibleMetrics.length;
-    const renderCompleteKey = `${chart.view}:${chart.points.length}:${visibleMetrics.map((metric) => metric.key).join(",")}`;
+    const isComplete = !chart.points.length || visibleMetricCount >= visibleMetricTotal;
+    const renderCompleteKey = `${chart.view}:${chart.points.length}:${visibleMetricKey}`;
 
     if (renderCompleteKeyRef.current !== renderCompleteKey) {
       renderCompleteKeyRef.current = renderCompleteKey;
@@ -463,8 +478,8 @@ export function MiniTrendGrid({
     }
 
     didNotifyRenderCompleteRef.current = true;
-    onRenderComplete?.();
-  }, [chart.points.length, chart.view, hiddenMetricKeys, isChartReady, onRenderComplete, orderedMetrics, visibleMetricCount]);
+    onRenderCompleteRef.current?.();
+  }, [chart.points.length, chart.view, isChartReady, visibleMetricCount, visibleMetricKey, visibleMetricTotal]);
 
   useEffect(() => {
     if (layout !== "auto") {
@@ -636,8 +651,8 @@ export function MiniTrendGrid({
               }));
               return (
                 <div
-                  className={`transition-[opacity,transform] duration-200 ${
-                    index < visibleMetricCount ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+                  className={`transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+                    index < visibleMetricCount ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
                   }`}
                   key={metric.key}
                 >
