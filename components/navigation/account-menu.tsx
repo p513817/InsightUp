@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LoaderCircle, LogOut, Mail, UserRound } from "lucide-react";
 import { useLocale, useTranslations, setLocaleCookie, getLocaleLabel } from "@/components/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { ROUND_ACTION_FEEDBACK_CLASS } from "@/components/ui/floating-action-styles";
 import type { AppUserSummary } from "@/lib/presentation";
 import { locales, type Locale } from "@/lib/i18n";
 
@@ -106,21 +107,16 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
 
   return (
     <div className="relative" ref={containerRef} style={menuStyle}>
-      <div
+      <button
         aria-expanded={isOpen}
         aria-haspopup="menu"
         className={[
-          "surface-pill flex items-center justify-center gap-[var(--brand-gap)] rounded-full bg-card/78 cursor-pointer select-none transition-[gap,padding] duration-500 ease-out",
+          "surface-pill flex items-center justify-center gap-[var(--brand-gap)] rounded-full bg-card/78 cursor-pointer select-none transition-[gap,padding] duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          ROUND_ACTION_FEEDBACK_CLASS,
           isCollapsed ? "w-[2.625rem] h-[2.625rem] min-w-0 max-w-full p-[0.3125rem]" : "w-[3.25rem] h-[3.25rem] min-w-0 max-w-full p-[0.3125rem]",
         ].join(" ")}
         onClick={() => setIsOpen((current) => !current)}
-        tabIndex={0}
-        role="button"
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            setIsOpen((current) => !current);
-          }
-        }}
+        type="button"
         style={isCollapsed ? { outline: "none", height: "2.625rem", width: "2.625rem" } : { outline: "none", height: "3.25rem", width: "3.25rem" }}
       >
         <div className="flex items-center justify-center rounded-full bg-card/78 transition-[height,width] duration-500 ease-out w-[var(--account-avatar-size)] h-[var(--account-avatar-size)] mx-auto">
@@ -130,7 +126,7 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
             <img alt={user.name} className="w-full h-full rounded-full object-cover bg-card/78" onError={() => setImageFailed(true)} src={user.avatarUrl} />
           )}
         </div>
-      </div>
+      </button>
 
       {isOpen ? (
         <div className="surface-menu absolute right-0 top-[calc(100%+0.75rem)] z-40 w-auto min-w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.35rem] p-2">

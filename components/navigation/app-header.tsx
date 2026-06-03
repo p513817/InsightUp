@@ -7,6 +7,7 @@ import { Activity, Files, LayoutDashboard, Menu, Sparkles, UsersRound, UserRound
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
+import { ROUND_ACTION_FEEDBACK_CLASS } from "@/components/ui/floating-action-styles";
 import { useTranslations } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 import type { AppUserSummary } from "@/lib/presentation";
@@ -29,12 +30,16 @@ type NavItem = {
   active: boolean;
 };
 
-const SIDEBAR_NAV_FEEDBACK_MS = 120;
-const SIDEBAR_NAV_TRANSITION_MS = 180;
+const SIDEBAR_NAV_FEEDBACK_MS = 150;
+const SIDEBAR_NAV_TRANSITION_MS = 150;
+const SIDEBAR_OPEN_FEEDBACK_MS = 150;
+const SIDEBAR_CLOSE_FEEDBACK_MS = 150;
+const SIDEBAR_PANEL_DURATION_CLASS = "duration-[320ms]";
+const SIDEBAR_PANEL_EASE_CLASS = "ease-[cubic-bezier(0.22,1,0.36,1)]";
 
 const sidebarNavClassName = (active: boolean, pending = false) =>
   cn(
-    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition-[background-color,border-color,box-shadow,transform] duration-150 active:scale-[0.985]",
+    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out active:scale-[0.97] active:translate-x-[1px]",
     active
       ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)] active:bg-accent/22"
       : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62 active:border-border/70 active:bg-white/78",
@@ -91,6 +96,8 @@ export function AppHeader({ user }: AppHeaderProps) {
   const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpenPending, setIsSidebarOpenPending] = useState(false);
+  const [isSidebarClosePending, setIsSidebarClosePending] = useState(false);
   const [sidebarLogoPlaySignal, setSidebarLogoPlaySignal] = useState(0);
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -145,8 +152,22 @@ export function AppHeader({ user }: AppHeaderProps) {
 
   useEffect(() => {
     setIsSidebarOpen(false);
+    setIsSidebarOpenPending(false);
+    setIsSidebarClosePending(false);
     setPendingNavHref(null);
   }, [pathname]);
+
+  function handleSidebarOpen() {
+    if (isSidebarOpen || isSidebarOpenPending) {
+      return;
+    }
+
+    setIsSidebarOpenPending(true);
+    window.setTimeout(() => {
+      setIsSidebarOpen(true);
+      setIsSidebarOpenPending(false);
+    }, SIDEBAR_OPEN_FEEDBACK_MS);
+  }
 
   function handleSidebarNavigate(href: string) {
     if (pendingNavHref) {
@@ -164,8 +185,22 @@ export function AppHeader({ user }: AppHeaderProps) {
     }, SIDEBAR_NAV_FEEDBACK_MS);
   }
 
+  function handleSidebarClose() {
+    if (!isSidebarOpen || isSidebarClosePending) {
+      return;
+    }
+
+    setIsSidebarClosePending(true);
+    window.setTimeout(() => {
+      setIsSidebarOpen(false);
+      setIsSidebarClosePending(false);
+    }, SIDEBAR_CLOSE_FEEDBACK_MS);
+  }
+
   useEffect(() => {
     if (!isSidebarOpen) {
+      setIsSidebarOpenPending(false);
+      setIsSidebarClosePending(false);
       return;
     }
 
@@ -279,8 +314,11 @@ export function AppHeader({ user }: AppHeaderProps) {
           <div className="surface-pill flex h-[2.625rem] min-w-0 items-center rounded-full bg-card/78 p-[0.3125rem] shadow-none">
             <button
               aria-label={t("navigation.menu")}
-              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary transition hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              onClick={() => setIsSidebarOpen(true)}
+              className={cn(
+                `grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${ROUND_ACTION_FEEDBACK_CLASS}`,
+                isSidebarOpenPending ? "bg-primary/10 scale-[0.92] rotate-90" : "",
+              )}
+              onClick={handleSidebarOpen}
               type="button"
             >
               <Menu className="size-5" />
@@ -339,8 +377,11 @@ export function AppHeader({ user }: AppHeaderProps) {
       <div
         aria-hidden={!isSidebarOpen}
         className={cn(
-          "fixed inset-0 z-50 cursor-pointer bg-[rgb(var(--overlay)/0.2)] backdrop-blur-[1.5px] transition-[opacity,backdrop-filter,background-color] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] active:bg-[rgb(var(--overlay)/0.26)] motion-reduce:transition-none",
+          "fixed inset-0 z-50 cursor-pointer bg-[rgb(var(--overlay)/0.2)] backdrop-blur-[1.5px] transition-[opacity,backdrop-filter,background-color] motion-reduce:transition-none",
+          SIDEBAR_PANEL_DURATION_CLASS,
+          SIDEBAR_PANEL_EASE_CLASS,
           isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0 backdrop-blur-0",
+          "active:bg-[rgb(var(--overlay)/0.26)]",
         )}
         onClick={() => setIsSidebarOpen(false)}
       />
@@ -348,14 +389,18 @@ export function AppHeader({ user }: AppHeaderProps) {
       <aside
         aria-label={t("navigation.mainNav")}
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.98)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] transition-[transform,opacity] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none",
+          "fixed left-0 top-0 z-50 flex h-dvh w-[min(16.5rem,calc(100vw-2rem))] flex-col overflow-hidden border-r border-border/55 bg-[rgb(var(--card)/0.98)] shadow-[12px_0_30px_rgba(16,35,63,0.1)] transition-[transform,opacity] will-change-transform motion-reduce:transition-none",
+          SIDEBAR_PANEL_DURATION_CLASS,
+          SIDEBAR_PANEL_EASE_CLASS,
           isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-[104%] opacity-95",
         )}
       >
         <div
           className={cn(
-            "flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5 transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-            isSidebarOpen ? "translate-x-0 opacity-100 delay-50" : "-translate-x-1 opacity-0",
+            "flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5 transition-[opacity,transform] motion-reduce:transition-none",
+            SIDEBAR_PANEL_DURATION_CLASS,
+            SIDEBAR_PANEL_EASE_CLASS,
+            isSidebarOpen ? "translate-x-0 opacity-100 delay-75" : "-translate-x-2 opacity-0",
           )}
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -367,8 +412,13 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
           <Button
             aria-label={t("navigation.closeMenu")}
-            className="size-10 px-0 transition-[transform,background-color] duration-150 active:scale-[0.94] active:bg-primary/12"
-            onClick={() => setIsSidebarOpen(false)}
+            className={cn(
+              "size-10 px-0 transition-[transform,background-color] duration-200",
+              isSidebarClosePending
+                ? "scale-[0.92] rotate-90 bg-primary/12"
+                : "active:scale-[0.92] active:rotate-90 active:bg-primary/12",
+            )}
+            onClick={handleSidebarClose}
             size="icon"
             type="button"
             variant="ghost"
@@ -379,8 +429,10 @@ export function AppHeader({ user }: AppHeaderProps) {
 
         <nav
           className={cn(
-            "flex-1 space-y-1.5 overflow-y-auto px-3 py-3 transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-            isSidebarOpen ? "translate-x-0 opacity-100 delay-75" : "-translate-x-1 opacity-0",
+            "flex-1 space-y-1.5 overflow-y-auto px-3 py-3 transition-[opacity,transform] motion-reduce:transition-none",
+            SIDEBAR_PANEL_DURATION_CLASS,
+            SIDEBAR_PANEL_EASE_CLASS,
+            isSidebarOpen ? "translate-x-0 opacity-100 delay-500" : "-translate-x-2 opacity-0",
           )}
         >
           {navItems.map((item) => (

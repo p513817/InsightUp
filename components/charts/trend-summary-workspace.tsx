@@ -4,6 +4,7 @@ import { useMemo, useState, type ComponentType } from "react";
 import { AlertTriangle, ClipboardList, Lightbulb, LoaderCircle, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { FAB_BASE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
@@ -199,7 +200,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
         <div className="mx-auto flex w-full max-w-4xl justify-end">
           <Button
             aria-label={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
-            className={`pointer-events-auto relative size-14 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem] ${
+            className={`pointer-events-auto relative ${FAB_BASE_CLASS} ${FAB_PRIMARY_TONE_CLASS} sm:size-[3.75rem] ${
               !generating && canGenerate ? "ai-generate-pulse" : ""
             }`}
             disabled={generating || !canGenerate}
