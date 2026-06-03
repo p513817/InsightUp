@@ -23,11 +23,14 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       const redirectUrl = new URL(nextPath, request.url);
+
       if (redirectUrl.pathname === "/dashboard") {
         redirectUrl.searchParams.set("welcome", "1");
       }
 
-      return NextResponse.redirect(redirectUrl);
+      const response = NextResponse.redirect(redirectUrl);
+
+      return response;
     }
 
     failureUrl.searchParams.set("message", error.message);

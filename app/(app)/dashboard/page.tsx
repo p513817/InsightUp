@@ -1,26 +1,16 @@
-import { getDashboardMetricOrder } from "@/lib/dashboard-preferences";
-import { DashboardWelcomeDialog } from "@/components/dashboard/dashboard-welcome-dialog";
-import { RecordsWorkspace } from "@/components/workspace/records-workspace";
-import { listRecords } from "@/lib/inbody/records";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { DashboardRecordsSection } from "@/components/workspace/dashboard-records-section";
 
-export default async function DashboardPage() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+interface DashboardPageProps {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
 
-  if (!user) {
-    return null;
-  }
+function pickFirst(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-  const records = await listRecords(supabase, user.id);
-  const metricOrder = await getDashboardMetricOrder(supabase, user.id);
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const shouldOpenWelcome = pickFirst(resolvedSearchParams?.welcome) === "1";
 
-  return (
-    <>
-      <RecordsWorkspace initialDashboardMetricOrder={metricOrder} initialRecords={records} mode="dashboard" />
-      {records.length ? <DashboardWelcomeDialog /> : null}
-    </>
-  );
+  return <DashboardRecordsSection showWelcomeDialog={shouldOpenWelcome} />;
 }

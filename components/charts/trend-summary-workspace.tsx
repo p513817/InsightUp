@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { useMemo, useState, type ComponentType } from "react";
 import { AlertTriangle, ClipboardList, Lightbulb, LoaderCircle, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { formatCompactDate } from "@/lib/presentation";
 
-interface TrendSummaryResponse {
+export interface TrendSummaryResponse {
   summary: string | null;
   structuredSummary?: {
     overview: string;
@@ -31,20 +31,34 @@ interface TrendSummaryResponse {
 
 type SectionKey = "overview" | "keyChanges" | "actionPlan" | "watchouts";
 
-export function TrendSummaryWorkspace() {
+interface TrendSummaryWorkspaceProps {
+  initialSummary?: TrendSummaryResponse | null;
+}
+
+function buildUsageBadge(t: ReturnType<typeof useTranslations>, data: TrendSummaryResponse) {
+  return `${t("summary.usage.label")} ${data.usageCount ?? 0} / ${data.dailyLimit == null ? t("summary.usage.unlimited") : data.dailyLimit}`;
+}
+
+function buildSourceLabel(t: ReturnType<typeof useTranslations>, data: TrendSummaryResponse) {
+  return data.provider === "gemini"
+    ? t("summary.source.gemini")
+    : data.reused
+      ? t("summary.source.cacheReused")
+      : t("summary.source.cache");
+}
+
+export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWorkspaceProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const [loadingSummary, setLoadingSummary] = useState(true);
-  const [refreshingSummary, setRefreshingSummary] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [structuredSummary, setStructuredSummary] = useState<TrendSummaryResponse["structuredSummary"]>(null);
-  const [requestDate, setRequestDate] = useState<string | null>(null);
-  const [canGenerate, setCanGenerate] = useState(true);
-  const [usageBadge, setUsageBadge] = useState<string | null>(null);
-  const [sourceLabel, setSourceLabel] = useState<string | null>(null);
-  const [modelLabel, setModelLabel] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(initialSummary?.summary ?? null);
+  const [structuredSummary, setStructuredSummary] = useState<TrendSummaryResponse["structuredSummary"]>(initialSummary?.structuredSummary ?? null);
+  const [requestDate, setRequestDate] = useState<string | null>(initialSummary?.requestDate ?? null);
+  const [canGenerate, setCanGenerate] = useState(initialSummary?.canGenerate ?? true);
+  const [usageBadge, setUsageBadge] = useState<string | null>(initialSummary ? buildUsageBadge(t, initialSummary) : null);
+  const [sourceLabel, setSourceLabel] = useState<string | null>(initialSummary ? buildSourceLabel(t, initialSummary) : null);
+  const [modelLabel, setModelLabel] = useState<string | null>(initialSummary?.modelName ?? null);
 
   const hasSummary = useMemo(() => Boolean(summary || structuredSummary), [structuredSummary, summary]);
 
@@ -62,32 +76,6 @@ export function TrendSummaryWorkspace() {
           : t("summary.source.cache"),
     );
     setModelLabel(data.modelName || null);
-  }
-
-  async function fetchLatestSummary() {
-    setLoadingSummary(true);
-    setRefreshingSummary(true);
-
-    try {
-      const response = await fetch("/api/trend-summary", { method: "GET" });
-      const payload = (await response.json().catch(() => null)) as TrendSummaryResponse | { message?: string } | null;
-
-      if (!response.ok) {
-        throw new Error(payload?.message || t("summary.errors.fetchFailed"));
-      }
-
-      const data = payload as TrendSummaryResponse;
-      applySummaryResponse(data);
-
-      if (data.message) {
-        toast.message(data.message);
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("summary.errors.fetchFailed"));
-    } finally {
-      setLoadingSummary(false);
-      setRefreshingSummary(false);
-    }
   }
 
   async function regenerateSummary() {
@@ -121,10 +109,6 @@ export function TrendSummaryWorkspace() {
       setGenerating(false);
     }
   }
-
-  useEffect(() => {
-    void fetchLatestSummary();
-  }, []);
 
   const sections: Array<{ key: SectionKey; title: string; icon: ComponentType<{ className?: string }> }> = [
     { key: "overview", title: t("summary.sections.overview"), icon: TrendingUp },
@@ -164,21 +148,10 @@ export function TrendSummaryWorkspace() {
             </div>
           </StatsScrollbarRow>
 
-          {refreshingSummary ? (
-            <div className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
-              <LoaderCircle className="size-3 animate-spin" />
-              {t("summary.loading.refreshing")}
-            </div>
-          ) : null}
         </div>
       </section>
 
-      {loadingSummary ? (
-        <Card className="min-h-72 items-center justify-center gap-3 text-muted-foreground">
-          <LoaderCircle className="size-5 animate-spin" />
-          <p className="text-sm">{t("summary.loading.fetching")}</p>
-        </Card>
-      ) : !structuredSummary ? (
+      {!structuredSummary ? (
         <Card className="surface-state-panel min-h-72 items-center justify-center gap-2 p-8 text-center">
           <span className="grid size-11 place-items-center rounded-full bg-primary/7 text-primary">
             <Sparkles className="size-5" />
@@ -226,9 +199,9 @@ export function TrendSummaryWorkspace() {
           <Button
             aria-label={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
             className={`pointer-events-auto relative size-14 overflow-hidden rounded-full p-0 shadow-[0_12px_28px_rgb(23_52_93/0.20)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_16px_34px_rgb(23_52_93/0.24)] active:scale-[0.96] sm:size-[3.75rem] ${
-              !loadingSummary && !generating && canGenerate ? "ai-generate-pulse" : ""
+              !generating && canGenerate ? "ai-generate-pulse" : ""
             }`}
-            disabled={loadingSummary || generating || !canGenerate}
+            disabled={generating || !canGenerate}
             onClick={hasSummary ? () => setConfirmOpen(true) : () => void regenerateSummary()}
             title={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
             type="button"

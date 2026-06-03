@@ -367,6 +367,16 @@ export function buildChartPayload(records: InbodyRecord[], view: ChartViewKey, l
   return { view, metrics, points };
 }
 
+export function buildDashboardChartPayloads(records: InbodyRecord[], locale: Locale = "zh-Hant") {
+  return {
+    overallChart: buildChartPayload(records, "overall", locale),
+    segmentalCharts: CHART_VIEWS.filter((view) => view.key !== "overall").map((view) => ({
+      key: view.key,
+      chart: buildChartPayload(records, view.key, locale),
+    })),
+  };
+}
+
 export function getDefaultChartView(): ChartViewKey {
   return CHART_VIEWS[0].key;
 }

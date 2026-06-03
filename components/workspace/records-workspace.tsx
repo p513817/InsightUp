@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Columns2, Eye, EyeOff, RectangleHorizontal, Share2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { MiniTrendGrid, type TrendGridLayout } from "@/components/charts/mini-trend-grid";
+import { DashboardWelcomeDialog } from "@/components/dashboard/dashboard-welcome-dialog";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
+import { PageLoading } from "@/components/ui/page-loading";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { buildChartPayload } from "@/lib/inbody/records";
 import { type RecordFormValues } from "@/lib/inbody/schema";
@@ -17,8 +19,14 @@ import { formatCompactDate, formatLongDate } from "@/lib/presentation";
 
 interface RecordsWorkspaceProps {
   initialDashboardMetricOrder?: string[];
+  initialOverallChart?: ChartPayload;
   initialRecords: InbodyRecord[];
+  initialSegmentalCharts?: Array<{
+    key: SegmentPartKey;
+    chart: ChartPayload;
+  }>;
   mode: "dashboard" | "records";
+  showWelcomeDialog?: boolean;
 }
 
 type TrendMode = "overall" | "segmental";
@@ -121,8 +129,11 @@ function TrendToolButton({
 
 export function RecordsWorkspace({
   initialDashboardMetricOrder = [],
+  initialOverallChart,
   initialRecords,
+  initialSegmentalCharts,
   mode,
+  showWelcomeDialog = false,
 }: RecordsWorkspaceProps) {
   const router = useRouter();
   const locale = useLocale();
@@ -137,23 +148,121 @@ export function RecordsWorkspace({
   const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("one");
   const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
   const [trendEditMode, setTrendEditMode] = useState(false);
-  const segmentPartLabels: Record<SegmentPartKey, string> = {
-    leftArm: t("segmentParts.leftArm"),
-    rightArm: t("segmentParts.rightArm"),
-    trunk: t("segmentParts.trunk"),
-    leftLeg: t("segmentParts.leftLeg"),
-    rightLeg: t("segmentParts.rightLeg"),
-  };
-
-  const overallChart = buildChartPayload(records, "overall", locale);
-  const segmentalCharts = SEGMENT_CHART_VIEWS.map((view) => ({
-    ...view,
-    label: segmentPartLabels[view.key],
-    chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key, locale)),
-  }));
+  const [visibleSegmentChartCount, setVisibleSegmentChartCount] = useState(1);
+  const [isDashboardChartRenderStarted, setIsDashboardChartRenderStarted] = useState(mode !== "dashboard");
+  const [isDashboardChartRenderComplete, setIsDashboardChartRenderComplete] = useState(mode !== "dashboard");
+  const [, setCompletedSegmentChartKeys] = useState<Set<SegmentPartKey>>(() => new Set());
+  const segmentPartLabels = useMemo<Record<SegmentPartKey, string>>(
+    () => ({
+      leftArm: t("segmentParts.leftArm"),
+      rightArm: t("segmentParts.rightArm"),
+      trunk: t("segmentParts.trunk"),
+      leftLeg: t("segmentParts.leftLeg"),
+      rightLeg: t("segmentParts.rightLeg"),
+    }),
+    [t],
+  );
+  const [overallChart, setOverallChart] = useState<ChartPayload>(() => initialOverallChart ?? buildChartPayload(records, "overall", locale));
+  const [segmentalCharts, setSegmentalCharts] = useState<
+    Array<{
+      key: SegmentPartKey;
+      label: string;
+      chart: ChartPayload;
+    }>
+  >(() =>
+    (initialSegmentalCharts ?? SEGMENT_CHART_VIEWS.map((view) => ({ key: view.key, chart: buildChartPayload(records, view.key, locale) }))).map((segment) => ({
+      ...segment,
+      label: segmentPartLabels[segment.key],
+      chart: keepPrimarySegmentMetrics(segment.chart),
+    })),
+  );
   const latestRecord = records.at(-1);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
+  const didHydrateChartsRef = useRef(false);
+  const shouldShowDashboardLoading = mode === "dashboard" && records.length > 0 && !isDashboardChartRenderStarted;
+  const shouldShowWelcomeDialog = showWelcomeDialog && isDashboardChartRenderComplete;
+
+  useEffect(() => {
+    if (!didHydrateChartsRef.current) {
+      didHydrateChartsRef.current = true;
+      return;
+    }
+
+    setOverallChart(buildChartPayload(records, "overall", locale));
+    setSegmentalCharts(
+      SEGMENT_CHART_VIEWS.map((view) => ({
+        key: view.key,
+        label: segmentPartLabels[view.key],
+        chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key, locale)),
+      })),
+    );
+  }, [locale, records, segmentPartLabels]);
+
+  useEffect(() => {
+    if (mode !== "dashboard" || trendMode !== "segmental" || !records.length) {
+      setVisibleSegmentChartCount(SEGMENT_CHART_VIEWS.length);
+      return;
+    }
+
+    setVisibleSegmentChartCount(1);
+
+    const timers = SEGMENT_CHART_VIEWS.map((_, index) =>
+      window.setTimeout(() => {
+        setVisibleSegmentChartCount((current) => Math.max(current, index + 1));
+      }, index * 120),
+    );
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [mode, records.length, trendMode]);
+
+  useEffect(() => {
+    if (mode !== "dashboard" || !records.length) {
+      setIsDashboardChartRenderStarted(true);
+      setIsDashboardChartRenderComplete(true);
+      setCompletedSegmentChartKeys(new Set());
+      return;
+    }
+
+    setIsDashboardChartRenderStarted(false);
+    setIsDashboardChartRenderComplete(false);
+    setCompletedSegmentChartKeys(new Set());
+  }, [mode, records.length, trendMode]);
+
+  const handleDashboardChartRenderStart = useCallback(() => {
+    if (mode === "dashboard") {
+      setIsDashboardChartRenderStarted(true);
+    }
+  }, [mode]);
+
+  const handleOverallChartRenderComplete = useCallback(() => {
+    if (mode === "dashboard" && trendMode === "overall") {
+      setIsDashboardChartRenderComplete(true);
+    }
+  }, [mode, trendMode]);
+
+  const handleSegmentChartRenderComplete = useCallback((segmentKey: SegmentPartKey) => {
+    if (mode !== "dashboard" || trendMode !== "segmental") {
+      return;
+    }
+
+    setCompletedSegmentChartKeys((current) => {
+      if (current.has(segmentKey)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.add(segmentKey);
+
+      if (next.size >= segmentalCharts.length) {
+        setIsDashboardChartRenderComplete(true);
+      }
+
+      return next;
+    });
+  }, [mode, segmentalCharts.length, trendMode]);
 
   useEffect(() => {
     const savedLayout = window.localStorage.getItem(TREND_LAYOUT_STORAGE_KEY);
@@ -289,6 +398,7 @@ export function RecordsWorkspace({
   if (mode === "dashboard") {
     if (!records.length) {
       return (
+        <>
         <div className="pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-[calc(7rem+env(safe-area-inset-bottom))]">
           <RecordEmptyState
             actionLabel={locale === "en" ? "Add first record" : "新增第一筆紀錄"}
@@ -296,30 +406,58 @@ export function RecordsWorkspace({
             onAdd={openCreateDialog}
           />
         </div>
+        <DashboardWelcomeDialog open={shouldShowWelcomeDialog} />
+        </>
       );
     }
 
     return (
-      <div className="space-y-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:pb-[calc(6rem+env(safe-area-inset-bottom))]">
-        <section className="space-y-4">
+      <>
+      <div className="relative space-y-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:pb-[calc(6rem+env(safe-area-inset-bottom))]">
+        {shouldShowDashboardLoading ? (
+          <div className="absolute inset-x-0 top-0 z-10 rounded-[1.75rem] bg-background/92 backdrop-blur-sm">
+            <PageLoading />
+          </div>
+        ) : null}
+
+        <section className={`space-y-4 transition-opacity duration-150 ${shouldShowDashboardLoading ? "pointer-events-none opacity-0" : "opacity-100"}`}>
           {trendMode === "overall" ? (
             <MiniTrendGrid
               chart={overallChart}
               editMode={trendEditMode}
               initialMetricOrder={initialDashboardMetricOrder}
               layout={trendLayout}
+              onRenderStart={handleDashboardChartRenderStart}
+              onRenderComplete={handleOverallChartRenderComplete}
             />
           ) : (
             <div className="space-y-3.5">
-              {segmentalCharts.map((segment) => (
+              {segmentalCharts.map((segment, index) => (
                 <section className="space-y-2.5" key={segment.key}>
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
-                      <SegmentIcon view={segment.key} />
-                    </span>
-                    <h3 className="font-display text-[1.02rem] leading-tight text-foreground">{segment.label}</h3>
-                  </div>
-                  <MiniTrendGrid chart={segment.chart} editMode={trendEditMode} layout={trendLayout} />
+                  {index < visibleSegmentChartCount ? (
+                    <>
+                      <div className="flex items-center gap-2 px-1">
+                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
+                          <SegmentIcon view={segment.key} />
+                        </span>
+                        <h3 className="font-display text-[1.02rem] leading-tight text-foreground">{segment.label}</h3>
+                      </div>
+                      <MiniTrendGrid
+                        chart={segment.chart}
+                        editMode={trendEditMode}
+                        layout={trendLayout}
+                        onRenderStart={handleDashboardChartRenderStart}
+                        onRenderComplete={() => handleSegmentChartRenderComplete(segment.key)}
+                      />
+                    </>
+                  ) : (
+                    <div className="surface-state-panel flex min-h-[16rem] items-center justify-center rounded-[1.5rem] p-4">
+                      <div className="grid w-full gap-3">
+                        <div className="surface-soft-card h-7 w-32 animate-pulse rounded-full" />
+                        <div className="surface-soft-card h-44 animate-pulse rounded-[1.25rem]" />
+                      </div>
+                    </div>
+                  )}
                 </section>
               ))}
             </div>
@@ -345,6 +483,8 @@ export function RecordsWorkspace({
           </div>
         </div>
       </div>
+      <DashboardWelcomeDialog open={shouldShowWelcomeDialog} />
+      </>
     );
   }
 

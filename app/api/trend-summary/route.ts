@@ -1,88 +1,20 @@
 import { NextResponse } from "next/server";
 import {
   LlmProviderError,
-  decodeStoredStructuredSummary,
   generateText,
   getModelPool,
-  parseEntitlementConfig,
   parseStructuredSummaryText,
   toLegacySummaryText,
 } from "@/lib/llms";
 import { buildGeminiPrompt, getTodayTaipeiDate, listRecentRecordsForSummary } from "@/lib/inbody/trend-summary";
+import {
+  getLatestTrendSummaryRow,
+  getTodayTrendSummaryRow,
+  getTrendSummarySnapshot,
+  resolveTrendSummaryEntitlement,
+} from "@/lib/inbody/trend-summary-service";
 import { getServerTranslations } from "@/lib/i18n/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-interface TrendSummaryEntitlement {
-  planCode: string;
-  dailyLimit: number | null;
-  config: Record<string, unknown>;
-}
-
-interface TrendSummaryRow {
-  summary_text: string;
-  created_at: string;
-  model_name: string | null;
-  request_date: string;
-  usage_count: number;
-  last_generated_at: string | null;
-}
-
-async function resolveTrendSummaryEntitlement(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
-  const { data, error } = await supabase.rpc("resolve_my_feature_entitlement", {
-    input_feature: "trend_summary",
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  const row = (Array.isArray(data) ? data[0] : data) as
-    | { plan_code?: string | null; daily_limit?: number | null; config?: unknown }
-    | null
-    | undefined;
-
-  return {
-    planCode: row?.plan_code || "free",
-    dailyLimit: typeof row?.daily_limit === "number" ? row.daily_limit : 1,
-    config: parseEntitlementConfig(row?.config),
-  } satisfies TrendSummaryEntitlement;
-}
-
-async function getLatestTrendSummaryRow(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string) {
-  const { data, error } = await supabase
-    .from("llm_trend_daily_summaries")
-    .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
-    .eq("user_id", userId)
-    .eq("feature_key", "trend_summary")
-    .not("summary_text", "is", null)
-    .neq("summary_text", "")
-    .order("request_date", { ascending: false })
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data as TrendSummaryRow | null;
-}
-
-async function getTodayTrendSummaryRow(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string, requestDate: string) {
-  const { data, error } = await supabase
-    .from("llm_trend_daily_summaries")
-    .select("summary_text, created_at, model_name, request_date, usage_count, last_generated_at")
-    .eq("user_id", userId)
-    .eq("feature_key", "trend_summary")
-    .eq("request_date", requestDate)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data as TrendSummaryRow | null;
-}
 
 async function getAuthenticatedContext() {
   const supabase = await createServerSupabaseClient();
@@ -147,32 +79,17 @@ export async function GET() {
       return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
-    const requestDate = getTodayTaipeiDate();
     const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
     if (entitlement.dailyLimit === 0) {
       return NextResponse.json({ message: t("api.trendSummary.notAllowed") }, { status: 403 });
     }
 
-    const [latestSummary, todaySummary] = await Promise.all([
-      getLatestTrendSummaryRow(supabase, user.id),
-      getTodayTrendSummaryRow(supabase, user.id, requestDate),
-    ]);
-    const structuredSummary = latestSummary?.summary_text ? decodeStoredStructuredSummary(latestSummary.summary_text) : null;
+    const snapshot = await getTrendSummarySnapshot(supabase, user.id);
 
     return NextResponse.json({
-      summary: structuredSummary ? toLegacySummaryText(structuredSummary) : null,
-      structuredSummary,
-      generatedAt: latestSummary?.last_generated_at ?? latestSummary?.created_at ?? null,
-      modelName: latestSummary?.model_name ?? null,
-      provider: latestSummary ? "cache" : "gemini",
-      reused: Boolean(latestSummary),
-      requestDate: latestSummary?.request_date ?? requestDate,
-      usageCount: todaySummary?.usage_count ?? 0,
-      dailyLimit: entitlement.dailyLimit,
-      planCode: entitlement.planCode,
-      canGenerate: entitlement.dailyLimit == null || (todaySummary?.usage_count ?? 0) < entitlement.dailyLimit,
-      message: latestSummary ? undefined : t("summary.errors.noContent"),
+      ...snapshot,
+      message: snapshot.summary ? undefined : t("summary.errors.noContent"),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : t("api.unexpected");

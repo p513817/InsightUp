@@ -388,6 +388,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           ))}
         </nav>
       </aside>
+
     </>
   );
 }

@@ -1,53 +1,68 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslations } from "@/components/i18n-provider";
 
-const WELCOME_DIALOG_SESSION_KEY = "insightup.dashboardWelcomeShown";
+interface DashboardWelcomeDialogProps {
+  open?: boolean;
+}
 
-export function DashboardWelcomeDialog() {
+export function DashboardWelcomeDialog({ open = false }: DashboardWelcomeDialogProps) {
   const t = useTranslations();
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const shouldShowWelcome = url.searchParams.get("welcome") === "1";
+    if (open && !isDismissed) {
+      setIsOpen(true);
+    }
+  }, [isDismissed, open]);
 
-    if (!shouldShowWelcome || window.sessionStorage.getItem(WELCOME_DIALOG_SESSION_KEY) === "true") {
+  useEffect(() => {
+    if (!isOpen || !window.location.search.includes("welcome=1")) {
       return;
     }
 
-    window.sessionStorage.setItem(WELCOME_DIALOG_SESSION_KEY, "true");
-    url.searchParams.delete("welcome");
-    router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
-    setOpen(true);
-  }, [router]);
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.delete("welcome");
+    window.history.replaceState(null, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+  }, [isOpen]);
 
-  function goToNewRecord() {
-    setOpen(false);
-    router.push("/records/new");
+  if (!isOpen) {
+    return null;
   }
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
-      <DialogContent className="max-w-[25rem] p-0" showCloseButton>
-        <DialogHeader className="border-b-0 px-5 pb-2 pt-5 sm:px-6 sm:pt-6">
-          <DialogTitle className="text-[1.65rem] leading-tight">{t("dashboard.welcomeTitle")}</DialogTitle>
-          <DialogDescription className="text-sm leading-6">{t("dashboard.welcomeBody")}</DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgb(var(--overlay)/0.24)] px-4 py-6 backdrop-blur-[3px]">
+      <div className="relative w-full max-w-[25rem] overflow-hidden rounded-[1.5rem] border border-border/70 bg-card shadow-panel">
+        <button
+          aria-label={t("common.close")}
+          className="absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent/18 hover:text-foreground"
+          onClick={() => {
+            setIsDismissed(true);
+            setIsOpen(false);
+          }}
+          type="button"
+        >
+          <X className="size-4" />
+        </button>
+
+        <div className="border-b-0 px-5 pb-2 pt-5 sm:px-6 sm:pt-6">
+          <h2 className="font-display text-[1.65rem] leading-tight text-foreground">{t("dashboard.welcomeTitle")}</h2>
+          <p className="text-sm leading-6 text-muted-foreground">{t("dashboard.welcomeBody")}</p>
+        </div>
 
         <div className="px-5 pb-5 pt-2 sm:px-6 sm:pb-6">
-          <Button className="h-12 w-full rounded-[1rem]" onClick={goToNewRecord} type="button">
-            <Plus className="size-5" />
-            {t("records.empty.action")}
+          <Button asChild className="h-12 w-full rounded-[1rem]">
+            <a href="/records/new">
+              <Plus className="size-5" />
+              {t("records.empty.action")}
+            </a>
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

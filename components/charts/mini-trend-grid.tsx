@@ -9,7 +9,6 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useLocale } from "@/components/i18n-provider";
 import { Card } from "@/components/ui/card";
-import { PageLoading } from "@/components/ui/page-loading";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
 import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/presentation";
 
@@ -18,6 +17,8 @@ interface MiniTrendGridProps {
   editMode?: boolean;
   initialMetricOrder?: string[];
   layout?: TrendGridLayout;
+  onRenderStart?: () => void;
+  onRenderComplete?: () => void;
 }
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
@@ -372,14 +373,20 @@ export function MiniTrendGrid({
   editMode = false,
   initialMetricOrder = EMPTY_INITIAL_METRIC_ORDER,
   layout = "auto",
+  onRenderStart,
+  onRenderComplete,
 }: MiniTrendGridProps) {
   const locale = useLocale();
   const [isChartReady, setIsChartReady] = useState(false);
+  const [visibleMetricCount, setVisibleMetricCount] = useState(0);
   const [hiddenMetricKeys, setHiddenMetricKeys] = useState<string[]>([]);
   const [isAutoTwoColumn, setIsAutoTwoColumn] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const orderedMetricsRef = useRef(chart.metrics);
   const saveTimeoutIdRef = useRef<number | null>(null);
+  const renderStartKeyRef = useRef("");
+  const didNotifyRenderCompleteRef = useRef(false);
+  const renderCompleteKeyRef = useRef("");
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -398,19 +405,66 @@ export function MiniTrendGrid({
 
   useEffect(() => {
     let firstFrame = 0;
-    let secondFrame = 0;
+    const renderStartKey = `${chart.view}:${chart.points.length}`;
+
+    setIsChartReady(false);
+    setVisibleMetricCount(0);
 
     firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        setIsChartReady(true);
-      });
+      if (renderStartKeyRef.current !== renderStartKey) {
+        renderStartKeyRef.current = renderStartKey;
+        onRenderStart?.();
+      }
+
+      setIsChartReady(true);
     });
 
     return () => {
       window.cancelAnimationFrame(firstFrame);
-      window.cancelAnimationFrame(secondFrame);
     };
-  }, []);
+  }, [chart.points.length, chart.view, onRenderStart]);
+
+  useEffect(() => {
+    if (!isChartReady) {
+      return;
+    }
+
+    const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
+    setVisibleMetricCount(1);
+
+    const timers = visibleMetrics.map((_, index) =>
+      window.setTimeout(() => {
+        setVisibleMetricCount((current) => Math.max(current, index + 1));
+      }, index * 90),
+    );
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [hiddenMetricKeys, isChartReady, orderedMetrics]);
+
+  useEffect(() => {
+    if (!isChartReady) {
+      didNotifyRenderCompleteRef.current = false;
+      return;
+    }
+
+    const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
+    const isComplete = !chart.points.length || visibleMetricCount >= visibleMetrics.length;
+    const renderCompleteKey = `${chart.view}:${chart.points.length}:${visibleMetrics.map((metric) => metric.key).join(",")}`;
+
+    if (renderCompleteKeyRef.current !== renderCompleteKey) {
+      renderCompleteKeyRef.current = renderCompleteKey;
+      didNotifyRenderCompleteRef.current = false;
+    }
+
+    if (!isComplete || didNotifyRenderCompleteRef.current) {
+      return;
+    }
+
+    didNotifyRenderCompleteRef.current = true;
+    onRenderComplete?.();
+  }, [chart.points.length, chart.view, hiddenMetricKeys, isChartReady, onRenderComplete, orderedMetrics, visibleMetricCount]);
 
   useEffect(() => {
     if (layout !== "auto") {
@@ -541,7 +595,14 @@ export function MiniTrendGrid({
   }
 
   if (!isChartReady) {
-    return <PageLoading className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />;
+    return (
+      <Card className="surface-state-panel min-h-[52vh] rounded-[1.75rem] p-4">
+        <div className="grid h-full gap-2">
+          <div className="surface-soft-card h-10 animate-pulse rounded-[0.9rem]" />
+          <div className="surface-soft-card h-[calc(100%-2.5rem)] animate-pulse rounded-[1.2rem]" />
+        </div>
+      </Card>
+    );
   }
 
   if (!chart.points.length) {
@@ -564,7 +625,7 @@ export function MiniTrendGrid({
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
         <SortableContext items={visibleMetrics.map((metric) => metric.key)} strategy={rectSortingStrategy}>
           <div className={LAYOUT_GRID_CLASS_MAP[layout]}>
-            {visibleMetrics.map((metric) => {
+            {visibleMetrics.map((metric, index) => {
               const latestValue = getNumericValue(latestPoint?.[metric.key]);
               const previousValue = getNumericValue(previousPoint?.[metric.key]);
               const delta = latestValue != null && previousValue != null ? latestValue - previousValue : null;
@@ -574,16 +635,22 @@ export function MiniTrendGrid({
                 value: getNumericValue(point[metric.key]),
               }));
               return (
-                <SortableMetricCard
-                  canHide={canHideVisibleMetric}
-                  editMode={editMode}
-                  formattedDelta={formatDelta(metric, delta)}
-                  headerValueText={showHeaderValue ? formatMetricValue(metric, latestValue) : null}
+                <div
+                  className={`transition-[opacity,transform] duration-200 ${
+                    index < visibleMetricCount ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+                  }`}
                   key={metric.key}
-                  metric={metric}
-                  onHide={hideMetric}
-                  points={points}
-                />
+                >
+                  <SortableMetricCard
+                    canHide={canHideVisibleMetric}
+                    editMode={editMode}
+                    formattedDelta={formatDelta(metric, delta)}
+                    headerValueText={showHeaderValue ? formatMetricValue(metric, latestValue) : null}
+                    metric={metric}
+                    onHide={hideMetric}
+                    points={points}
+                  />
+                </div>
               );
             })}
           </div>
