@@ -17,20 +17,10 @@ export async function DashboardRecordsSection({ showWelcomeDialog = false }: Das
     return null;
   }
 
-  console.log("[InsightUp dashboard server]", {
-    event: "dashboard-seed-start",
-    time: new Date().toISOString(),
-  });
-  const startedAt = Date.now();
   const [latestRecord, metricOrder] = await Promise.all([
     getLatestRecord(supabase, user.id),
     getDashboardMetricOrder(supabase, user.id),
   ]);
-  console.log("[InsightUp dashboard server]", {
-    durationMs: Date.now() - startedAt,
-    event: "dashboard-seed-complete",
-    hasLatestRecord: Boolean(latestRecord),
-  });
 
   return (
     <RecordsWorkspace

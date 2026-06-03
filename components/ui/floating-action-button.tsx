@@ -12,6 +12,7 @@ interface FloatingActionButtonProps {
   fixed?: boolean;
   onClick?: () => void;
   pulse?: boolean;
+  pressFeedbackClassName?: string;
   type?: "button" | "submit" | "reset";
   title?: string;
   variant?: "primary" | "outline";
@@ -25,18 +26,20 @@ export function FloatingActionButton({
   fixed = true,
   onClick,
   pulse = true,
+  pressFeedbackClassName,
   title,
   type = "button",
   variant = "primary",
 }: FloatingActionButtonProps) {
   const toneClassName = variant === "outline" ? FAB_OUTLINE_TONE_CLASS : FAB_PRIMARY_TONE_CLASS;
+  const feedbackClassName = pressFeedbackClassName ?? "";
 
   const placementClassName = fixed ? FAB_FIXED_POSITION_CLASS : "";
 
   return (
     <Button
       aria-label={ariaLabel}
-      className={`${pulse ? "ai-generate-pulse" : ""} pointer-events-auto cursor-pointer ${FAB_BASE_CLASS} ${toneClassName} ${placementClassName} ${className || ""}`}
+      className={`${pulse ? "ai-generate-pulse" : ""} pointer-events-auto cursor-pointer ${FAB_BASE_CLASS} ${feedbackClassName} ${toneClassName} ${placementClassName} ${className || ""}`}
       disabled={disabled}
       onClick={onClick}
       title={title}

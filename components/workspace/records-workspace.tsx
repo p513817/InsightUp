@@ -144,14 +144,6 @@ function mergeChartPayload(current: ChartPayload | null, incoming: ChartPayload,
   };
 }
 
-function logDashboardChartEvent(event: string, details: Record<string, unknown> = {}) {
-  console.log("[InsightUp dashboard chart]", {
-    event,
-    timeMs: Math.round(performance.now()),
-    ...details,
-  });
-}
-
 function getExpectedVisibleOverallMetricKeys() {
   const hiddenMetricsRaw = window.localStorage.getItem(OVERALL_HIDDEN_METRICS_STORAGE_KEY);
 
@@ -260,19 +252,6 @@ export function RecordsWorkspace({
   const shouldShowWelcomeDialog = showWelcomeDialog && isDashboardChartRenderComplete;
 
   useEffect(() => {
-    if (mode !== "dashboard") {
-      return;
-    }
-
-    logDashboardChartEvent("loading-state", {
-      isLoading: shouldShowDashboardLoading,
-      renderStarted: isDashboardChartRenderStarted,
-      renderComplete: isDashboardChartRenderComplete,
-      trendMode,
-    });
-  }, [isDashboardChartRenderComplete, isDashboardChartRenderStarted, mode, shouldShowDashboardLoading, trendMode]);
-
-  useEffect(() => {
     if (mode === "dashboard") {
       return;
     }
@@ -294,11 +273,6 @@ export function RecordsWorkspace({
 
     const requestVersion = chartRequestVersionRef.current + 1;
     chartRequestVersionRef.current = requestVersion;
-    logDashboardChartEvent("request-batch-start", {
-      requestVersion,
-      records: records.length,
-      trendMode,
-    });
     setIsDashboardChartRenderStarted(false);
     setIsDashboardChartRenderComplete(false);
     setCompletedSegmentChartKeys(new Set());
@@ -307,32 +281,16 @@ export function RecordsWorkspace({
       setOverallChart(null);
 
       OVERALL_CHART_METRIC_KEYS.forEach((metric) => {
-        logDashboardChartEvent("request-start", { requestVersion, view: "overall", metric });
-
         void fetchChartPayload("overall", metric)
           .then((chart) => {
             if (chartRequestVersionRef.current !== requestVersion) {
-              logDashboardChartEvent("request-stale", { requestVersion, view: "overall", metric });
               return;
             }
 
-            logDashboardChartEvent("request-success", {
-              requestVersion,
-              view: "overall",
-              metric,
-              points: chart.points.length,
-            });
             setOverallChart((current) => mergeChartPayload(current, chart, OVERALL_CHART_METRIC_KEYS));
             setIsDashboardChartRenderStarted(true);
-            logDashboardChartEvent("loading-release-first-payload", { requestVersion, view: "overall", metric });
           })
           .catch((error) => {
-            logDashboardChartEvent("request-error", {
-              requestVersion,
-              view: "overall",
-              metric,
-              message: error instanceof Error ? error.message : String(error),
-            });
             toast.error(error instanceof Error ? error.message : "Failed to load chart data.");
             setIsDashboardChartRenderStarted(true);
           });
@@ -343,21 +301,13 @@ export function RecordsWorkspace({
     setSegmentalCharts(createEmptySegmentalCharts(segmentPartLabels));
 
     SEGMENT_CHART_VIEWS.forEach((view) => {
-      logDashboardChartEvent("request-start", { requestVersion, view: view.key });
       void fetchChartPayload(view.key)
         .then((chart) => {
           if (chartRequestVersionRef.current !== requestVersion) {
-            logDashboardChartEvent("request-stale", { requestVersion, view: view.key });
             return;
           }
 
-          logDashboardChartEvent("request-success", {
-            requestVersion,
-            view: view.key,
-            points: chart.points.length,
-          });
           setIsDashboardChartRenderStarted(true);
-          logDashboardChartEvent("loading-release-first-payload", { requestVersion, view: view.key });
           setSegmentalCharts((current) =>
             current.map((segment) =>
               segment.key === view.key
@@ -368,13 +318,8 @@ export function RecordsWorkspace({
                 : segment,
             ),
           );
-        })
-        .catch((error) => {
-          logDashboardChartEvent("request-error", {
-            requestVersion,
-            view: view.key,
-            message: error instanceof Error ? error.message : String(error),
-          });
+          })
+          .catch((error) => {
           toast.error(error instanceof Error ? error.message : "Failed to load chart data.");
           setIsDashboardChartRenderStarted(true);
         });
@@ -396,7 +341,6 @@ export function RecordsWorkspace({
 
   const handleDashboardChartRenderStart = useCallback(() => {
     if (mode === "dashboard") {
-      logDashboardChartEvent("render-start", { trendMode });
       setIsDashboardChartRenderStarted(true);
     }
   }, [mode]);
@@ -408,19 +352,9 @@ export function RecordsWorkspace({
       const loadedVisibleMetricCount = (overallChart?.metrics ?? []).filter((metric) => expectedVisibleMetricKeySet.has(metric.key)).length;
 
       if (loadedVisibleMetricCount < expectedVisibleMetricKeys.length) {
-        logDashboardChartEvent("render-partial", {
-          expectedVisibleMetrics: expectedVisibleMetricKeys.length,
-          view: "overall",
-          loadedVisibleMetrics: loadedVisibleMetricCount,
-        });
         return;
       }
 
-      logDashboardChartEvent("render-complete", {
-        expectedVisibleMetrics: expectedVisibleMetricKeys.length,
-        loadedVisibleMetrics: loadedVisibleMetricCount,
-        view: "overall",
-      });
       setIsDashboardChartRenderComplete(true);
     }
   }, [mode, overallChart?.metrics.length, trendMode]);
@@ -437,11 +371,6 @@ export function RecordsWorkspace({
 
       const next = new Set(current);
       next.add(segmentKey);
-      logDashboardChartEvent("render-complete", {
-        view: segmentKey,
-        completed: next.size,
-        total: segmentalCharts.length,
-      });
 
       if (next.size >= segmentalCharts.length) {
         setIsDashboardChartRenderComplete(true);
