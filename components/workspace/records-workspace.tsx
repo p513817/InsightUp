@@ -656,8 +656,10 @@ export function RecordsWorkspace({
         </section>
 
         <div
-          className={`pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 transition-[opacity,transform] duration-1000 ease-out motion-reduce:transition-none sm:bottom-4 ${
-            isDashboardChartRenderComplete ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+          className={`pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 transition-[opacity,transform] ease-out motion-reduce:transition-none sm:bottom-4 ${
+            isDashboardChartRenderComplete
+              ? "translate-y-0 opacity-100 duration-1000"
+              : "translate-y-6 opacity-0 duration-200"
           }`}
         >
           <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-primary/38 bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] px-0.5 py-0.5 text-primary-foreground shadow-[0_12px_24px_rgba(23,52,93,0.22)]">
