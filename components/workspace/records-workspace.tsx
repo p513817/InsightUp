@@ -34,7 +34,14 @@ type TrendMode = "overall" | "segmental";
 const TREND_LAYOUT_STORAGE_KEY = "insightup.dashboard.trend-layout";
 
 const MIN_TWO_COLUMN_WIDTH = 360;
-const SEGMENT_CHART_REVEAL_INTERVAL_MS = 220;
+const OVERALL_CHART_METRIC_KEYS = ["weight", "muscle", "fat", "fatPercent", "score", "visceralFatLevel", "bmr", "recommendedCalories"];
+const OVERALL_HIDDEN_METRICS_STORAGE_KEY = "insightup.dashboard.hidden-metrics";
+
+type DashboardSegmentChart = {
+  key: SegmentPartKey;
+  label: string;
+  chart: ChartPayload | null;
+};
 
 const SEGMENT_CHART_VIEWS = CHART_VIEWS.filter((view) => view.key !== "overall") as Array<{
   key: SegmentPartKey;
@@ -56,6 +63,17 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
   }
 
   return response.json() as Promise<T>;
+}
+
+async function fetchChartPayload(view: ChartViewKey, metric?: string): Promise<ChartPayload> {
+  const params = new URLSearchParams({ view });
+
+  if (metric) {
+    params.set("metric", metric);
+  }
+
+  const payload = await requestJson<{ chart: ChartPayload }>(`/api/chart-data?${params.toString()}`);
+  return payload.chart;
 }
 
 function sortRecords(records: InbodyRecord[]) {
@@ -88,6 +106,66 @@ function keepPrimarySegmentMetrics(chart: ChartPayload): ChartPayload {
     ...chart,
     metrics: chart.metrics.filter((metric) => metric.key === "muscle" || metric.key === "fat"),
   };
+}
+
+function createEmptySegmentalCharts(labels: Record<SegmentPartKey, string>): DashboardSegmentChart[] {
+  return SEGMENT_CHART_VIEWS.map((view) => ({
+    key: view.key,
+    label: labels[view.key],
+    chart: null,
+  }));
+}
+
+function mergeChartPayload(current: ChartPayload | null, incoming: ChartPayload, metricOrder: string[]): ChartPayload {
+  if (!current) {
+    return incoming;
+  }
+
+  const metricsByKey = new Map([...current.metrics, ...incoming.metrics].map((metric) => [metric.key, metric]));
+  const metrics = Array.from(metricsByKey.values()).sort((left, right) => {
+    const leftIndex = metricOrder.indexOf(left.key);
+    const rightIndex = metricOrder.indexOf(right.key);
+    return (leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) - (rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex);
+  });
+  const pointsByDate = new Map<string, Record<string, string | number | null>>();
+
+  [...current.points, ...incoming.points].forEach((point) => {
+    const date = String(point.date || "");
+    pointsByDate.set(date, {
+      ...(pointsByDate.get(date) || {}),
+      ...point,
+    });
+  });
+
+  return {
+    ...current,
+    metrics,
+    points: Array.from(pointsByDate.values()),
+  };
+}
+
+function logDashboardChartEvent(event: string, details: Record<string, unknown> = {}) {
+  console.log("[InsightUp dashboard chart]", {
+    event,
+    timeMs: Math.round(performance.now()),
+    ...details,
+  });
+}
+
+function getExpectedVisibleOverallMetricKeys() {
+  const hiddenMetricsRaw = window.localStorage.getItem(OVERALL_HIDDEN_METRICS_STORAGE_KEY);
+
+  if (!hiddenMetricsRaw) {
+    return OVERALL_CHART_METRIC_KEYS;
+  }
+
+  try {
+    const hiddenMetricKeys = new Set(JSON.parse(hiddenMetricsRaw) as string[]);
+    const visibleMetricKeys = OVERALL_CHART_METRIC_KEYS.filter((key) => !hiddenMetricKeys.has(key));
+    return visibleMetricKeys.length ? visibleMetricKeys : OVERALL_CHART_METRIC_KEYS.slice(0, 1);
+  } catch {
+    return OVERALL_CHART_METRIC_KEYS;
+  }
 }
 
 function TrendToolButton({
@@ -149,7 +227,6 @@ export function RecordsWorkspace({
   const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("one");
   const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
   const [trendEditMode, setTrendEditMode] = useState(false);
-  const [visibleSegmentChartCount, setVisibleSegmentChartCount] = useState(1);
   const [isDashboardChartRenderStarted, setIsDashboardChartRenderStarted] = useState(mode !== "dashboard");
   const [isDashboardChartRenderComplete, setIsDashboardChartRenderComplete] = useState(mode !== "dashboard");
   const [, setCompletedSegmentChartKeys] = useState<Set<SegmentPartKey>>(() => new Set());
@@ -163,30 +240,40 @@ export function RecordsWorkspace({
     }),
     [t],
   );
-  const [overallChart, setOverallChart] = useState<ChartPayload>(() => initialOverallChart ?? buildChartPayload(records, "overall", locale));
-  const [segmentalCharts, setSegmentalCharts] = useState<
-    Array<{
-      key: SegmentPartKey;
-      label: string;
-      chart: ChartPayload;
-    }>
-  >(() =>
-    (initialSegmentalCharts ?? SEGMENT_CHART_VIEWS.map((view) => ({ key: view.key, chart: buildChartPayload(records, view.key, locale) }))).map((segment) => ({
-      ...segment,
-      label: segmentPartLabels[segment.key],
-      chart: keepPrimarySegmentMetrics(segment.chart),
-    })),
+  const [overallChart, setOverallChart] = useState<ChartPayload | null>(() =>
+    initialOverallChart ?? (mode === "dashboard" ? null : buildChartPayload(records, "overall", locale)),
+  );
+  const [segmentalCharts, setSegmentalCharts] = useState<DashboardSegmentChart[]>(() =>
+    initialSegmentalCharts
+      ? initialSegmentalCharts.map((segment) => ({
+          ...segment,
+          label: segmentPartLabels[segment.key],
+          chart: keepPrimarySegmentMetrics(segment.chart),
+        }))
+      : createEmptySegmentalCharts(segmentPartLabels),
   );
   const latestRecord = records.at(-1);
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
-  const didHydrateChartsRef = useRef(false);
+  const chartRequestVersionRef = useRef(0);
   const shouldShowDashboardLoading = mode === "dashboard" && records.length > 0 && !isDashboardChartRenderStarted;
   const shouldShowWelcomeDialog = showWelcomeDialog && isDashboardChartRenderComplete;
 
   useEffect(() => {
-    if (!didHydrateChartsRef.current) {
-      didHydrateChartsRef.current = true;
+    if (mode !== "dashboard") {
+      return;
+    }
+
+    logDashboardChartEvent("loading-state", {
+      isLoading: shouldShowDashboardLoading,
+      renderStarted: isDashboardChartRenderStarted,
+      renderComplete: isDashboardChartRenderComplete,
+      trendMode,
+    });
+  }, [isDashboardChartRenderComplete, isDashboardChartRenderStarted, mode, shouldShowDashboardLoading, trendMode]);
+
+  useEffect(() => {
+    if (mode === "dashboard") {
       return;
     }
 
@@ -198,26 +285,101 @@ export function RecordsWorkspace({
         chart: keepPrimarySegmentMetrics(buildChartPayload(records, view.key, locale)),
       })),
     );
-  }, [locale, records, segmentPartLabels]);
+  }, [locale, mode, records, segmentPartLabels]);
 
   useEffect(() => {
-    if (mode !== "dashboard" || trendMode !== "segmental" || !records.length) {
-      setVisibleSegmentChartCount(SEGMENT_CHART_VIEWS.length);
+    if (mode !== "dashboard" || !records.length) {
       return;
     }
 
-    setVisibleSegmentChartCount(1);
+    const requestVersion = chartRequestVersionRef.current + 1;
+    chartRequestVersionRef.current = requestVersion;
+    logDashboardChartEvent("request-batch-start", {
+      requestVersion,
+      records: records.length,
+      trendMode,
+    });
+    setIsDashboardChartRenderStarted(false);
+    setIsDashboardChartRenderComplete(false);
+    setCompletedSegmentChartKeys(new Set());
 
-    const timers = SEGMENT_CHART_VIEWS.map((_, index) =>
-      window.setTimeout(() => {
-        setVisibleSegmentChartCount((current) => Math.max(current, index + 1));
-      }, index * SEGMENT_CHART_REVEAL_INTERVAL_MS),
-    );
+    if (trendMode === "overall") {
+      setOverallChart(null);
 
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-    };
-  }, [mode, records.length, trendMode]);
+      OVERALL_CHART_METRIC_KEYS.forEach((metric) => {
+        logDashboardChartEvent("request-start", { requestVersion, view: "overall", metric });
+
+        void fetchChartPayload("overall", metric)
+          .then((chart) => {
+            if (chartRequestVersionRef.current !== requestVersion) {
+              logDashboardChartEvent("request-stale", { requestVersion, view: "overall", metric });
+              return;
+            }
+
+            logDashboardChartEvent("request-success", {
+              requestVersion,
+              view: "overall",
+              metric,
+              points: chart.points.length,
+            });
+            setOverallChart((current) => mergeChartPayload(current, chart, OVERALL_CHART_METRIC_KEYS));
+            setIsDashboardChartRenderStarted(true);
+            logDashboardChartEvent("loading-release-first-payload", { requestVersion, view: "overall", metric });
+          })
+          .catch((error) => {
+            logDashboardChartEvent("request-error", {
+              requestVersion,
+              view: "overall",
+              metric,
+              message: error instanceof Error ? error.message : String(error),
+            });
+            toast.error(error instanceof Error ? error.message : "Failed to load chart data.");
+            setIsDashboardChartRenderStarted(true);
+          });
+      });
+      return;
+    }
+
+    setSegmentalCharts(createEmptySegmentalCharts(segmentPartLabels));
+
+    SEGMENT_CHART_VIEWS.forEach((view) => {
+      logDashboardChartEvent("request-start", { requestVersion, view: view.key });
+      void fetchChartPayload(view.key)
+        .then((chart) => {
+          if (chartRequestVersionRef.current !== requestVersion) {
+            logDashboardChartEvent("request-stale", { requestVersion, view: view.key });
+            return;
+          }
+
+          logDashboardChartEvent("request-success", {
+            requestVersion,
+            view: view.key,
+            points: chart.points.length,
+          });
+          setIsDashboardChartRenderStarted(true);
+          logDashboardChartEvent("loading-release-first-payload", { requestVersion, view: view.key });
+          setSegmentalCharts((current) =>
+            current.map((segment) =>
+              segment.key === view.key
+                ? {
+                    ...segment,
+                    chart: keepPrimarySegmentMetrics(chart),
+                  }
+                : segment,
+            ),
+          );
+        })
+        .catch((error) => {
+          logDashboardChartEvent("request-error", {
+            requestVersion,
+            view: view.key,
+            message: error instanceof Error ? error.message : String(error),
+          });
+          toast.error(error instanceof Error ? error.message : "Failed to load chart data.");
+          setIsDashboardChartRenderStarted(true);
+        });
+    });
+  }, [mode, records, segmentPartLabels, trendMode]);
 
   useEffect(() => {
     if (mode !== "dashboard" || !records.length) {
@@ -234,15 +396,34 @@ export function RecordsWorkspace({
 
   const handleDashboardChartRenderStart = useCallback(() => {
     if (mode === "dashboard") {
+      logDashboardChartEvent("render-start", { trendMode });
       setIsDashboardChartRenderStarted(true);
     }
   }, [mode]);
 
   const handleOverallChartRenderComplete = useCallback(() => {
     if (mode === "dashboard" && trendMode === "overall") {
+      const expectedVisibleMetricKeys = getExpectedVisibleOverallMetricKeys();
+      const expectedVisibleMetricKeySet = new Set(expectedVisibleMetricKeys);
+      const loadedVisibleMetricCount = (overallChart?.metrics ?? []).filter((metric) => expectedVisibleMetricKeySet.has(metric.key)).length;
+
+      if (loadedVisibleMetricCount < expectedVisibleMetricKeys.length) {
+        logDashboardChartEvent("render-partial", {
+          expectedVisibleMetrics: expectedVisibleMetricKeys.length,
+          view: "overall",
+          loadedVisibleMetrics: loadedVisibleMetricCount,
+        });
+        return;
+      }
+
+      logDashboardChartEvent("render-complete", {
+        expectedVisibleMetrics: expectedVisibleMetricKeys.length,
+        loadedVisibleMetrics: loadedVisibleMetricCount,
+        view: "overall",
+      });
       setIsDashboardChartRenderComplete(true);
     }
-  }, [mode, trendMode]);
+  }, [mode, overallChart?.metrics.length, trendMode]);
 
   const handleSegmentChartRenderComplete = useCallback((segmentKey: SegmentPartKey) => {
     if (mode !== "dashboard" || trendMode !== "segmental") {
@@ -256,6 +437,11 @@ export function RecordsWorkspace({
 
       const next = new Set(current);
       next.add(segmentKey);
+      logDashboardChartEvent("render-complete", {
+        view: segmentKey,
+        completed: next.size,
+        total: segmentalCharts.length,
+      });
 
       if (next.size >= segmentalCharts.length) {
         setIsDashboardChartRenderComplete(true);
@@ -423,19 +609,23 @@ export function RecordsWorkspace({
 
         <section className={`space-y-4 transition-opacity duration-150 ${shouldShowDashboardLoading ? "pointer-events-none opacity-0" : "opacity-100"}`}>
           {trendMode === "overall" ? (
-            <MiniTrendGrid
-              chart={overallChart}
-              editMode={trendEditMode}
-              initialMetricOrder={initialDashboardMetricOrder}
-              layout={trendLayout}
-              onRenderStart={handleDashboardChartRenderStart}
-              onRenderComplete={handleOverallChartRenderComplete}
-            />
+            overallChart ? (
+              <MiniTrendGrid
+                chart={overallChart}
+                editMode={trendEditMode}
+                initialMetricOrder={initialDashboardMetricOrder}
+                layout={trendLayout}
+                onRenderStart={handleDashboardChartRenderStart}
+                onRenderComplete={handleOverallChartRenderComplete}
+              />
+            ) : (
+              <div className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />
+            )
           ) : (
             <div className="space-y-3.5">
               {segmentalCharts.map((segment, index) => (
                 <section className="space-y-2.5" key={segment.key}>
-                  {index < visibleSegmentChartCount ? (
+                  {segment.chart ? (
                     <>
                       <div className="flex items-center gap-2 px-1">
                         <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">

@@ -267,6 +267,23 @@ export async function listRecords(supabase: SupabaseClient, userId: string) {
   return (data || []).map((row) => mapRecordRow(row as Record<string, unknown>));
 }
 
+export async function getLatestRecord(supabase: SupabaseClient, userId: string) {
+  const { data, error } = await supabase
+    .from("inbody_records")
+    .select(RECORD_SELECT)
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .order("recorded_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? mapRecordRow(data as Record<string, unknown>) : null;
+}
+
 export async function getRecordById(supabase: SupabaseClient, userId: string, recordId: string) {
   const { data, error } = await supabase
     .from("inbody_records")

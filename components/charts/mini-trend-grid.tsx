@@ -384,6 +384,7 @@ export function MiniTrendGrid({
   const [isAutoTwoColumn, setIsAutoTwoColumn] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const orderedMetricsRef = useRef(chart.metrics);
+  const visibleMetricCountRef = useRef(0);
   const saveTimeoutIdRef = useRef<number | null>(null);
   const renderStartKeyRef = useRef("");
   const didNotifyRenderCompleteRef = useRef(false);
@@ -421,6 +422,10 @@ export function MiniTrendGrid({
   }, [onRenderComplete]);
 
   useEffect(() => {
+    visibleMetricCountRef.current = visibleMetricCount;
+  }, [visibleMetricCount]);
+
+  useEffect(() => {
     let firstFrame = 0;
     const renderStartKey = `${chart.view}:${chart.points.length}`;
 
@@ -446,11 +451,12 @@ export function MiniTrendGrid({
       return;
     }
 
-    setVisibleMetricCount(1);
+    const initialVisibleMetricCount = Math.max(1, Math.min(visibleMetricCountRef.current || 1, visibleMetricTotal));
+    setVisibleMetricCount(initialVisibleMetricCount);
 
-    const timers = Array.from({ length: visibleMetricTotal }, (_, index) =>
+    const timers = Array.from({ length: Math.max(visibleMetricTotal - initialVisibleMetricCount, 0) }, (_, index) =>
       window.setTimeout(() => {
-        setVisibleMetricCount((current) => Math.max(current, index + 1));
+        setVisibleMetricCount((current) => Math.max(current, initialVisibleMetricCount + index + 1));
       }, index * METRIC_REVEAL_INTERVAL_MS),
     );
 

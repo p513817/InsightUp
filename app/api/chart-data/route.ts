@@ -16,7 +16,13 @@ export async function GET(request: Request) {
 
   const requestUrl = new URL(request.url);
   const viewParam = requestUrl.searchParams.get("view") || "overall";
+  const metricParam = requestUrl.searchParams.get("metric");
   const availableView = CHART_VIEWS.find((view) => view.key === viewParam);
+  console.log("[InsightUp chart-data api]", {
+    metric: metricParam,
+    time: new Date().toISOString(),
+    view: viewParam,
+  });
 
   if (!availableView) {
     return NextResponse.json({ message: "Unsupported chart view" }, { status: 400 });
@@ -24,6 +30,26 @@ export async function GET(request: Request) {
 
   const records = await listRecords(supabase, user.id);
   const chart = buildChartPayload(records, availableView.key as ChartViewKey, detectLocaleFromAcceptLanguage(request.headers.get("accept-language")));
+
+  if (metricParam) {
+    const metric = chart.metrics.find((entry) => entry.key === metricParam);
+
+    if (!metric) {
+      return NextResponse.json({ message: "Unsupported chart metric" }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      chart: {
+        ...chart,
+        metrics: [metric],
+        points: chart.points.map((point) => ({
+          date: point.date,
+          label: point.label,
+          [metric.key]: point[metric.key],
+        })),
+      },
+    });
+  }
 
   return NextResponse.json({ chart });
 }

@@ -5,6 +5,11 @@ import { summarizeUser } from "@/lib/presentation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function ProtectedLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const startedAt = Date.now();
+  console.log("[InsightUp protected layout]", {
+    event: "layout-start",
+    time: new Date().toISOString(),
+  });
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -15,6 +20,10 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
   }
 
   await ensureCurrentUserProfile(supabase, user);
+  console.log("[InsightUp protected layout]", {
+    durationMs: Date.now() - startedAt,
+    event: "layout-complete",
+  });
 
   return (
     <div className="min-h-screen">

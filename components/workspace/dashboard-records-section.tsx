@@ -1,7 +1,6 @@
-import { getServerTranslations } from "@/lib/i18n/server";
 import { getDashboardMetricOrder } from "@/lib/dashboard-preferences";
 import { RecordsWorkspace } from "@/components/workspace/records-workspace";
-import { buildDashboardChartPayloads, listRecords } from "@/lib/inbody/records";
+import { getLatestRecord } from "@/lib/inbody/records";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface DashboardRecordsSectionProps {
@@ -9,7 +8,6 @@ interface DashboardRecordsSectionProps {
 }
 
 export async function DashboardRecordsSection({ showWelcomeDialog = false }: DashboardRecordsSectionProps) {
-  const { locale } = await getServerTranslations();
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -19,16 +17,25 @@ export async function DashboardRecordsSection({ showWelcomeDialog = false }: Das
     return null;
   }
 
-  const records = await listRecords(supabase, user.id);
-  const metricOrder = await getDashboardMetricOrder(supabase, user.id);
-  const { overallChart, segmentalCharts } = buildDashboardChartPayloads(records, locale);
+  console.log("[InsightUp dashboard server]", {
+    event: "dashboard-seed-start",
+    time: new Date().toISOString(),
+  });
+  const startedAt = Date.now();
+  const [latestRecord, metricOrder] = await Promise.all([
+    getLatestRecord(supabase, user.id),
+    getDashboardMetricOrder(supabase, user.id),
+  ]);
+  console.log("[InsightUp dashboard server]", {
+    durationMs: Date.now() - startedAt,
+    event: "dashboard-seed-complete",
+    hasLatestRecord: Boolean(latestRecord),
+  });
 
   return (
     <RecordsWorkspace
       initialDashboardMetricOrder={metricOrder}
-      initialOverallChart={overallChart}
-      initialRecords={records}
-      initialSegmentalCharts={segmentalCharts}
+      initialRecords={latestRecord ? [latestRecord] : []}
       mode="dashboard"
       showWelcomeDialog={showWelcomeDialog}
     />
