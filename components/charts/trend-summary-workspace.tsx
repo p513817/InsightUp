@@ -20,6 +20,7 @@ export interface TrendSummaryResponse {
   } | null;
   generatedAt: string | null;
   modelName?: string | null;
+  planCode?: string | null;
   provider: "gemini" | "cache";
   reused: boolean;
   requestDate: string;

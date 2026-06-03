@@ -3,6 +3,7 @@ import {
   LlmProviderError,
   generateText,
   getModelPool,
+  decodeStoredStructuredSummary,
   parseStructuredSummaryText,
   toLegacySummaryText,
 } from "@/lib/llms";
