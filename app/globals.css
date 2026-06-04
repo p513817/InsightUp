@@ -121,6 +121,47 @@ html {
   background: var(--stats-scrollbar-thumb-hover);
 }
 
+.share-tools-scrollbar {
+  scrollbar-color: rgb(var(--brand-slate-500) / 0.46) rgb(var(--brand-sky-400) / 0.14);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.share-tools-scrollbar::-webkit-scrollbar {
+  width: 9px;
+}
+
+.share-tools-scrollbar::-webkit-scrollbar-button,
+.share-tools-scrollbar::-webkit-scrollbar-button:single-button,
+.share-tools-scrollbar::-webkit-scrollbar-button:double-button,
+.share-tools-scrollbar::-webkit-scrollbar-button:vertical:start:decrement,
+.share-tools-scrollbar::-webkit-scrollbar-button:vertical:start:increment,
+.share-tools-scrollbar::-webkit-scrollbar-button:vertical:end:decrement,
+.share-tools-scrollbar::-webkit-scrollbar-button:vertical:end:increment {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+}
+
+.share-tools-scrollbar::-webkit-scrollbar-track {
+  margin-block: 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(var(--brand-sky-400) / 0.08), rgb(var(--brand-sky-500) / 0.16));
+}
+
+.share-tools-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 2.5rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(var(--brand-navy-900) / 0.62), rgb(var(--brand-slate-500) / 0.44)) padding-box;
+}
+
+.share-tools-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgb(var(--brand-navy-900) / 0.76), rgb(var(--brand-slate-500) / 0.58)) padding-box;
+}
+
 body {
   margin: 0;
   min-height: 100vh;

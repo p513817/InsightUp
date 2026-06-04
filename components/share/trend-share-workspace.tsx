@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Palette, Pipette, RotateCcw, TrendingUp, Type, X } from "lucide-react";
+import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Maximize2, Minimize2, Palette, Pipette, RotateCcw, TrendingUp, Type, X } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
@@ -245,7 +245,7 @@ function ColorSwatchPicker({
   swatchAriaLabelPrefix,
 }: ColorSwatchPickerProps) {
   return (
-    <div className={cn("flex min-w-0 items-center gap-1.5 overflow-x-auto px-1.5 py-1", disabled && "pointer-events-none opacity-45 grayscale")}>
+    <div className={cn("flex min-w-0 items-center gap-1.5 overflow-x-auto px-0 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", disabled && "pointer-events-none opacity-45 grayscale")}>
       {SHARE_COLOR_SWATCHES.map((swatch) => {
         const checked = color.toLowerCase() === swatch.toLowerCase();
 
@@ -279,7 +279,7 @@ function ColorSwatchPicker({
       })}
       <label
         className={cn(
-          "inline-flex h-7 min-w-[4.25rem] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border bg-background/72 px-2.5 text-[0.625rem] font-medium leading-none text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-within:ring-2 focus-within:ring-primary",
+          "inline-flex h-7 min-w-[3.75rem] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border bg-background/72 px-2 text-[0.625rem] font-medium leading-none text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-within:ring-2 focus-within:ring-primary",
           isPresetShareColor(color) ? "border-slate-200/90" : "border-slate-500 shadow-[0_0_0_3px_rgba(148,163,184,0.16)]",
         )}
       >
@@ -613,7 +613,7 @@ function SharePreviewContent({
     <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
       <div className="min-w-0">
         <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))} style={{ color: titleColor }}>
-          <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{isEnglish ? "Trend overview" : "我的身體趨勢"}</h2> : null}</div>
+          <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{isEnglish ? "Trend overview" : "\u6211\u7684\u8eab\u9ad4\u8d8b\u52e2"}</h2> : null}</div>
         </div>
       </div>
 
@@ -628,7 +628,7 @@ function SharePreviewContent({
           )
         ) : (
           <div className={cn("rounded-[1rem] border border-dashed px-4 py-12 text-center text-sm", background === "dark" ? "border-white/16 text-white/62" : "border-border/80 text-muted-foreground")}>
-            {isEnglish ? "There are no trend records available to share right now." : "目前沒有可分享的趨勢資料。"}
+            {isEnglish ? "There are no trend records available to share right now." : "\u76ee\u524d\u6c92\u6709\u53ef\u5206\u4eab\u7684\u8d8b\u52e2\u8cc7\u6599\u3002"}
           </div>
         )}
       </div>
@@ -664,14 +664,15 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [textColors, setTextColors] = useState<Partial<Record<TextColorTarget, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [activeControl, setActiveControl] = useState<ControlPanel | null>("style");
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const styleOptions = isEnglish
     ? [
         { value: "trend" as const, label: "Trend" },
         { value: "current" as const, label: "Current" },
       ]
     : [
-        { value: "trend" as const, label: "趨勢" },
-        { value: "current" as const, label: "目前" },
+        { value: "trend" as const, label: "\u8d8b\u52e2" },
+        { value: "current" as const, label: "\u76ee\u524d" },
       ];
   const backgroundOptions = isEnglish
     ? [
@@ -681,10 +682,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         { value: "custom" as const, label: "Custom" },
       ]
     : [
-        { value: "light" as const, label: "淺色" },
-        { value: "dark" as const, label: "深色" },
-        { value: "transparent" as const, label: "透明" },
-        { value: "custom" as const, label: "自訂" },
+        { value: "light" as const, label: "\u6dfa\u8272" },
+        { value: "dark" as const, label: "\u6df1\u8272" },
+        { value: "transparent" as const, label: "\u900f\u660e" },
+        { value: "custom" as const, label: "\u81ea\u8a02" },
       ];
   const positionOptions = isEnglish
     ? [
@@ -693,9 +694,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         { value: "bottom" as const, label: "Bottom" },
       ]
     : [
-        { value: "top" as const, label: "上方" },
-        { value: "center" as const, label: "置中" },
-        { value: "bottom" as const, label: "下方" },
+        { value: "top" as const, label: "\u4e0a\u65b9" },
+        { value: "center" as const, label: "\u7f6e\u4e2d" },
+        { value: "bottom" as const, label: "\u4e0b\u65b9" },
       ];
   const columnOptions = isEnglish
     ? [
@@ -703,8 +704,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         { value: 2 as const, label: "Two columns" },
       ]
     : [
-        { value: 1 as const, label: "一欄" },
-        { value: 2 as const, label: "兩欄" },
+        { value: 1 as const, label: "\u4e00\u6b04" },
+        { value: 2 as const, label: "\u5169\u6b04" },
       ];
   const titleModeOptions = isEnglish
     ? [
@@ -712,8 +713,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         { value: "hide" as const, label: "Hide" },
       ]
     : [
-        { value: "show" as const, label: "顯示" },
-        { value: "hide" as const, label: "隱藏" },
+        { value: "show" as const, label: "\u986f\u793a" },
+        { value: "hide" as const, label: "\u96b1\u85cf" },
       ];
   const titleAlignOptions = isEnglish
     ? [
@@ -722,9 +723,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         { value: "right" as const, label: "Right" },
       ]
     : [
-        { value: "left" as const, label: "靠左" },
-        { value: "center" as const, label: "置中" },
-        { value: "right" as const, label: "靠右" },
+        { value: "left" as const, label: "\u9760\u5de6" },
+        { value: "center" as const, label: "\u7f6e\u4e2d" },
+        { value: "right" as const, label: "\u9760\u53f3" },
       ];
 
   const previewRef = useRef<HTMLDivElement>(null);
@@ -759,6 +760,19 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   useEffect(() => {
     setSelectedIds((current) => (current.length ? current : defaultSelectedIds));
   }, [defaultSelectedIds]);
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, []);
 
   useEffect(() => {
     if (!syncMetricColors || !syncMetricColor) {
@@ -844,13 +858,25 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   }
 
   function handleControlToggle(panel: ControlPanel) {
+    setIsPreviewExpanded(false);
     setActiveControl((current) => (current === panel ? null : panel));
+  }
+
+  function handlePreviewExpandToggle() {
+    setIsPreviewExpanded((current) => {
+      const next = !current;
+      if (next) {
+        setActiveControl(null);
+      }
+
+      return next;
+    });
   }
 
   
   const saveImage = useCallback(async () => {
     if (!selectedMetrics.length) {
-      toast.error(isEnglish ? "Select at least one metric." : "請至少選擇一個指標。");
+      toast.error(isEnglish ? "Select at least one metric." : "\u8acb\u81f3\u5c11\u9078\u64c7\u4e00\u500b\u6307\u6a19\u3002");
       return;
     }
 
@@ -858,7 +884,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     if (!previewNode) return;
 
     setIsSaving(true);
-    const toastId = toast.loading(isEnglish ? "Generating image..." : "正在產生圖片...");
+    const toastId = toast.loading(isEnglish ? "Generating image..." : "\u6b63\u5728\u7522\u751f\u5716\u7247...");
 
     try {
       const { dataUrl, exportHeight, exportWidth } = await renderSharePreviewImage(previewNode);
@@ -872,7 +898,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               files: [imageFile],
               title: "Insight Up",
             });
-            toast.success(isEnglish ? "System share opened." : "已開啟系統分享。", { id: toastId });
+            toast.success(isEnglish ? "System share opened." : "\u5df2\u958b\u555f\u7cfb\u7d71\u5206\u4eab\u3002", { id: toastId });
             return;
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") {
@@ -886,14 +912,14 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       }
 
       downloadDataUrl(dataUrl, fileName);
-      toast.success(isEnglish ? "Image downloaded." : "圖片已下載。", { id: toastId });
+      toast.success(isEnglish ? "Image downloaded." : "\u5716\u7247\u5df2\u4e0b\u8f09\u3002", { id: toastId });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         toast.dismiss(toastId);
         return;
       }
 
-      toast.error(isEnglish ? "Image download failed. Please try again." : "圖片下載失敗，請再試一次。", { id: toastId });
+      toast.error(isEnglish ? "Image download failed. Please try again." : "\u5716\u7247\u4e0b\u8f09\u5931\u6557\uff0c\u8acb\u518d\u8a66\u4e00\u6b21\u3002", { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -902,7 +928,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   if (!shareMetrics.length) {
     return (
       <div className="surface-state-panel flex min-h-[52vh] w-full max-w-full items-center justify-center overflow-hidden rounded-[1.75rem] px-6 text-center text-sm text-muted-foreground">
-        {isEnglish ? "There are no trend records available to share right now." : "目前沒有可分享的趨勢資料。"}
+        {isEnglish ? "There are no trend records available to share right now." : "\u76ee\u524d\u6c92\u6709\u53ef\u5206\u4eab\u7684\u8d8b\u52e2\u8cc7\u6599\u3002"}
       </div>
     );
       }
@@ -910,17 +936,21 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   return (
     <div
       className={cn(
-        "relative -mx-6 flex min-h-[calc(100vh-var(--app-header-offset,0px)-1rem)] w-[calc(100%+3rem)] max-w-none flex-col overflow-x-hidden px-4 sm:px-6 lg:-mx-10 lg:w-[calc(100%+5rem)] lg:px-10",
-        activeControl ? "pb-52" : "pb-24",
+        "relative -mx-6 grid h-[calc(100dvh-var(--app-header-offset,0px)-1rem)] w-[calc(100%+3rem)] max-w-none gap-3 overflow-hidden px-4 sm:px-6 lg:-mx-10 lg:w-[calc(100%+5rem)] lg:px-10",
+        isPreviewExpanded ? "grid-rows-[minmax(0,9fr)_minmax(0,0fr)_minmax(5rem,1fr)]" : "grid-rows-[minmax(0,7fr)_minmax(0,2fr)_minmax(5rem,1fr)]",
       )}
     >
-      <h1 className="sr-only">{isEnglish ? "Share trend data" : "分享趨勢數據"}</h1>
+      <h1 className="sr-only">{isEnglish ? "Share trend data" : "\u5206\u4eab\u8d8b\u52e2\u6578\u64da"}</h1>
 
-      <section className="flex min-h-[calc(100vh-var(--app-header-offset,0px)-16.5rem)] min-w-0 shrink-0 items-start justify-center pt-2">
+      <div className="contents">
+      <section
+        className="flex min-h-0 min-w-0 items-center justify-center overflow-auto pt-2"
+      >
         <div
           ref={previewRef}
           className={cn(
-            "relative mx-auto aspect-[9/16] h-[min(58vh,34rem)] max-w-full min-w-0 overflow-hidden p-3 shadow-panel sm:p-4",
+            "relative mx-auto aspect-[9/16] h-full max-h-full max-w-full min-w-0 overflow-hidden p-3 shadow-panel sm:p-4",
+            "lg:max-h-full",
             shareBackground !== "transparent" && "border",
             getPreviewBackgroundClass(shareBackground),
           )}
@@ -947,25 +977,19 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         </div>
       </section>
 
+      <aside className={cn("flex min-h-0 overflow-hidden rounded-[1.25rem] border border-border/75 bg-card/95 shadow-panel backdrop-blur", isPreviewExpanded && "invisible pointer-events-none")}>
+      <div className="share-tools-scrollbar min-h-0 flex-1 overflow-y-auto py-4 pl-4 pr-2">
       {!hasEnoughData ? (
         <div className="mt-3 rounded-[1.25rem] border border-border/70 bg-card/78 px-4 py-3 text-sm text-muted-foreground">
           {"\u81f3\u5c11\u9700\u8981 2 \u7b46\u5df2\u7d0d\u5165\u5716\u8868\u7684\u8cc7\u6599\uff0c\u8da8\u52e2\u7dda\u624d\u6703\u66f4\u5b8c\u6574\u3002"}
         </div>
       ) : null}
-      {/*
-      {!hasEnoughData ? (
-        <div className="mt-3 rounded-[1.25rem] border border-border/70 bg-card/78 px-4 py-3 text-sm text-muted-foreground">
-          ???????2 ??????????????????????????????????????????????豯叟???????????
-        </div>
-      ) : null}
-
-      */}
 
       {activeControl ? (
-        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 mx-auto max-w-xl rounded-[1.25rem] border border-border/75 bg-card/95 p-3 shadow-panel backdrop-blur sm:bottom-[calc(env(safe-area-inset-bottom)+5rem)]">
+        <div className="min-h-full min-w-0 pr-2">
         {activeControl === "style" ? (
           <div className="min-w-0">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Style" : "樣式"}</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Style" : "\u6a23\u5f0f"}</p>
             <PillScrollGroup>
               {styleOptions.map((option) => (
                 <OptionPill active={shareStyle === option.value} key={option.value} onClick={() => handleShareStyleChange(option.value)}>
@@ -978,7 +1002,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
         {activeControl === "background" ? (
           <div className="min-w-0">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Background" : "背景"}</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Background" : "\u80cc\u666f"}</p>
             <PillScrollGroup>
               {backgroundOptions.map((option) => (
                 <OptionPill active={shareBackground === option.value} key={option.value} onClick={() => setShareBackground(option.value)}>
@@ -990,19 +1014,19 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               <>
                 <div className="mt-3 grid gap-3">
                   <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2">
-                    <span className="truncate text-sm font-semibold text-foreground">{isEnglish ? "Color" : "顏色"}</span>
+                    <span className="truncate text-sm font-semibold text-foreground">{isEnglish ? "Color" : "Color"}</span>
                     <ColorSwatchPicker
                       color={customBackgroundColor}
-                      customLabel={isEnglish ? "Custom" : "自訂"}
-                      inputAriaLabel={isEnglish ? "Custom background color" : "自訂背景顏色"}
+                      customLabel={isEnglish ? "Custom" : "\u81ea\u8a02"}
+                      inputAriaLabel={isEnglish ? "Custom background color" : "Custom background color"}
                       onChange={setCustomBackgroundColor}
-                      swatchAriaLabelPrefix={isEnglish ? "Background color" : "背景顏色"}
+                      swatchAriaLabelPrefix={isEnglish ? "Background color" : "Background color"}
                     />
                   </div>
                   <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)_3rem] items-center gap-3 rounded-xl border border-border/65 bg-background/64 px-3 py-2">
-                    <span className="text-sm font-semibold text-foreground">{isEnglish ? "Opacity" : "透明度"}</span>
+                    <span className="text-sm font-semibold text-foreground">{isEnglish ? "Opacity" : "Opacity"}</span>
                     <input
-                      aria-label={isEnglish ? "Background opacity" : "背景透明度"}
+                      aria-label={isEnglish ? "Background opacity" : "Background opacity"}
                       className="w-full accent-primary"
                       max="100"
                       min="0"
@@ -1022,9 +1046,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                     <span className="relative grid size-6 place-items-center rounded-full border border-white/80 shadow-sm" style={{ backgroundColor: customBackgroundColor }}>
                       <Pipette className="size-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
                     </span>
-                    <span>{isEnglish ? "Custom" : "自訂"}</span>
+                    <span>{isEnglish ? "Custom" : "\u81ea\u8a02"}</span>
                     <input
-                      aria-label={isEnglish ? "Custom background color" : "自訂背景色"}
+                      aria-label={isEnglish ? "Custom background color" : "Custom background color"}
                       className="pointer-events-none fixed left-1/2 top-[38vh] size-8 -translate-x-1/2 opacity-0"
                       onChange={(event) => setCustomBackgroundColor(event.target.value)}
                       type="color"
@@ -1033,7 +1057,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                   </label>
                 </div>
                 <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_3rem] items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">{isEnglish ? "Opacity" : "透明度"}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{isEnglish ? "Opacity" : "Opacity"}</span>
                   <input
                     aria-label="\u80cc\u666f\u900f\u660e\u5ea6"
                     className="w-full accent-primary"
@@ -1054,7 +1078,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "title" ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Title" : "標題"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Title" : "\u6a19\u984c"}</p>
               <PillScrollGroup>
               {titleModeOptions.map((option) => (
                   <OptionPill active={titleMode === option.value} key={option.value} onClick={() => setTitleMode(option.value)}>
@@ -1064,7 +1088,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               </PillScrollGroup>
             </div>
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Alignment" : "對齊"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Alignment" : "\u5c0d\u9f4a"}</p>
               <PillScrollGroup>
               {titleAlignOptions.map((option) => (
                   <OptionPill active={titleAlign === option.value} key={option.value} onClick={() => setTitleAlign(option.value)}>
@@ -1079,7 +1103,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "layout" ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Position" : "位置"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Position" : "\u4f4d\u7f6e"}</p>
               <PillScrollGroup>
               {positionOptions.map((option) => (
                   <OptionPill active={sharePosition === option.value} key={option.value} onClick={() => setSharePosition(option.value)}>
@@ -1089,7 +1113,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               </PillScrollGroup>
             </div>
             <div className="min-w-0">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Columns" : "欄位"}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Columns" : "\u6b04\u4f4d"}</p>
               <PillScrollGroup>
                 {columnOptions.map((option) => (
                   <OptionPill
@@ -1109,7 +1133,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "colors" ? (
           <div className="min-w-0">
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Chart colors" : "圖表顏色"}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Chart colors" : "\u5716\u8868\u984f\u8272"}</p>
               <div className="inline-flex h-7 shrink-0 rounded-full border border-border/70 bg-background/72 p-0.5">
                 <button
                   aria-pressed={!syncMetricColors}
@@ -1145,11 +1169,11 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               </button>
               </div>
             </div>
-            <div className="max-h-32 min-w-0 overflow-y-auto pr-1">
+            <div className="min-w-0 pr-1">
               <div className="grid gap-2">
                 {selectedMetrics.length ? selectedMetrics.map((item) => {
                   return (
-                  <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2" key={item.id}>
+                  <div className="grid min-w-0 grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-2 border-b border-border/45 py-1.5 last:border-b-0" key={item.id}>
                     <div className="flex min-w-0 items-center">
                       <span className="truncate text-sm font-semibold text-foreground">{item.metric.label}</span>
                     </div>
@@ -1164,14 +1188,14 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                   );
                 }) : (
                   <div className="rounded-xl border border-dashed border-border/70 bg-background/50 px-3 py-4 text-sm text-muted-foreground">
-                    {isEnglish ? "Select chart items first, then adjust their colors." : "請先選擇要顯示的項目，再調整顏色。"}
+                    {isEnglish ? "Select chart items first, then adjust their colors." : "\u8acb\u5148\u9078\u64c7\u8981\u986f\u793a\u7684\u9805\u76ee\uff0c\u518d\u8abf\u6574\u984f\u8272\u3002"}
                   </div>
                 )}
                 <div className="mt-1 min-w-0 border-t border-border/60 pt-2">
                   <div className="grid gap-2">
                     {textColorOptions.map((option) => {
                       return (
-                      <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-border/65 bg-background/64 px-3 py-2" key={option.value}>
+                      <div className="grid min-w-0 grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-2 border-b border-border/45 py-1.5 last:border-b-0" key={option.value}>
                         <span className="truncate text-sm font-semibold text-foreground">{option.label}</span>
                         <ColorSwatchPicker
                           color={option.color}
@@ -1193,25 +1217,25 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         {activeControl === "metrics" ? (
           <div className="min-w-0">
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Metrics" : "數據"}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isEnglish ? "Metrics" : "\u6578\u64da"}</p>
               <div className="flex shrink-0 gap-1.5">
                 <button
                   className="h-7 cursor-pointer rounded-full border border-border/70 bg-background/72 px-3 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => setSelectedIds(shareMetrics.map((item) => item.id))}
                   type="button"
                 >
-                  {isEnglish ? "Select all" : "全選"}
+                  {isEnglish ? "Select all" : "\u5168\u9078"}
                 </button>
                 <button
                   className="h-7 cursor-pointer rounded-full px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/8 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => setSelectedIds([])}
                   type="button"
                 >
-                  {isEnglish ? "Clear" : "清除"}
+                  {isEnglish ? "Clear" : "\u6e05\u9664"}
                 </button>
               </div>
             </div>
-            <div className="max-h-24 min-w-0 overflow-y-auto pr-1">
+            <div className="min-w-0 pr-1">
               <div className="flex flex-wrap gap-1.5">
                 {coloredShareMetrics.map((item) => {
                   const checked = selectedIds.includes(item.id);
@@ -1242,11 +1266,27 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         </div>
       ) : null}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+1.1rem)] sm:px-5">
-        <Button aria-label={isEnglish ? "Cancel" : "取消"} className="pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
+      </div>
+      </aside>
+      </div>
+
+      <div className="pointer-events-none relative z-50 flex min-h-0 items-center justify-between pb-[env(safe-area-inset-bottom)]">
+        <Button aria-label={isEnglish ? "Cancel" : "\u53d6\u6d88"} className="pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
           <X className="size-5" />
         </Button>
-        <div className="pointer-events-auto grid grid-cols-6 rounded-full border border-border/75 bg-card/95 p-1 shadow-panel backdrop-blur">
+        <div className="pointer-events-auto grid grid-cols-7 rounded-full border border-border/75 bg-card/95 p-1 shadow-panel backdrop-blur">
+          <button
+            aria-label={isPreviewExpanded ? (isEnglish ? "Exit expanded preview" : "\u95dc\u9589\u653e\u5927\u9810\u89bd") : isEnglish ? "Expand preview" : "\u653e\u5927\u9810\u89bd"}
+            aria-pressed={isPreviewExpanded}
+            className={cn(
+              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              isPreviewExpanded && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
+            )}
+            onClick={handlePreviewExpandToggle}
+            type="button"
+          >
+            {isPreviewExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
           <button
             aria-label="\u6a23\u5f0f"
             aria-pressed={activeControl === "style"}
@@ -1320,7 +1360,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <ListChecks className="size-4" />
           </button>
         </div>
-        <Button aria-label={isEnglish ? "Download image" : "下載圖片"} className="ai-generate-pulse pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
+        <Button aria-label={isEnglish ? "Download image" : "\u4e0b\u8f09\u5716\u7247"} className="ai-generate-pulse pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
           <Download className="size-5" />
         </Button>
       </div>
