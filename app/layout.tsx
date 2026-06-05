@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html data-scroll-behavior="smooth" dir={getLocaleDirection(locale)} lang={locale} suppressHydrationWarning>
       <body className={`${fontDisplay.variable} ${fontBody.variable} grain-overlay`} suppressHydrationWarning>
-        <I18nProvider locale={locale} messages={messages}>
+        <I18nProvider key={locale} locale={locale} messages={messages}>
           {children}
           <Toaster position="top-right" richColors />
         </I18nProvider>

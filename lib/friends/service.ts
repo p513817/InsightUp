@@ -1,4 +1,6 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { ensureSegmentalData } from "@/lib/inbody/records";
+import type { InbodyRecord } from "@/lib/inbody/types";
 import { summarizeUser } from "@/lib/presentation";
 import type { FriendProfile, FriendSnapshot } from "./types";
 
@@ -27,6 +29,27 @@ interface FriendSnapshotRow {
   latest_score: number | null;
   latest_score_delta: number | null;
   latest_source_type: FriendSnapshot["latestSourceType"];
+}
+
+interface FriendRecordRow {
+  id: string;
+  user_id: string;
+  recorded_at: string;
+  height: number | null;
+  age: number | null;
+  gender: InbodyRecord["gender"];
+  score: number | null;
+  weight: number | null;
+  muscle: number | null;
+  fat: number | null;
+  fat_percent: number | null;
+  visceral_fat_level: number | null;
+  bmr: number | null;
+  recommended_calories: number | null;
+  is_included_in_charts: boolean;
+  source_type: InbodyRecord["sourceType"];
+  created_at: string;
+  updated_at: string;
 }
 
 const FRIENDS_MIGRATION_PATH = "infra/supabase/migrations/20260424_002_friends.sql";
@@ -122,6 +145,35 @@ function createFallbackSnapshot(profile: FriendProfile): FriendSnapshot {
   };
 }
 
+function mapFriendRecord(row: FriendRecordRow): InbodyRecord {
+  const record = {
+    id: row.id,
+    userId: row.user_id,
+    date: row.recorded_at,
+    height: row.height,
+    age: row.age,
+    gender: row.gender || "unknown",
+    score: row.score,
+    weight: row.weight,
+    muscle: row.muscle,
+    fat: row.fat,
+    fatPercent: row.fat_percent,
+    visceralFatLevel: row.visceral_fat_level,
+    bmr: row.bmr,
+    recommendedCalories: row.recommended_calories,
+    isIncludedInCharts: row.is_included_in_charts,
+    sourceType: row.source_type || "manual",
+    notes: null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+
+  return {
+    ...record,
+    segmental: ensureSegmentalData(record),
+  };
+}
+
 export function normalizeFriendCode(value: string) {
   return value.trim().replace(/\s+/g, "").toUpperCase();
 }
@@ -164,6 +216,22 @@ export async function listFriendSnapshots(supabase: SupabaseClient) {
   }
 
   return ((data || []) as FriendSnapshotRow[]).map((row) => mapFriendSnapshot(row));
+}
+
+export async function listFriendRecords(supabase: SupabaseClient, friendUserId: string) {
+  const { data, error } = await supabase.rpc("list_friend_records", {
+    input_friend_user_id: friendUserId,
+  });
+
+  if (error) {
+    if (isMissingFriendsInfrastructure(error)) {
+      throw new MissingFriendsInfrastructureError();
+    }
+
+    throw error;
+  }
+
+  return ((data || []) as FriendRecordRow[]).map((row) => mapFriendRecord(row));
 }
 
 export async function addFriendByCode(supabase: SupabaseClient, userId: string, friendCode: string) {

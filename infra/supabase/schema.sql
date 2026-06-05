@@ -274,6 +274,60 @@ as $$
   order by coalesce(latest.recorded_at::timestamptz, f.created_at) desc, p.display_name asc;
 $$;
 
+create or replace function public.list_friend_records(input_friend_user_id uuid)
+returns table (
+  id uuid,
+  user_id uuid,
+  recorded_at date,
+  height numeric,
+  age integer,
+  gender public.gender_type,
+  score integer,
+  weight numeric,
+  muscle numeric,
+  fat numeric,
+  fat_percent numeric,
+  visceral_fat_level integer,
+  bmr integer,
+  recommended_calories integer,
+  is_included_in_charts boolean,
+  source_type public.record_source_type,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    r.id,
+    r.user_id,
+    r.recorded_at,
+    r.height,
+    r.age,
+    r.gender,
+    r.score,
+    r.weight,
+    r.muscle,
+    r.fat,
+    r.fat_percent,
+    r.visceral_fat_level,
+    r.bmr,
+    r.recommended_calories,
+    r.is_included_in_charts,
+    r.source_type,
+    r.created_at,
+    r.updated_at
+  from public.user_friendships f
+  join public.inbody_records r on r.user_id = f.friend_user_id
+  where auth.uid() is not null
+    and f.user_id = auth.uid()
+    and f.friend_user_id = input_friend_user_id
+    and r.deleted_at is null
+  order by r.recorded_at asc, r.created_at asc;
+$$;
+
 create or replace view public.active_inbody_records
 with (security_invoker = on) as
 select *

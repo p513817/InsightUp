@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Activity, Files, LayoutDashboard, Menu, Sparkles, UsersRound, UserRound, X } from "lucide-react";
+import { Activity, Files, GitCompareArrows, LayoutDashboard, Menu, Sparkles, UsersRound, UserRound, X } from "lucide-react";
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
@@ -103,9 +103,13 @@ export function AppHeader({ user }: AppHeaderProps) {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname.startsWith("/records") || pathname === "/profile";
-  const isFriends = pathname === "/friends";
+  const isFriends = pathname.startsWith("/friends");
   const isSummary = pathname === "/summary";
   const dashboardTrendMode = searchParams.get("trend") === "segmental" ? "segmental" : "overall";
+  const friendDetailMatch = pathname.match(/^\/friends\/([^/]+)(?:\/compare)?$/);
+  const friendUserId = friendDetailMatch?.[1] ?? null;
+  const isFriendDetail = Boolean(friendUserId);
+  const friendViewMode = pathname.endsWith("/compare") ? "compare" : "trend";
   const headerStyle: HeaderStyle = {
     "--app-header-translate": isHeaderVisible ? "0%" : "-110%",
     "--brand-gap": "0rem",
@@ -148,6 +152,15 @@ export function AppHeader({ user }: AppHeaderProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("trend", nextMode);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
+  function setFriendViewMode(nextMode: "trend" | "compare") {
+    if (!friendUserId) {
+      return;
+    }
+
+    const nextPathname = nextMode === "compare" ? `/friends/${friendUserId}/compare` : `/friends/${friendUserId}`;
+    router.replace(nextPathname, { scroll: false });
   }
 
   useEffect(() => {
@@ -360,6 +373,43 @@ export function AppHeader({ user }: AppHeaderProps) {
               >
                 <UserRound className="size-4" />
                 <span className="truncate">{t("dashboardTrendUi.segmental")}</span>
+              </button>
+            </div>
+          ) : isFriendDetail ? (
+            <div
+              aria-label={t("navigation.friends.label")}
+              className="surface-pill absolute left-1/2 grid h-[2.625rem] max-w-[min(32rem,56vw)] -translate-x-1/2 grid-cols-2 gap-1 rounded-full bg-card/78 p-[0.3125rem] shadow-none"
+              role="tablist"
+            >
+              <button
+                aria-selected={friendViewMode === "trend"}
+                className={cn(
+                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
+                  friendViewMode === "trend"
+                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
+                )}
+                onClick={() => setFriendViewMode("trend")}
+                role="tab"
+                type="button"
+              >
+                <Activity className="size-4" />
+                <span className="truncate">{t("friends.friendTrendTab")}</span>
+              </button>
+              <button
+                aria-selected={friendViewMode === "compare"}
+                className={cn(
+                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
+                  friendViewMode === "compare"
+                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
+                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
+                )}
+                onClick={() => setFriendViewMode("compare")}
+                role="tab"
+                type="button"
+              >
+                <GitCompareArrows className="size-4" />
+                <span className="truncate">{t("friends.compareTab")}</span>
               </button>
             </div>
           ) : (

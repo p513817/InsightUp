@@ -6,6 +6,7 @@ import { FAB_BASE_CLASS, FAB_FIXED_POSITION_CLASS, FAB_OUTLINE_TONE_CLASS, FAB_P
 
 interface FloatingActionButtonProps {
   ariaLabel: string;
+  asChild?: boolean;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
@@ -20,6 +21,7 @@ interface FloatingActionButtonProps {
 
 export function FloatingActionButton({
   ariaLabel,
+  asChild = false,
   children,
   className,
   disabled = false,
@@ -39,6 +41,7 @@ export function FloatingActionButton({
   return (
     <Button
       aria-label={ariaLabel}
+      asChild={asChild}
       className={`${pulse ? "ai-generate-pulse" : ""} pointer-events-auto cursor-pointer ${FAB_BASE_CLASS} ${feedbackClassName} ${toneClassName} ${placementClassName} ${className || ""}`}
       disabled={disabled}
       onClick={onClick}

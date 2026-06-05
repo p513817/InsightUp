@@ -1,0 +1,144 @@
+"use client";
+
+import { useTranslations } from "@/components/i18n-provider";
+import { Card } from "@/components/ui/card";
+import { getMetricDeltaToneClass } from "@/lib/inbody/progress";
+import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { GripVertical } from "lucide-react";
+import { useEffect, useState } from "react";
+
+export type FriendCompareMetricItem = {
+  diffText: string;
+  friendText: string;
+  friendValue: number | null;
+  isSecondary: boolean;
+  key: string;
+  label: string;
+  myText: string;
+  myValue: number | null;
+};
+
+interface FriendCompareGridProps {
+  items: FriendCompareMetricItem[];
+  storageKey: string;
+}
+
+function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) {
+  if (!transform) {
+    return undefined;
+  }
+
+  return `translate3d(${transform.x}px, ${transform.y}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`;
+}
+
+function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
+  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
+    id: item.key,
+    transition: {
+      duration: 120,
+      easing: "cubic-bezier(0.2, 0, 0, 1)",
+    },
+  });
+  const diffDelta = item.friendValue != null && item.myValue != null ? item.friendValue - item.myValue : null;
+
+  return (
+    <Card
+      className={`grid min-h-14 grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] items-center gap-1.5 rounded-[0.9rem] px-2.5 py-2 sm:gap-2 sm:px-3 ${
+        item.isSecondary ? "bg-card/78" : "bg-card/94"
+      } ${isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_18px_34px_rgba(16,35,63,0.16)]" : ""}`}
+      ref={setNodeRef}
+      style={{
+        transform: transformToCss(transform),
+        transition: isDragging ? "none" : transition,
+      }}
+    >
+      <div className="flex min-w-0 items-center gap-1.5">
+        <button
+          aria-label={item.label}
+          className="grid size-11 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/7 hover:text-primary active:cursor-grabbing"
+          ref={setActivatorNodeRef}
+          type="button"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <p className="min-w-0 truncate text-sm font-semibold text-foreground sm:text-base">{item.label}</p>
+      </div>
+      <p className="truncate rounded-[0.7rem] bg-muted/35 px-2 py-2 text-right font-display text-sm text-foreground sm:text-base">{item.myText}</p>
+      <p className="truncate rounded-[0.7rem] bg-primary/7 px-2 py-2 text-right font-display text-sm text-foreground sm:text-base">{item.friendText}</p>
+      <p className={`truncate rounded-[0.7rem] px-2 py-2 text-right font-display text-xs sm:text-base ${getMetricDeltaToneClass(item.key, diffDelta)}`}>{item.diffText}</p>
+    </Card>
+  );
+}
+
+export function FriendCompareGrid({ items, storageKey }: FriendCompareGridProps) {
+  const t = useTranslations();
+  const [orderedKeys, setOrderedKeys] = useState(() => items.map((item) => item.key));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 2 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  useEffect(() => {
+    const storedValue = window.localStorage.getItem(storageKey);
+    if (!storedValue) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(storedValue) as string[];
+      const itemKeys = new Set(items.map((item) => item.key));
+      const keptKeys = parsed.filter((key) => itemKeys.has(key));
+      const missingKeys = items.map((item) => item.key).filter((key) => !keptKeys.includes(key));
+      setOrderedKeys([...keptKeys, ...missingKeys]);
+    } catch {
+      setOrderedKeys(items.map((item) => item.key));
+    }
+  }, [items, storageKey]);
+
+  const orderedItems = orderedKeys
+    .map((key) => items.find((item) => item.key === key))
+    .filter((item): item is FriendCompareMetricItem => Boolean(item));
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setOrderedKeys((current) => {
+      const oldIndex = current.indexOf(String(active.id));
+      const newIndex = current.indexOf(String(over.id));
+      if (oldIndex < 0 || newIndex < 0) {
+        return current;
+      }
+
+      const nextKeys = arrayMove(current, oldIndex, newIndex);
+      window.localStorage.setItem(storageKey, JSON.stringify(nextKeys));
+      return nextKeys;
+    });
+  }
+
+  return (
+    <section className="space-y-2">
+      <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] items-center gap-1.5 px-2.5 text-[11px] font-semibold text-muted-foreground sm:gap-2 sm:px-3">
+        <span className="pl-11">{t("friends.item")}</span>
+        <span className="px-2 text-right">{t("friends.me")}</span>
+        <span className="px-2 text-right">{t("friends.friend")}</span>
+        <span className="px-2 text-right">{t("friends.diff")}</span>
+      </div>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+        <SortableContext items={orderedItems.map((item) => item.key)} strategy={verticalListSortingStrategy}>
+          <div className="grid gap-2">
+            {orderedItems.map((item) => (
+              <SortableCompareCard item={item} key={item.key} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </section>
+  );
+}
