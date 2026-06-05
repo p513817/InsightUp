@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   CartesianGrid,
+  Customized,
   Legend,
   Line,
   LineChart,
@@ -13,6 +14,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/i18n-provider";
+import { DirectionalTrendOverlay } from "@/components/charts/directional-trend-line";
 import type { ChartPayload } from "@/lib/inbody/types";
 import { formatChartDate, formatMetricValue } from "@/lib/presentation";
 
@@ -127,11 +129,12 @@ export function TrendChart({ chart }: TrendChartProps) {
                   activeDot={{ r: 5 }}
                   name={metric.label}
                   stroke={metric.color}
+                  strokeOpacity={0}
                   strokeWidth={2.4}
-                  type="monotone"
                   yAxisId={metric.axis}
                 />
               ))}
+            <Customized component={DirectionalTrendOverlay} />
           </LineChart>
         </ResponsiveContainer>
       </div>

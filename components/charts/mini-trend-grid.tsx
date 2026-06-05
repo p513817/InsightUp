@@ -5,10 +5,11 @@ import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, ty
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { Eye, EyeOff, GripVertical } from "lucide-react";
 import type { DotProps } from "recharts";
-import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
+import { Customized, Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useLocale } from "@/components/i18n-provider";
 import { Card } from "@/components/ui/card";
+import { DirectionalTrendOverlay } from "@/components/charts/directional-trend-line";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
 import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/presentation";
 
@@ -358,10 +359,11 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
               dot={<MiniChartDot metric={metric} totalPoints={points.length} visibleLabelIndexes={visibleLabelIndexes} />}
               isAnimationActive={false}
               stroke={metric.color}
+              strokeOpacity={0}
               strokeLinecap="round"
               strokeWidth={3}
-              type="monotone"
             />
+            <Customized component={DirectionalTrendOverlay} />
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -4,8 +4,9 @@ import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Maximize2, M
 import { toPng } from "html-to-image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Customized, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
+import { DirectionalTrendOverlay } from "@/components/charts/directional-trend-line";
 import { useLocale } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { buildChartPayload } from "@/lib/inbody/records";
@@ -508,7 +509,15 @@ function MetricTrendPreview({ background, item }: { background: ShareBackground;
                 );
               }}
             />
-            <Line dataKey="value" dot={{ fill: item.metric.color, r: 2.5, strokeWidth: 0 }} isAnimationActive={false} stroke={item.metric.color} strokeLinecap="round" strokeWidth={2} type="monotone">
+              <Line
+              dataKey="value"
+              dot={{ fill: item.metric.color, r: 2.5, strokeWidth: 0 }}
+              isAnimationActive={false}
+              stroke={item.metric.color}
+              strokeOpacity={0}
+              strokeLinecap="round"
+              strokeWidth={2}
+            >
               <LabelList
                 dataKey="value"
                 formatter={(value: number | null) => (value != null ? formatShareNumber(value) : "")}
@@ -516,6 +525,7 @@ function MetricTrendPreview({ background, item }: { background: ShareBackground;
                 style={{ fill: item.metric.color, fontSize: 7.5, fontWeight: 700 }}
               />
             </Line>
+            <Customized component={DirectionalTrendOverlay} />
           </LineChart>
         </ResponsiveContainer>
       </div>
