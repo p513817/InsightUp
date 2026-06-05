@@ -218,9 +218,14 @@ export async function listFriendSnapshots(supabase: SupabaseClient) {
   return ((data || []) as FriendSnapshotRow[]).map((row) => mapFriendSnapshot(row));
 }
 
-export async function listFriendRecords(supabase: SupabaseClient, friendUserId: string) {
-  const { data, error } = await supabase.rpc("list_friend_records", {
+export async function listFriendRecords(supabase: SupabaseClient, friendUserId: string, limit?: number) {
+  const input = {
     input_friend_user_id: friendUserId,
+    ...(limit == null ? {} : { input_limit: limit }),
+  };
+
+  const { data, error } = await supabase.rpc("list_friend_records_history", {
+    ...input,
   });
 
   if (error) {

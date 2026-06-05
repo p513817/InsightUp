@@ -39,7 +39,7 @@ export default async function FriendComparePage({ params }: FriendComparePagePro
     return null;
   }
 
-  const [friends, friendRecords, myRecords] = await Promise.all([listFriendSnapshots(supabase), listFriendRecords(supabase, friendUserId), listRecords(supabase, user.id)]);
+  const [friends, friendRecords, myRecords] = await Promise.all([listFriendSnapshots(supabase), listFriendRecords(supabase, friendUserId, 5), listRecords(supabase, user.id)]);
   const friend = friends.find((entry) => entry.friendUserId === friendUserId);
 
   if (!friend) {

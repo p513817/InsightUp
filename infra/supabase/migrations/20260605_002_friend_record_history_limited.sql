@@ -1,6 +1,6 @@
 begin;
 
-create or replace function public.list_friend_records(input_friend_user_id uuid, input_limit integer default null)
+create or replace function public.list_friend_records_history(input_friend_user_id uuid, input_limit integer default null)
 returns table (
   id uuid,
   user_id uuid,
@@ -64,7 +64,7 @@ as $$
   order by recorded_at asc, created_at asc;
 $$;
 
-comment on function public.list_friend_records(uuid, integer) is
+comment on function public.list_friend_records_history(uuid, integer) is
 'Returns non-deleted InBody records for a friend only when the signed-in user has that friend in user_friendships. The optional limit returns the latest N records.';
 
 commit;
