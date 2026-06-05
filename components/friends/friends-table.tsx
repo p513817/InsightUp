@@ -1,11 +1,11 @@
 "use client";
 
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { CalendarDays, Dumbbell, LoaderCircle, Percent, Scale, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import type { FriendSnapshot } from "@/lib/friends/types";
-import { formatDecimal, formatLongDate, formatSourceType, getUserInitials } from "@/lib/presentation";
+import { formatDecimal, formatLongDate, getUserInitials } from "@/lib/presentation";
 
 interface FriendsTableProps {
   busyFriendId: string | null;
@@ -25,15 +25,49 @@ function formatDelta(value: number | null | undefined) {
   return `${prefix}${formattedValue}`;
 }
 
-function deltaTone(value: number | null | undefined) {
+function deltaTone(value: number | null | undefined, inverse = false) {
   if (value == null || Number(value) === 0) {
-    return "text-muted-foreground";
+    return {
+      bg: "bg-muted/42",
+      text: "text-muted-foreground",
+    };
   }
 
-  return Number(value) > 0 ? "text-success" : "text-danger";
+  const isPositiveProgress = inverse ? Number(value) < 0 : Number(value) > 0;
+
+  return isPositiveProgress
+    ? {
+        bg: "bg-success/10",
+        text: "text-success",
+      }
+    : {
+        bg: "bg-danger/10",
+        text: "text-danger",
+      };
 }
 
-function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBusy: boolean; onRemove: (friend: FriendSnapshot) => void }) {
+function FriendAvatar({ friend }: { friend: FriendSnapshot }) {
+  const className = "size-12 sm:size-14";
+
+  if (friend.avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        alt={friend.displayName}
+        className={`${className} rounded-full border border-border object-cover shadow-[0_8px_18px_rgba(16,35,63,0.12)]`}
+        src={friend.avatarUrl}
+      />
+    );
+  }
+
+  return (
+    <div className={`surface-avatar-fallback flex ${className} items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground shadow-[0_8px_18px_rgba(16,35,63,0.12)]`}>
+      {getUserInitials(friend.displayName)}
+    </div>
+  );
+}
+
+function FriendProgressCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBusy: boolean; onRemove: (friend: FriendSnapshot) => void }) {
   const t = useTranslations();
   const locale = useLocale();
   const metricItems = [
@@ -41,77 +75,75 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
       label: t("friends.labels.weight"),
       value: formatDecimal(friend.latestWeight),
       delta: formatDelta(friend.latestWeightDelta),
-      deltaClassName: deltaTone(friend.latestWeightDelta),
+      icon: <Scale className="size-4" />,
+      tone: deltaTone(friend.latestWeightDelta),
     },
     {
       label: t("friends.labels.muscle"),
       value: formatDecimal(friend.latestMuscle),
       delta: formatDelta(friend.latestMuscleDelta),
-      deltaClassName: deltaTone(friend.latestMuscleDelta),
+      icon: <Dumbbell className="size-4" />,
+      tone: deltaTone(friend.latestMuscleDelta),
     },
     {
       label: t("friends.labels.fatPercent"),
       value: formatDecimal(friend.latestFatPercent),
       delta: formatDelta(friend.latestFatPercentDelta),
-      deltaClassName: deltaTone(friend.latestFatPercentDelta),
+      icon: <Percent className="size-4" />,
+      tone: deltaTone(friend.latestFatPercentDelta, true),
     },
   ];
+  const hasSnapshot = Boolean(friend.latestRecordedAt);
 
   return (
-    <Card className="gap-3.5 border-border/60 bg-card/90 p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          {friend.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt={friend.displayName} className="size-10 rounded-full border border-border object-cover" src={friend.avatarUrl} />
-          ) : (
-            <div className="surface-avatar-fallback flex size-10 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground">
-              {getUserInitials(friend.displayName)}
+    <Card className="group relative gap-3.5 overflow-hidden border-border/60 bg-card/94 p-3.5 shadow-[0_12px_28px_rgba(16,35,63,0.07)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/24 hover:shadow-[0_16px_34px_rgba(16,35,63,0.1)] sm:p-4">
+      <div className="flex items-start gap-3">
+        <FriendAvatar friend={friend} />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate font-display text-[1.08rem] leading-none text-foreground sm:text-[1.15rem]">{friend.displayName}</p>
+              <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
+                <span className={`inline-flex h-7 max-w-full items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold ${hasSnapshot ? "bg-success/10 text-success" : "bg-muted/50 text-muted-foreground"}`}>
+                  <CalendarDays className="size-3.5 shrink-0" />
+                  <span className="truncate">{hasSnapshot ? formatLongDate(friend.latestRecordedAt, locale) : t("friends.noSnapshot")}</span>
+                </span>
+                <span className="inline-flex h-7 max-w-full items-center rounded-full bg-primary/8 px-2.5 text-xs font-semibold text-primary">
+                  <span className="truncate">{friend.friendCode}</span>
+                </span>
+              </div>
             </div>
-          )}
 
-          <div className="min-w-0">
-            <p className="truncate font-display text-[1.08rem] leading-none text-foreground">{friend.displayName}</p>
-            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-              {t("friends.latestDate")} {formatLongDate(friend.latestRecordedAt, locale)}
-            </p>
+            <Button
+              aria-label={`${t("friends.remove")} ${friend.displayName}`}
+              className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-danger/8 hover:text-danger"
+              disabled={isBusy}
+              onClick={() => onRemove(friend)}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+            </Button>
           </div>
-        </div>
 
-        <Button className="size-9" disabled={isBusy} onClick={() => onRemove(friend)} size="icon" type="button" variant="ghost">
-          {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-        </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         {metricItems.map((item) => (
-          <div className="surface-subtle-gradient rounded-[1rem] border border-border/70 px-3 py-2.5" key={item.label}>
-            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
-            <p className="mt-1 font-display text-[1rem] leading-tight text-foreground">{item.value}</p>
-            <p className={`mt-1 text-[11px] leading-4 ${item.deltaClassName}`}>{item.delta}</p>
+          <div className="surface-subtle-gradient min-w-0 rounded-[0.9rem] border border-border/65 px-2.5 py-2.5" key={item.label}>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">{item.icon}</span>
+              <p className="truncate text-[10px] font-semibold uppercase text-muted-foreground">{item.label}</p>
+            </div>
+            <div className="mt-1.5 flex min-w-0 items-end justify-between gap-1">
+              <p className="truncate font-display text-base leading-none text-foreground">{item.value}</p>
+              <p className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ${item.tone.bg} ${item.tone.text}`}>{item.delta}</p>
+            </div>
           </div>
         ))}
-      </div>
-
-      <div className="flex items-start justify-between gap-3 text-xs text-muted-foreground">
-        <div className="space-y-1 leading-5">
-          <p>
-            {t("friends.friendCode")}: <span className="font-mono text-[11px] text-foreground">{friend.friendCode}</span>
-          </p>
-          <p>
-            {t("friends.latestSource")}: <span className="text-foreground">{friend.latestSourceType ? formatSourceType(friend.latestSourceType) : "-"}</span>
-          </p>
-        </div>
-        <div className="space-y-1 text-right leading-5">
-          <p>
-            {t("friends.fat")}: <span className="text-foreground">{formatDecimal(friend.latestFat)}</span>
-            <span className={`ml-1 ${deltaTone(friend.latestFatDelta)}`}>{formatDelta(friend.latestFatDelta)}</span>
-          </p>
-          <p>
-            {t("friends.score")}: <span className="text-foreground">{formatDecimal(friend.latestScore)}</span>
-            <span className={`ml-1 ${deltaTone(friend.latestScoreDelta)}`}>{formatDelta(friend.latestScoreDelta)}</span>
-          </p>
-        </div>
       </div>
     </Card>
   );
@@ -119,7 +151,6 @@ function MobileFriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot
 
 export function FriendsTable({ busyFriendId, friends, onAdd, onRemove }: FriendsTableProps) {
   const t = useTranslations();
-  const locale = useLocale();
 
   if (!friends.length) {
     return (
@@ -133,74 +164,10 @@ export function FriendsTable({ busyFriendId, friends, onAdd, onRemove }: Friends
 
   return (
     <>
-      <div className="surface-table-shell hidden overflow-hidden rounded-[1.2rem] lg:block sm:rounded-[1.75rem]">
-        <div className="overflow-x-auto">
-          <table className="min-w-[47rem] border-collapse text-left sm:min-w-full">
-            <thead>
-              <tr className="surface-table-head border-b border-border/70 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                <th className="px-3 py-3 font-medium sm:px-5 sm:py-4">{t("friends.title")}</th>
-                <th className="hidden px-4 py-4 font-medium md:table-cell">{t("friends.friendCode")}</th>
-                <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">{t("friends.latestDate")}</th>
-                <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">{t("friends.labels.weight")}</th>
-                <th className="px-3 py-3 font-medium sm:px-4 sm:py-4">{t("friends.labels.muscle")}</th>
-                <th className="hidden px-4 py-4 font-medium lg:table-cell">{t("friends.fat")}</th>
-                <th className="hidden px-4 py-4 font-medium lg:table-cell">{t("friends.labels.fatPercent")}</th>
-                <th className="hidden px-4 py-4 font-medium xl:table-cell">{t("friends.score")}</th>
-                <th className="hidden px-4 py-4 font-medium xl:table-cell">{t("friends.latestSource")}</th>
-                <th className="px-3 py-3 text-right font-medium sm:px-5 sm:py-4">{t("friends.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {friends.map((friend) => {
-                const isBusy = busyFriendId === friend.friendUserId;
-
-                return (
-                  <tr className="border-b border-border/55 last:border-b-0" key={friend.friendUserId}>
-                    <td className="px-3 py-3 align-middle sm:px-5 sm:py-4">
-                      <div className="flex items-center gap-2.5 sm:gap-3">
-                        {friend.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img alt={friend.displayName} className="size-9 rounded-full border border-border object-cover sm:size-11" src={friend.avatarUrl} />
-                        ) : (
-                          <div className="surface-avatar-fallback flex size-9 items-center justify-center rounded-full border border-border text-xs font-semibold text-foreground sm:size-11 sm:text-sm">
-                            {getUserInitials(friend.displayName)}
-                          </div>
-                        )}
-
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground sm:text-base">{friend.displayName}</p>
-                          <p className="text-[11px] leading-4 text-muted-foreground sm:text-xs">
-            {t("friends.addedOn")} {formatLongDate(friend.linkedAt, locale)}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="hidden px-4 py-4 font-mono text-xs text-foreground md:table-cell">{friend.friendCode}</td>
-                    <td className="px-3 py-3 text-xs text-foreground sm:px-4 sm:py-4 sm:text-sm">{formatLongDate(friend.latestRecordedAt, locale)}</td>
-                    <td className="px-3 py-3 text-xs text-foreground sm:px-4 sm:py-4 sm:text-sm">{formatDecimal(friend.latestWeight)}</td>
-                    <td className="px-3 py-3 text-xs text-foreground sm:px-4 sm:py-4 sm:text-sm">{formatDecimal(friend.latestMuscle)}</td>
-                    <td className="hidden px-4 py-4 text-sm text-foreground lg:table-cell">{formatDecimal(friend.latestFat)}</td>
-                    <td className="hidden px-4 py-4 text-sm text-foreground lg:table-cell">{formatDecimal(friend.latestFatPercent)}</td>
-                    <td className="hidden px-4 py-4 text-sm text-foreground xl:table-cell">{formatDecimal(friend.latestScore)}</td>
-                    <td className="hidden px-4 py-4 text-sm text-foreground xl:table-cell">{friend.latestSourceType ? formatSourceType(friend.latestSourceType) : "-"}</td>
-                    <td className="px-3 py-3 text-right sm:px-5 sm:py-4">
-                      <Button className="h-8 px-2.5 text-[11px] sm:h-9 sm:px-4 sm:text-xs" disabled={isBusy} onClick={() => onRemove(friend)} size="sm" type="button" variant="ghost">
-                        {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                        {t("friends.remove")}
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="grid gap-3 lg:hidden">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {friends.map((friend) => {
           const isBusy = busyFriendId === friend.friendUserId;
-          return <MobileFriendCard friend={friend} isBusy={isBusy} key={friend.friendUserId} onRemove={onRemove} />;
+          return <FriendProgressCard friend={friend} isBusy={isBusy} key={friend.friendUserId} onRemove={onRemove} />;
         })}
       </div>
     </>

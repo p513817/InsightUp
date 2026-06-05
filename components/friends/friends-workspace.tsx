@@ -88,33 +88,25 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
   }
 
   return (
-    <div className="space-y-3 pb-24 sm:space-y-8 sm:pb-28">
-      <section className="relative p-1 sm:p-2">
-        <div className="relative z-10 mx-auto max-w-5xl space-y-4 sm:space-y-5">
-          <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.2fr_0.9fr_0.9fr]">
-            <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("friends.title")}</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{friends.length}</p>
-            </div>
-            <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("friends.snapshotCount")}</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
-                {activeSnapshots}/{friends.length || 0}
-              </p>
-            </div>
-            <div className="surface-soft-card min-w-[7.25rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("friends.latestDate")}</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{formatCompactDate(freshestFriend?.latestRecordedAt, locale)}</p>
-            </div>
-          </StatsScrollbarRow>
-        </div>
+    <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
+      <section>
+        <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
+          <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("friends.title")}</p>
+            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{friends.length}</p>
+          </div>
+          <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("friends.snapshotCount")}</p>
+            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{activeSnapshots}/{friends.length || 0}</p>
+          </div>
+          <div className="surface-soft-card min-w-[8.25rem] shrink-0 rounded-[0.875rem] px-3 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("friends.latestDate")}</p>
+            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{formatCompactDate(freshestFriend?.latestRecordedAt, locale)}</p>
+          </div>
+        </StatsScrollbarRow>
       </section>
 
       <section className="space-y-2.5 sm:space-y-3">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm leading-6 text-muted-foreground">{t("friends.count").replace("{count}", String(friends.length))}</p>
-        </div>
-
         <FriendsTable busyFriendId={busyFriendId} friends={friends} onAdd={() => setDialogOpen(true)} onRemove={handleRemoveFriend} />
       </section>
 
