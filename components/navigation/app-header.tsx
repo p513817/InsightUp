@@ -400,7 +400,7 @@ export function AppHeader({ user }: AppHeaderProps) {
             "flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5 transition-[opacity,transform] motion-reduce:transition-none",
             SIDEBAR_PANEL_DURATION_CLASS,
             SIDEBAR_PANEL_EASE_CLASS,
-            isSidebarOpen ? "translate-x-0 opacity-100 delay-75" : "-translate-x-2 opacity-0",
+            isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0",
           )}
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -432,7 +432,7 @@ export function AppHeader({ user }: AppHeaderProps) {
             "flex-1 space-y-1.5 overflow-y-auto px-3 py-3 transition-[opacity,transform] motion-reduce:transition-none",
             SIDEBAR_PANEL_DURATION_CLASS,
             SIDEBAR_PANEL_EASE_CLASS,
-            isSidebarOpen ? "translate-x-0 opacity-100 delay-500" : "-translate-x-2 opacity-0",
+            isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0",
           )}
         >
           {navItems.map((item) => (
