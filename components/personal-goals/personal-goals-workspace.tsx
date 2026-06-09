@@ -89,6 +89,8 @@ function getProgressToneIconClass(progressPercent: number) {
   return "text-[#22c55e]";
 }
 
+const PROGRESS_ROW_CLASS = "-mx-3 mt-3 grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-2";
+
 function compareTargetDatesDesc(left: string | null, right: string | null) {
   if (left && right) {
     return right.localeCompare(left);
@@ -313,14 +315,14 @@ function GoalCard({
         </div>
       ) : null}
 
-      <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-2">
+      <div className={PROGRESS_ROW_CLASS}>
         <div className="h-2 overflow-hidden rounded-full bg-foreground/[0.06]">
           <div
             className={`h-full rounded-full transition-[width] duration-300 ${progressToneClass}`}
             style={{ width: getProgressBarWidth(group.progressPercent) }}
           />
         </div>
-        <span className={`min-w-10 text-right text-xs font-semibold ${progressToneTextClass}`}>
+        <span className={`w-12 shrink-0 text-right text-xs font-semibold tabular-nums ${progressToneTextClass}`}>
           {group.progressPercent}%
         </span>
       </div>
@@ -403,14 +405,14 @@ function GoalCard({
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-2">
+        <div className="-mx-3 mt-3 grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-2">
           <div className="h-2 overflow-hidden rounded-full bg-foreground/[0.06]">
             <div
               className={`h-full rounded-full transition-[width] duration-300 ${progressToneClass}`}
               style={{ width: getProgressBarWidth(goal.progressPercent) }}
             />
           </div>
-          <span className={`min-w-10 text-right text-xs font-semibold ${progressToneTextClass}`}>
+          <span className={`w-12 shrink-0 text-right text-xs font-semibold tabular-nums ${progressToneTextClass}`}>
             {goal.progressPercent}%
           </span>
         </div>
