@@ -89,7 +89,7 @@ function getProgressToneIconClass(progressPercent: number) {
   return "text-[#22c55e]";
 }
 
-const PROGRESS_ROW_CLASS = "-mx-3 mt-3 grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-2";
+const PROGRESS_ROW_CLASS = "mt-3 grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-2";
 
 function compareTargetDatesDesc(left: string | null, right: string | null) {
   if (left && right) {
