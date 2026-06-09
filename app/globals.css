@@ -73,6 +73,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 .stats-scrollbar {
