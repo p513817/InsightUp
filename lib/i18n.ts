@@ -1,3 +1,6 @@
+import enMessages from "../messages/en.json";
+import zhHantMessages from "../messages/zh-Hant.json";
+
 export const locales = ["zh-Hant", "en"] as const;
 export type Locale = (typeof locales)[number];
 
@@ -46,7 +49,7 @@ export function detectLocaleFromAcceptLanguage(value: string | null | undefined)
 }
 
 export async function loadMessages(locale: Locale) {
-  return (await import(`../messages/${locale}.json`)).default as MessageDictionary;
+  return (locale === "en" ? enMessages : zhHantMessages) as MessageDictionary;
 }
 
 function resolvePath(source: unknown, path: string) {
