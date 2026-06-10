@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useLocale, useTranslations } from "@/components/i18n-provider";
+import { useTranslations } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 interface FriendCodeCardProps {
@@ -16,14 +16,57 @@ interface FriendCodeCardProps {
 
 export function FriendCodeCard({ className, description, friendCode, title }: FriendCodeCardProps) {
   const t = useTranslations();
-  const locale = useLocale();
   const [copied, setCopied] = useState(false);
+  const resetCopiedTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetCopiedTimerRef.current !== null) {
+        window.clearTimeout(resetCopiedTimerRef.current);
+      }
+    };
+  }, []);
+
+  async function copyWithFallback(text: string) {
+    if (typeof window !== "undefined" && window.isSecureContext && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    if (typeof document === "undefined") {
+      throw new Error("Clipboard unavailable");
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "fixed";
+    textarea.style.top = "-9999px";
+    textarea.style.left = "-9999px";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    if (!copied) {
+      throw new Error("Clipboard fallback failed");
+    }
+  }
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(friendCode);
+      await copyWithFallback(friendCode);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      if (resetCopiedTimerRef.current !== null) {
+        window.clearTimeout(resetCopiedTimerRef.current);
+      }
+      resetCopiedTimerRef.current = window.setTimeout(() => {
+        setCopied(false);
+        resetCopiedTimerRef.current = null;
+      }, 1600);
       toast.success(t("friends.copyCode"), {
         description: t("friends.copyCodeBody"),
       });
@@ -43,7 +86,7 @@ export function FriendCodeCard({ className, description, friendCode, title }: Fr
 
         <Button className="shrink-0" onClick={handleCopy} size="sm" type="button" variant={copied ? "secondary" : "outline"}>
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? (locale === "en" ? "Copied" : "\u5df2\u8907\u88fd") : locale === "en" ? "Copy" : "\u8907\u88fd"}
+          {copied ? t("common.copied") : t("common.copy")}
         </Button>
       </div>
     </div>
