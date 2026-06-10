@@ -6,6 +6,8 @@ import { useState, useTransition, type ReactNode } from "react";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { GoalMetricProgressCard } from "@/components/ui/goal-metric-progress-card";
+import { GoalProgressBar } from "@/components/ui/goal-progress-bar";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import type { PersonalGoal } from "@/lib/personal-goals";
 import type { InbodyRecord } from "@/lib/inbody/types";
@@ -49,48 +51,6 @@ function getGoalGroupKey(goal: PersonalGoal) {
   const dateKey = goal.targetDate ? `target:${goal.targetDate}` : `created:${goal.createdAt.slice(0, 10)}`;
   return `${titleKey}:${startRecordKey}:${dateKey}`;
 }
-
-function getProgressBarWidth(progressPercent: number) {
-  return `${Math.max(0, Math.min(100, progressPercent))}%`;
-}
-
-function getProgressToneClass(progressPercent: number) {
-  if (progressPercent <= 33) {
-    return "bg-[#ef4444]";
-  }
-
-  if (progressPercent <= 66) {
-    return "bg-[#f59e0b]";
-  }
-
-  return "bg-[#22c55e]";
-}
-
-function getProgressToneTextClass(progressPercent: number) {
-  if (progressPercent <= 33) {
-    return "text-[#ef4444]";
-  }
-
-  if (progressPercent <= 66) {
-    return "text-[#f59e0b]";
-  }
-
-  return "text-[#22c55e]";
-}
-
-function getProgressToneIconClass(progressPercent: number) {
-  if (progressPercent <= 33) {
-    return "text-[#ef4444]";
-  }
-
-  if (progressPercent <= 66) {
-    return "text-[#f59e0b]";
-  }
-
-  return "text-[#22c55e]";
-}
-
-const PROGRESS_ROW_CLASS = "mt-3 grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-2";
 
 function compareTargetDatesDesc(left: string | null, right: string | null) {
   if (left && right) {
@@ -280,12 +240,13 @@ function GoalCard({
   t,
   locale,
 }: GoalCardProps) {
-  const progressToneClass = getProgressToneClass(group.progressPercent);
-  const progressToneTextClass = getProgressToneTextClass(group.progressPercent);
-  const progressToneIconClass = getProgressToneIconClass(group.progressPercent);
   const leftIcon = variant === "history"
-    ? (group.isCompleted ? <CheckCircle2 className={`mt-0.5 size-5 shrink-0 ${progressToneIconClass}`} /> : <XCircle className={`mt-0.5 size-5 shrink-0 ${progressToneIconClass}`} />)
-    : <Target className={`mt-0.5 size-5 shrink-0 ${progressToneIconClass}`} />;
+    ? (
+        group.isCompleted
+          ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[rgb(var(--primary-strong))]" />
+          : <XCircle className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+      )
+    : <Target className="mt-0.5 size-5 shrink-0 text-[rgb(var(--primary-strong))]" />;
   const showExpandedDetails = isExpanded;
 
   return (
@@ -342,17 +303,7 @@ function GoalCard({
         </div>
       ) : null}
 
-      <div className={PROGRESS_ROW_CLASS}>
-        <div className="h-2 overflow-hidden rounded-full bg-foreground/[0.06]">
-          <div
-            className={`h-full rounded-full transition-[width] duration-300 ${progressToneClass}`}
-            style={{ width: getProgressBarWidth(group.progressPercent) }}
-          />
-        </div>
-        <span className={`w-12 shrink-0 text-right text-xs font-semibold tabular-nums ${progressToneTextClass}`}>
-          {group.progressPercent}%
-        </span>
-      </div>
+      <GoalProgressBar className="mt-3 h-7" value={group.progressPercent} />
 
       {showExpandedDetails ? (
         <div className="mt-3 space-y-2">
@@ -421,34 +372,14 @@ function GoalSection({
 }
 
   function renderGoalItem(goal: PersonalGoal) {
-    const progressToneClass = getProgressToneClass(goal.progressPercent);
-    const progressToneTextClass = getProgressToneTextClass(goal.progressPercent);
-
     return (
-      <div className="rounded-[1rem] bg-white/58 p-3" key={goal.id}>
-        <div className="min-w-0">
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-baseline gap-2">
-              <p className="shrink-0 text-sm font-semibold text-foreground">{t(`personalGoal.metrics.${goal.metricKey}`)}</p>
-              <p className="min-w-0 truncate text-xs font-medium text-muted-foreground">
-                {t("personalGoal.list.start")} {formatValue(goal.startValue, goal.unit)} / {t("personalGoal.list.current")} {formatValue(goal.latestValue, goal.unit)} / {t("personalGoal.list.target")} {formatValue(goal.targetValue, goal.unit)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="-mx-3 mt-3 grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-2">
-          <div className="h-2 overflow-hidden rounded-full bg-foreground/[0.06]">
-            <div
-              className={`h-full rounded-full transition-[width] duration-300 ${progressToneClass}`}
-              style={{ width: getProgressBarWidth(goal.progressPercent) }}
-            />
-          </div>
-          <span className={`w-12 shrink-0 text-right text-xs font-semibold tabular-nums ${progressToneTextClass}`}>
-            {goal.progressPercent}%
-          </span>
-        </div>
-      </div>
+      <GoalMetricProgressCard
+        detail={`${t("personalGoal.list.start")} ${formatValue(goal.startValue, goal.unit)} / ${t("personalGoal.list.current")} ${formatValue(goal.latestValue, goal.unit)} / ${t("personalGoal.list.target")} ${formatValue(goal.targetValue, goal.unit)}`}
+        key={goal.id}
+        metricLabel={t(`personalGoal.metrics.${goal.metricKey}`)}
+        progressClassName="-mx-3"
+        progressPercent={goal.progressPercent}
+      />
     );
   }
 

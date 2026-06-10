@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, CircleAlert, Crown, Pencil, Share2, Target, TrendingDown, Trophy, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, CircleAlert, Crown, Pencil, Share2, Target, Trophy, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { BottomActionDock, type BottomActionDockItem } from "@/components/ui/bottom-action-dock";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GoalMetricProgressCard } from "@/components/ui/goal-metric-progress-card";
+import { GoalProgressBar } from "@/components/ui/goal-progress-bar";
 import type { CompetitionProgress } from "@/lib/competitions";
 import { attachCurrentUserMember, getCompetitionLeaderBoard } from "@/lib/competitions";
 import { formatCompactDate, getUserInitials } from "@/lib/presentation";
@@ -34,10 +36,6 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
   }
 
   return response.json() as Promise<T>;
-}
-
-function formatProgressValue(value: number) {
-  return `${Math.round(value)}%`;
 }
 
 function formatGoalValue(value: number | null, unit: string) {
@@ -119,70 +117,6 @@ function getPodiumBadgeTone(rank: number) {
   }
 
   return "bg-gradient-to-br from-orange-400 to-amber-600 text-white shadow-[0_6px_14px_rgba(154,52,18,0.22)]";
-}
-
-function ProgressBar({
-  value,
-  hasGoals,
-  label = formatProgressValue(value),
-  className,
-}: {
-  value: number;
-  hasGoals: boolean;
-  label?: string;
-  className?: string;
-}) {
-  const percent = Math.max(0, Math.min(100, value));
-  const setbackPercent = Math.max(0, Math.min(100, Math.abs(value)));
-  const isNegative = hasGoals && value < 0;
-  const labelInside = !isNegative && percent >= 50;
-  const ariaValue = Math.max(-100, Math.min(100, Math.round(value)));
-
-  return (
-    <div
-      className={cn(
-        "relative h-7 overflow-hidden rounded-full bg-foreground/[0.06]",
-        isNegative ? "bg-[rgb(var(--primary)/0.08)] ring-1 ring-[rgb(var(--primary)/0.18)]" : "",
-        className,
-      )}
-      role="progressbar"
-      aria-valuemin={-100}
-      aria-valuemax={100}
-      aria-valuenow={ariaValue}
-      aria-valuetext={label}
-    >
-      <div
-        className={cn(
-          "absolute top-0 h-full rounded-full transition-[width] duration-300",
-          isNegative
-            ? "right-0 bg-[repeating-linear-gradient(135deg,rgb(var(--primary-strong)/0.72)_0_6px,rgb(var(--primary)/0.34)_6px_12px)]"
-            : "left-0",
-          !isNegative && hasGoals ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" : "",
-          !isNegative && !hasGoals ? "bg-foreground/15" : "",
-        )}
-        style={{ width: `${isNegative ? setbackPercent : percent}%` }}
-      />
-      {isNegative ? <div aria-hidden="true" className="absolute right-0 top-0 h-full w-px bg-[rgb(var(--primary-strong)/0.5)]" /> : null}
-      {label ? (
-        <span
-          className={cn(
-            "absolute top-1/2 inline-flex -translate-y-1/2 truncate rounded-full px-2.5 py-0.5 text-[11px] font-semibold tabular-nums sm:text-xs",
-            isNegative
-              ? "left-1 text-[rgb(var(--primary-strong))]"
-              : labelInside
-                ? "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]"
-                : hasGoals
-                  ? "text-[rgb(var(--primary-strong))]"
-                  : "text-muted-foreground",
-            labelInside ? "justify-end" : "justify-start",
-          )}
-          style={isNegative ? undefined : labelInside ? { right: `${100 - percent}%` } : { left: `${percent}%` }}
-        >
-          {label}
-        </span>
-      ) : null}
-    </div>
-  );
 }
 
 export function CompetitionDetailWorkspace({ competition, userId }: CompetitionDetailWorkspaceProps) {
@@ -394,7 +328,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                   </div>
 
                   <div className="flex min-w-0 items-center justify-end">
-                    <ProgressBar className="h-8 w-full" hasGoals={hasGoals} value={member.progressPercent} />
+                    <GoalProgressBar className="h-8 w-full" hasGoals={hasGoals} value={member.progressPercent} />
                   </div>
 
                   <div className="flex items-center justify-end text-muted-foreground transition-colors group-hover:text-foreground">
@@ -443,7 +377,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
 
               <div className="space-y-4 p-4 sm:p-5">
                 <div className="surface-soft-card rounded-[0.95rem] p-3">
-                  <ProgressBar className="h-5" hasGoals={selectedMember.goalCount > 0} value={selectedMember.progressPercent} />
+                  <GoalProgressBar className="h-5" hasGoals={selectedMember.goalCount > 0} value={selectedMember.progressPercent} />
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="inline-flex min-h-8 items-center rounded-full border border-border/70 bg-background/80 px-2.5 text-[11px] font-medium tracking-[0.08em] text-muted-foreground">
                       {t("competitions.detail.latestRecord")} {selectedMember.latestRecordDate ? formatCompactDate(selectedMember.latestRecordDate, locale) : t("competitions.detail.noRecord")}
@@ -457,41 +391,13 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                 <div className="grid gap-2">
                   {selectedMember.goals.length > 0 ? (
                     selectedMember.goals.map((goal) => (
-                      <div className="surface-soft-card rounded-[0.85rem] p-3" key={goal.id}>
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-foreground">{t(`personalGoal.metrics.${goal.metricKey}`)}</p>
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1 text-xs font-semibold tabular-nums",
-                              goal.progressPercent < 0 ? "text-[rgb(var(--primary-strong))]" : "text-muted-foreground",
-                            )}
-                          >
-                            {goal.progressPercent < 0 ? <TrendingDown aria-hidden="true" className="size-3.5" /> : null}
-                            {formatProgressValue(goal.progressPercent)}
-                          </span>
-                        </div>
-                        <ProgressBar className="mt-2 h-1.5" hasGoals value={goal.progressPercent} label="" />
-                        <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-lg border border-border/60 bg-background/70 text-center">
-                          <div className="min-w-0 px-2 py-1.5">
-                            <p className="text-[10px] font-medium text-muted-foreground">{t("personalGoal.list.start")}</p>
-                            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-foreground">
-                              {formatGoalValue(goal.startValue, goal.unit)}
-                            </p>
-                          </div>
-                          <div className="min-w-0 border-x border-border/60 px-2 py-1.5">
-                            <p className="text-[10px] font-medium text-muted-foreground">{t("personalGoal.list.current")}</p>
-                            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-[rgb(var(--primary-strong))]">
-                              {formatGoalValue(goal.latestValue, goal.unit)}
-                            </p>
-                          </div>
-                          <div className="min-w-0 px-2 py-1.5">
-                            <p className="text-[10px] font-medium text-muted-foreground">{t("personalGoal.list.target")}</p>
-                            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-foreground">
-                              {formatGoalValue(goal.targetValue, goal.unit)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                      <GoalMetricProgressCard
+                        className="surface-soft-card bg-background/60"
+                        detail={`${t("personalGoal.list.start")} ${formatGoalValue(goal.startValue, goal.unit)} / ${t("personalGoal.list.current")} ${formatGoalValue(goal.latestValue, goal.unit)} / ${t("personalGoal.list.target")} ${formatGoalValue(goal.targetValue, goal.unit)}`}
+                        key={goal.id}
+                        metricLabel={t(`personalGoal.metrics.${goal.metricKey}`)}
+                        progressPercent={goal.progressPercent}
+                      />
                     ))
                   ) : (
                     <p className="text-sm text-muted-foreground">{t("competitions.detail.goalMissingBody")}</p>
