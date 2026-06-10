@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Activity, Files, GitCompareArrows, LayoutDashboard, Menu, Sparkles, Target, UsersRound, UserRound, X } from "lucide-react";
+import { Activity, Files, GitCompareArrows, LayoutDashboard, Menu, Sparkles, Target, Trophy, UsersRound, UserRound, X } from "lucide-react";
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
@@ -104,6 +104,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const isDashboard = pathname === "/dashboard";
   const isRecords = pathname.startsWith("/records") || pathname === "/profile";
   const isFriends = pathname.startsWith("/friends");
+  const isCompetitions = pathname.startsWith("/competitions");
   const isPersonalGoal = pathname.startsWith("/personal-goal");
   const isSummary = pathname === "/summary";
   const dashboardTrendMode = searchParams.get("trend") === "segmental" ? "segmental" : "overall";
@@ -139,6 +140,13 @@ export function AppHeader({ user }: AppHeaderProps) {
       description: t("navigation.friends.description"),
       icon: <UsersRound className="size-4" />,
       active: isFriends,
+    },
+    {
+      href: "/competitions",
+      label: t("navigation.competitions.label"),
+      description: t("navigation.competitions.description"),
+      icon: <Trophy className="size-4" />,
+      active: isCompetitions,
     },
     {
       href: "/personal-goal",
