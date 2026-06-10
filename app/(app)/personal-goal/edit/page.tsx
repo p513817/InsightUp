@@ -38,5 +38,14 @@ export default async function EditPersonalGoalPage({ searchParams }: EditPersona
     redirect("/personal-goal");
   }
 
-  return <PersonalGoalCreatePage initialGoals={selectedGoals} latestRecord={latestRecord} mode="edit" records={records} />;
+  return (
+    <PersonalGoalCreatePage
+      fixedTargetDate={selectedGoals[0]?.targetDate || null}
+      initialGoals={selectedGoals}
+      latestRecord={latestRecord}
+      mode="edit"
+      records={records}
+      targetDateLocked={selectedGoals.some((goal) => goal.targetDateLocked)}
+    />
+  );
 }

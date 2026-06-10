@@ -28,6 +28,13 @@ interface PersonalGoalCreatePageProps {
   records: InbodyRecord[];
   mode?: "create" | "edit";
   initialGoals?: PersonalGoal[];
+  cancelHref?: string;
+  createEndpoint?: string;
+  successHref?: string;
+  fixedTargetDate?: string | null;
+  targetDateLocked?: boolean;
+  fixedTitle?: string | null;
+  titleLocked?: boolean;
 }
 
 type CreateGoalResponse = {
@@ -142,6 +149,13 @@ export function PersonalGoalCreatePage({
   records,
   mode = "create",
   initialGoals = [],
+  cancelHref = "/personal-goal",
+  createEndpoint = "/api/personal-goals",
+  successHref = "/personal-goal",
+  fixedTargetDate = null,
+  targetDateLocked = false,
+  fixedTitle = null,
+  titleLocked = false,
 }: PersonalGoalCreatePageProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -149,7 +163,8 @@ export function PersonalGoalCreatePage({
   const isEditMode = mode === "edit";
   const defaultStartRecordId = initialGoals.find((goal) => goal.startRecordId)?.startRecordId || latestRecord?.id || records.at(-1)?.id || "";
   const defaultStartRecord = records.find((record) => record.id === defaultStartRecordId) || latestRecord;
-  const [title, setTitle] = useState(() => initialGoals.find((goal) => goal.title)?.title || "");
+  const initialTitle = fixedTitle ?? (initialGoals.find((goal) => goal.title)?.title || "");
+  const [title, setTitle] = useState(() => initialTitle);
   const [selectedStartRecordId, setSelectedStartRecordId] = useState(() => defaultStartRecordId);
   const [drafts, setDrafts] = useState<Partial<Record<PersonalGoalMetricKey, GoalDraft>>>(() => {
     if (!isEditMode) {
@@ -166,7 +181,7 @@ export function PersonalGoalCreatePage({
       return next;
     }, {});
   });
-  const [targetDate, setTargetDate] = useState(() => initialGoals[0]?.targetDate || getDateValue(90, defaultStartRecord?.date));
+  const [targetDate, setTargetDate] = useState(() => initialGoals[0]?.targetDate || fixedTargetDate || getDateValue(90, defaultStartRecord?.date));
   const [isSaving, setIsSaving] = useState(false);
   const currentYear = new Date().getFullYear();
   const targetDateParts = splitDateParts(targetDate);
@@ -186,10 +201,14 @@ export function PersonalGoalCreatePage({
   const selectedStartRecord = records.find((record) => record.id === selectedStartRecordId) || latestRecord;
 
   function returnToGoals() {
-    router.replace("/personal-goal");
+    router.replace(cancelHref);
   }
 
   function updateTargetDate(nextParts: Partial<typeof targetDateParts>) {
+    if (targetDateLocked) {
+      return;
+    }
+
     setTargetDate(buildDateValue({ ...targetDateParts, ...nextParts }));
   }
 
@@ -201,7 +220,9 @@ export function PersonalGoalCreatePage({
       return;
     }
 
-    setTargetDate(getDateValue(90, nextRecord.date));
+    if (!targetDateLocked) {
+      setTargetDate(getDateValue(90, nextRecord.date));
+    }
 
     setDrafts((current) => {
       const next = { ...current };
@@ -282,12 +303,12 @@ export function PersonalGoalCreatePage({
   }
 
   async function saveGoal() {
-    const normalizedTitle = title.trim();
+    const normalizedTitle = (titleLocked ? fixedTitle ?? "" : title).trim();
     const goals = selectedDrafts.map(({ draft }) => ({
       ...draft,
       title: normalizedTitle || null,
       startRecordId: selectedStartRecordId || null,
-      targetDate: targetDate || null,
+      targetDate: targetDateLocked ? fixedTargetDate || targetDate || null : targetDate || null,
     }));
 
     if (!goals.length) {
@@ -306,30 +327,29 @@ export function PersonalGoalCreatePage({
 
             return requestJson<{ goal: PersonalGoal }>(`/api/personal-goals/${goal.id}`, {
               method: "PATCH",
-              body: JSON.stringify({
-                targetValue: goal.targetValue,
-                startValue: goal.startValue,
-                startRecordId: selectedStartRecordId || null,
-                title: normalizedTitle || null,
-                targetDate: targetDate || null,
-              }),
-            });
-          }),
+                body: JSON.stringify({
+                  targetValue: goal.targetValue,
+                  startValue: goal.startValue,
+                  startRecordId: selectedStartRecordId || null,
+                  title: normalizedTitle || null,
+                  targetDate: targetDateLocked ? fixedTargetDate || targetDate || null : targetDate || null,
+                }),
+              });
+            }),
         );
         toast.success(t("personalGoal.form.updateSuccess"));
       } else {
-        await requestJson<CreateGoalResponse>("/api/personal-goals", {
+        await requestJson<CreateGoalResponse>(createEndpoint, {
           method: "POST",
           body: JSON.stringify({
             goals,
-            targetDate,
           }),
         });
         toast.success(t("personalGoal.form.saveSuccess"));
       }
 
       router.refresh();
-      returnToGoals();
+      router.replace(successHref);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : isEditMode ? t("personalGoal.form.updateError") : t("personalGoal.form.saveError"));
     } finally {
@@ -352,18 +372,29 @@ export function PersonalGoalCreatePage({
 
       <section className="surface-muted-gradient rounded-[1rem] border border-border/80 p-2.5 sm:p-3">
         <div className="grid gap-3">
-        <label className="block">
-          <span className="px-1 text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {t("personalGoal.form.goalTitle")}
-          </span>
-          <Input
-            className="mt-2 h-11 rounded-[0.9rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] shadow-none"
-            maxLength={80}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder={t("personalGoal.form.goalTitlePlaceholder")}
-            value={title}
-          />
-        </label>
+        {titleLocked ? (
+          <div className="block">
+            <span className="px-1 text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {t("personalGoal.form.competitionGoalTitle")}
+            </span>
+            <div className="mt-2 rounded-[0.9rem] border border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] px-3.5 py-2.5 text-sm font-semibold text-foreground">
+              <span className="block truncate">{fixedTitle || title || t("common.notAvailable")}</span>
+            </div>
+          </div>
+        ) : (
+          <label className="block">
+            <span className="px-1 text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {t("personalGoal.form.goalTitle")}
+            </span>
+            <Input
+              className="mt-2 h-11 rounded-[0.9rem] border-border/80 bg-[linear-gradient(180deg,rgb(var(--card))_0%,rgb(var(--surface))_100%)] shadow-none"
+              maxLength={80}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder={t("personalGoal.form.goalTitlePlaceholder")}
+              value={title}
+            />
+          </label>
+        )}
         <label className="block">
           <span className="px-1 text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {t("personalGoal.form.startRecord")}
@@ -387,7 +418,8 @@ export function PersonalGoalCreatePage({
           <p className="px-1 text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("personalGoal.form.targetDate")}</p>
           <div className="mt-2 grid grid-cols-3 gap-1.5">
             <select
-              className="h-10 rounded-[0.75rem] border border-border/80 bg-card px-2 text-sm text-foreground outline-none focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
+              className="h-10 rounded-[0.75rem] border border-border/80 bg-card px-2 text-sm text-foreground outline-none focus:border-primary/70 focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={targetDateLocked}
               onChange={(event) => updateTargetDate({ year: event.target.value })}
               value={targetDateParts.year}
             >
@@ -399,7 +431,8 @@ export function PersonalGoalCreatePage({
               ))}
             </select>
             <select
-              className="h-10 rounded-[0.75rem] border border-border/80 bg-card px-2 text-sm text-foreground outline-none focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
+              className="h-10 rounded-[0.75rem] border border-border/80 bg-card px-2 text-sm text-foreground outline-none focus:border-primary/70 focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={targetDateLocked}
               onChange={(event) => updateTargetDate({ month: event.target.value })}
               value={targetDateParts.month}
             >
@@ -411,7 +444,8 @@ export function PersonalGoalCreatePage({
               ))}
             </select>
             <select
-              className="h-10 rounded-[0.75rem] border border-border/80 bg-card px-2 text-sm text-foreground outline-none focus:border-primary/70 focus:ring-2 focus:ring-primary/15"
+              className="h-10 rounded-[0.75rem] border border-border/80 bg-card px-2 text-sm text-foreground outline-none focus:border-primary/70 focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={targetDateLocked}
               onChange={(event) => updateTargetDate({ day: event.target.value })}
               value={targetDateParts.day}
             >
@@ -424,19 +458,24 @@ export function PersonalGoalCreatePage({
             </select>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Button className="h-8 rounded-full px-3 text-xs" onClick={() => setTargetDate(getDateValue(60, selectedStartRecord?.date))} type="button" variant="outline">
+            <Button className="h-8 rounded-full px-3 text-xs" disabled={targetDateLocked} onClick={() => setTargetDate(getDateValue(60, selectedStartRecord?.date))} type="button" variant="outline">
               {t("personalGoal.form.in60Days")}
             </Button>
-            <Button className="h-8 rounded-full px-3 text-xs" onClick={() => setTargetDate(getDateValue(90, selectedStartRecord?.date))} type="button" variant="outline">
+            <Button className="h-8 rounded-full px-3 text-xs" disabled={targetDateLocked} onClick={() => setTargetDate(getDateValue(90, selectedStartRecord?.date))} type="button" variant="outline">
               {t("personalGoal.form.in90Days")}
             </Button>
-            <Button className="h-8 rounded-full px-3 text-xs" onClick={() => setTargetDate(getDateValue(120, selectedStartRecord?.date))} type="button" variant="outline">
+            <Button className="h-8 rounded-full px-3 text-xs" disabled={targetDateLocked} onClick={() => setTargetDate(getDateValue(120, selectedStartRecord?.date))} type="button" variant="outline">
               {t("personalGoal.form.in120Days")}
             </Button>
-            <Button className="h-8 rounded-full px-3 text-xs" onClick={() => setTargetDate(getDateValue(180, selectedStartRecord?.date))} type="button" variant="outline">
+            <Button className="h-8 rounded-full px-3 text-xs" disabled={targetDateLocked} onClick={() => setTargetDate(getDateValue(180, selectedStartRecord?.date))} type="button" variant="outline">
               {t("personalGoal.form.in180Days")}
             </Button>
           </div>
+          {targetDateLocked ? (
+            <p className="mt-2 px-1 text-xs leading-5 text-muted-foreground">
+              {t("personalGoal.form.targetDateLockedHint")}
+            </p>
+          ) : null}
         </div>
         </div>
       </section>

@@ -33,6 +33,7 @@ type PersonalGoalGroup = {
 };
 
 type GoalCardVariant = "active" | "history";
+type GoalSectionVariant = GoalCardVariant;
 
 function formatValue(value: number | null, unit: string) {
   if (value == null) {
@@ -178,11 +179,12 @@ export function PersonalGoalsWorkspace({ goals, latestRecord, records }: Persona
   const [pendingGroupKey, setPendingGroupKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isRefreshing, startTransition] = useTransition();
+  const [collapsedActiveKeys, setCollapsedActiveKeys] = useState<string[]>([]);
   const [expandedHistoryKeys, setExpandedHistoryKeys] = useState<string[]>([]);
   const hasGoals = goals.length > 0;
   const goalGroups = buildGoalGroups(goals, records);
-  const activeGroups = goalGroups.filter((group) => !group.isCompleted && !group.isExpired);
-  const completedGroups = goalGroups.filter((group) => group.isCompleted || group.isExpired);
+  const activeGroups = goalGroups.filter((group) => !group.isExpired);
+  const completedGroups = goalGroups.filter((group) => group.isExpired);
 
   function openCreatePage() {
     router.push("/personal-goal/new");
@@ -195,6 +197,12 @@ export function PersonalGoalsWorkspace({ goals, latestRecord, records }: Persona
 
   function toggleHistoryGroup(groupKey: string) {
     setExpandedHistoryKeys((current) =>
+      current.includes(groupKey) ? current.filter((key) => key !== groupKey) : [...current, groupKey],
+    );
+  }
+
+  function toggleActiveGroup(groupKey: string) {
+    setCollapsedActiveKeys((current) =>
       current.includes(groupKey) ? current.filter((key) => key !== groupKey) : [...current, groupKey],
     );
   }
@@ -249,6 +257,17 @@ type GoalCardProps = {
   locale: string;
 };
 
+type GoalSectionProps = {
+  countLabel: string;
+  emptyState: ReactNode;
+  groups: PersonalGoalGroup[];
+  isAllCollapsed: boolean;
+  onToggleAll: () => void;
+  renderGoalCard: (group: PersonalGoalGroup, variant: GoalSectionVariant) => ReactNode;
+  title: string;
+  variant: GoalSectionVariant;
+};
+
 function GoalCard({
   group,
   variant,
@@ -267,7 +286,7 @@ function GoalCard({
   const leftIcon = variant === "history"
     ? (group.isCompleted ? <CheckCircle2 className={`mt-0.5 size-5 shrink-0 ${progressToneIconClass}`} /> : <XCircle className={`mt-0.5 size-5 shrink-0 ${progressToneIconClass}`} />)
     : <Target className={`mt-0.5 size-5 shrink-0 ${progressToneIconClass}`} />;
-  const showExpandedDetails = variant === "active" || isExpanded;
+  const showExpandedDetails = isExpanded;
 
   return (
     <article className="surface-soft-card min-w-0 overflow-hidden rounded-[1.35rem] p-4">
@@ -277,6 +296,14 @@ function GoalCard({
           onClick={onToggle}
           type="button"
         >
+          <div className="flex min-w-0 items-start gap-2">
+            {leftIcon}
+            <h3 className="break-words font-display text-[1.1rem] leading-tight text-foreground">{getGroupTitle(group)}</h3>
+          </div>
+          <ChevronDown className={`size-5 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+        </button>
+      ) : onToggle ? (
+        <button className="flex w-full items-start justify-between gap-3 text-left" onClick={onToggle} type="button">
           <div className="flex min-w-0 items-start gap-2">
             {leftIcon}
             <h3 className="break-words font-display text-[1.1rem] leading-tight text-foreground">{getGroupTitle(group)}</h3>
@@ -333,32 +360,7 @@ function GoalCard({
         </div>
       ) : null}
 
-      {variant === "active" ? (
-        <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/60 pt-3">
-          <Button
-            aria-label={t("personalGoal.list.edit")}
-            className="size-10 cursor-pointer"
-            disabled={isBusy}
-            onClick={() => onEdit(group)}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            aria-label={t("personalGoal.list.delete")}
-            className="size-10 cursor-pointer text-destructive hover:bg-destructive/10"
-            disabled={isBusy}
-            onClick={() => onDelete(group)}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ) : isExpanded ? (
+      {isExpanded ? (
         <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/60 pt-3">
           <Button
             aria-label={t("personalGoal.list.edit")}
@@ -385,6 +387,36 @@ function GoalCard({
         </div>
       ) : null}
     </article>
+  );
+}
+
+function GoalSection({
+  countLabel,
+  emptyState,
+  groups,
+  isAllCollapsed,
+  onToggleAll,
+  renderGoalCard,
+  title,
+  variant,
+}: GoalSectionProps) {
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-between gap-3 px-1">
+        <button className="flex min-w-0 items-center gap-1.5 text-left" onClick={onToggleAll} type="button">
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isAllCollapsed ? "rotate-180" : ""}`} />
+        </button>
+        <p className="text-xs text-muted-foreground">{countLabel}</p>
+      </div>
+      {groups.length > 0 ? (
+        <div className="grid min-w-0 gap-2.5 md:grid-cols-2">
+          {groups.map((group) => renderGoalCard(group, variant))}
+        </div>
+      ) : (
+        emptyState
+      )}
+    </section>
   );
 }
 
@@ -422,7 +454,7 @@ function GoalCard({
 
   function renderGoalCard(group: PersonalGoalGroup, variant: GoalCardVariant) {
     const isBusy = pendingGroupKey === group.key || isRefreshing;
-    const isExpanded = variant === "active" || expandedHistoryKeys.includes(group.key);
+    const isExpanded = variant === "active" ? !collapsedActiveKeys.includes(group.key) : expandedHistoryKeys.includes(group.key);
 
     return (
       <GoalCard
@@ -433,13 +465,16 @@ function GoalCard({
         locale={locale}
         onDelete={deleteGroup}
         onEdit={editGroup}
-        onToggle={variant === "history" ? () => toggleHistoryGroup(group.key) : undefined}
+        onToggle={variant === "history" ? () => toggleHistoryGroup(group.key) : () => toggleActiveGroup(group.key)}
         renderGoalItem={renderGoalItem}
         t={t}
         variant={variant}
       />
     );
   }
+
+  const isActiveCollapsed = activeGroups.length > 0 && activeGroups.every((group) => collapsedActiveKeys.includes(group.key));
+  const isHistoryCollapsed = completedGroups.length > 0 && completedGroups.every((group) => !expandedHistoryKeys.includes(group.key));
 
   return (
     <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
@@ -467,36 +502,41 @@ function GoalCard({
               {feedback}
             </p>
           ) : null}
+          <GoalSection
+            countLabel={t("personalGoal.list.remaining", { count: activeGroups.length })}
+            emptyState={<div className="surface-soft-card rounded-[1.15rem] p-4 text-sm text-muted-foreground">{t("personalGoal.list.noActiveGoals")}</div>}
+            groups={activeGroups}
+            isAllCollapsed={isActiveCollapsed}
+            onToggleAll={() => {
+              if (isActiveCollapsed) {
+                setCollapsedActiveKeys([]);
+                return;
+              }
 
-          <section className="space-y-2">
-            <div className="flex items-center justify-between gap-3 px-1">
-              <h2 className="text-sm font-semibold text-foreground">{t("personalGoal.list.activeTitle")}</h2>
-              <p className="text-xs text-muted-foreground">{t("personalGoal.list.remaining", { count: activeGroups.length })}</p>
-            </div>
-            <div className="grid min-w-0 gap-2.5 md:grid-cols-2">
-              {activeGroups.length > 0 ? activeGroups.map((group) => renderGoalCard(group, "active")) : (
-                <div className="surface-soft-card rounded-[1.15rem] p-4 text-sm text-muted-foreground">
-                  {t("personalGoal.list.noActiveGoals")}
-                </div>
-              )}
-            </div>
-          </section>
+              setCollapsedActiveKeys(activeGroups.map((group) => group.key));
+            }}
+            renderGoalCard={renderGoalCard}
+            title={t("personalGoal.list.activeTitle")}
+            variant="active"
+          />
 
-          <section className="space-y-2">
-            <div className="flex items-center justify-between gap-3 px-1">
-              <h2 className="text-sm font-semibold text-foreground">{t("personalGoal.list.historyTitle")}</h2>
-              <p className="text-xs text-muted-foreground">{t("personalGoal.list.historyCount", { count: completedGroups.length })}</p>
-            </div>
-            {completedGroups.length > 0 ? (
-              <div className="grid min-w-0 gap-2.5 md:grid-cols-2">
-                {completedGroups.map((group) => renderGoalCard(group, "history"))}
-              </div>
-            ) : (
-              <div className="surface-soft-card rounded-[1.15rem] border-dashed p-4 text-sm text-muted-foreground">
-                {t("personalGoal.list.historyEmpty")}
-              </div>
-            )}
-          </section>
+          <GoalSection
+            countLabel={t("personalGoal.list.historyCount", { count: completedGroups.length })}
+            emptyState={<div className="surface-soft-card rounded-[1.15rem] border-dashed p-4 text-sm text-muted-foreground">{t("personalGoal.list.historyEmpty")}</div>}
+            groups={completedGroups}
+            isAllCollapsed={isHistoryCollapsed}
+            onToggleAll={() => {
+              if (isHistoryCollapsed) {
+                setExpandedHistoryKeys(completedGroups.map((group) => group.key));
+                return;
+              }
+
+              setExpandedHistoryKeys([]);
+            }}
+            renderGoalCard={renderGoalCard}
+            title={t("personalGoal.list.historyTitle")}
+            variant="history"
+          />
         </div>
       ) : (
         <section className="surface-state-panel flex flex-col items-center gap-3 rounded-[1.75rem] p-8 text-center">

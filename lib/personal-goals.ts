@@ -43,6 +43,9 @@ export const personalGoalCreateSchema = z.object({
   startValue: z.number().finite(),
   targetValue: z.number().finite(),
   targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  competitionId: z.string().uuid().nullable().optional(),
+  competitionMemberId: z.string().uuid().nullable().optional(),
+  targetDateLocked: z.boolean().optional(),
 });
 
 export const personalGoalBatchCreateSchema = z.object({
@@ -65,11 +68,14 @@ export type PersonalGoal = {
   id: string;
   title: string | null;
   startRecordId: string | null;
+  competitionId: string | null;
+  competitionMemberId: string | null;
   metricKey: PersonalGoalMetricKey;
   startValue: number;
   targetValue: number;
   unit: string;
   targetDate: string | null;
+  targetDateLocked: boolean;
   createdAt: string;
   updatedAt: string;
   latestValue: number | null;
@@ -82,11 +88,14 @@ type PersonalGoalRow = {
   id: string;
   title?: string | null;
   start_record_id?: string | null;
+  competition_id?: string | null;
+  competition_member_id?: string | null;
   metric_key: PersonalGoalMetricKey;
   start_value: number | string;
   target_value: number | string;
   unit: string;
   target_date?: string | null;
+  target_date_locked?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -101,6 +110,14 @@ function isMissingPersonalGoalTitleColumn(error: { code?: string; message?: stri
 
 function isMissingPersonalGoalStartRecordColumn(error: { code?: string; message?: string } | null) {
   return error?.code === "42703" && Boolean(error?.message?.includes("start_record_id"));
+}
+
+function isMissingPersonalGoalCompetitionColumn(error: { code?: string; message?: string } | null) {
+  return error?.code === "42703" && Boolean(
+    error?.message?.includes("competition_id")
+      || error?.message?.includes("competition_member_id")
+      || error?.message?.includes("target_date_locked")
+  );
 }
 
 function getGoalMetric(metricKey: PersonalGoalMetricKey) {
@@ -160,11 +177,14 @@ function mapGoalRow(row: PersonalGoalRow, latestRecord: InbodyRecord | null, pro
     id: row.id,
     title: row.title ?? null,
     startRecordId: row.start_record_id ?? null,
+    competitionId: row.competition_id ?? null,
+    competitionMemberId: row.competition_member_id ?? null,
     metricKey: row.metric_key,
     startValue,
     targetValue,
     unit: row.unit,
     targetDate: row.target_date ?? null,
+    targetDateLocked: row.target_date_locked ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     latestValue,
@@ -181,7 +201,7 @@ export async function listPersonalGoals(
 ) {
   const { data, error } = await supabase
     .from("user_personal_goals")
-    .select("id, title, start_record_id, metric_key, start_value, target_value, unit, target_date, created_at, updated_at")
+    .select("id, title, start_record_id, competition_id, competition_member_id, metric_key, start_value, target_value, unit, target_date, target_date_locked, created_at, updated_at")
     .eq("user_id", userId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
@@ -191,7 +211,7 @@ export async function listPersonalGoals(
       return [];
     }
 
-    if (isMissingPersonalGoalTitleColumn(error) || isMissingPersonalGoalStartRecordColumn(error)) {
+    if (isMissingPersonalGoalTitleColumn(error) || isMissingPersonalGoalStartRecordColumn(error) || isMissingPersonalGoalCompetitionColumn(error)) {
       const { data: legacyData, error: legacyError } = await supabase
         .from("user_personal_goals")
         .select("id, metric_key, start_value, target_value, unit, target_date, created_at, updated_at")
@@ -225,13 +245,16 @@ export async function createPersonalGoal(
       user_id: userId,
       title: input.title?.trim() || null,
       start_record_id: input.startRecordId ?? null,
+      competition_id: input.competitionId ?? null,
+      competition_member_id: input.competitionMemberId ?? null,
       metric_key: input.metricKey,
       start_value: input.startValue,
       target_value: input.targetValue,
       unit: metric.unit,
       target_date: input.targetDate ?? null,
+      target_date_locked: input.targetDateLocked ?? false,
     })
-    .select("id, title, start_record_id, metric_key, start_value, target_value, unit, target_date, created_at, updated_at")
+    .select("id, title, start_record_id, competition_id, competition_member_id, metric_key, start_value, target_value, unit, target_date, target_date_locked, created_at, updated_at")
     .single();
 
   if (error) {
@@ -254,18 +277,21 @@ export async function createPersonalGoals(
       user_id: userId,
       title: input.title?.trim() || null,
       start_record_id: input.startRecordId ?? null,
+      competition_id: input.competitionId ?? null,
+      competition_member_id: input.competitionMemberId ?? null,
       metric_key: input.metricKey,
       start_value: input.startValue,
       target_value: input.targetValue,
       unit: metric.unit,
       target_date: input.targetDate ?? null,
+      target_date_locked: input.targetDateLocked ?? false,
     };
   });
 
   const { data, error } = await supabase
     .from("user_personal_goals")
     .insert(payload)
-    .select("id, title, start_record_id, metric_key, start_value, target_value, unit, target_date, created_at, updated_at");
+    .select("id, title, start_record_id, competition_id, competition_member_id, metric_key, start_value, target_value, unit, target_date, target_date_locked, created_at, updated_at");
 
   if (error) {
     throw error;
@@ -293,7 +319,7 @@ export async function updatePersonalGoal(
     .eq("id", goalId)
     .eq("user_id", userId)
     .is("deleted_at", null)
-    .select("id, title, start_record_id, metric_key, start_value, target_value, unit, target_date, created_at, updated_at")
+    .select("id, title, start_record_id, competition_id, competition_member_id, metric_key, start_value, target_value, unit, target_date, target_date_locked, created_at, updated_at")
     .single();
 
   if (error) {
