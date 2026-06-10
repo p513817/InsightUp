@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, CircleAlert, Crown, Pencil, Share2, Target, Trophy, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, CircleAlert, Crown, Pencil, Share2, Target, TrendingDown, Trophy, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,15 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 }
 
 function formatProgressValue(value: number) {
-  return `${Math.max(0, Math.round(value))}%`;
+  return `${Math.round(value)}%`;
+}
+
+function formatGoalValue(value: number | null, unit: string) {
+  if (value == null) {
+    return "-";
+  }
+
+  return `${value.toLocaleString("en-US", { maximumFractionDigits: 1 })}${unit ? ` ${unit}` : ""}`;
 }
 
 function getStatusBadgeLabel(status: CompetitionProgress["members"][number]["status"], t: ReturnType<typeof useTranslations>) {
@@ -125,27 +133,54 @@ function ProgressBar({
   className?: string;
 }) {
   const percent = Math.max(0, Math.min(100, value));
-  const labelInside = percent >= 50;
+  const setbackPercent = Math.max(0, Math.min(100, Math.abs(value)));
+  const isNegative = hasGoals && value < 0;
+  const labelInside = !isNegative && percent >= 50;
+  const ariaValue = Math.max(-100, Math.min(100, Math.round(value)));
 
   return (
-    <div className={cn("relative h-7 overflow-hidden rounded-full bg-foreground/[0.06]", className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+    <div
+      className={cn(
+        "relative h-7 overflow-hidden rounded-full bg-foreground/[0.06]",
+        isNegative ? "bg-[rgb(var(--primary)/0.08)] ring-1 ring-[rgb(var(--primary)/0.18)]" : "",
+        className,
+      )}
+      role="progressbar"
+      aria-valuemin={-100}
+      aria-valuemax={100}
+      aria-valuenow={ariaValue}
+      aria-valuetext={label}
+    >
       <div
         className={cn(
-          "h-full rounded-full transition-[width] duration-300",
-          hasGoals ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" : "bg-foreground/15",
+          "absolute top-0 h-full rounded-full transition-[width] duration-300",
+          isNegative
+            ? "right-0 bg-[repeating-linear-gradient(135deg,rgb(var(--primary-strong)/0.72)_0_6px,rgb(var(--primary)/0.34)_6px_12px)]"
+            : "left-0",
+          !isNegative && hasGoals ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" : "",
+          !isNegative && !hasGoals ? "bg-foreground/15" : "",
         )}
-        style={{ width: `${percent}%` }}
+        style={{ width: `${isNegative ? setbackPercent : percent}%` }}
       />
-      <span
-        className={cn(
-          "absolute top-1/2 inline-flex -translate-y-1/2 truncate rounded-full px-2.5 py-0.5 text-[11px] font-semibold tabular-nums sm:text-xs",
-          labelInside ? "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]" : hasGoals ? "text-[rgb(var(--primary-strong))]" : "text-muted-foreground",
-          labelInside ? "justify-end" : "justify-start",
-        )}
-        style={labelInside ? { right: `${100 - percent}%` } : { left: `${percent}%` }}
-      >
-        {label}
-      </span>
+      {isNegative ? <div aria-hidden="true" className="absolute right-0 top-0 h-full w-px bg-[rgb(var(--primary-strong)/0.5)]" /> : null}
+      {label ? (
+        <span
+          className={cn(
+            "absolute top-1/2 inline-flex -translate-y-1/2 truncate rounded-full px-2.5 py-0.5 text-[11px] font-semibold tabular-nums sm:text-xs",
+            isNegative
+              ? "left-1 text-[rgb(var(--primary-strong))]"
+              : labelInside
+                ? "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]"
+                : hasGoals
+                  ? "text-[rgb(var(--primary-strong))]"
+                  : "text-muted-foreground",
+            labelInside ? "justify-end" : "justify-start",
+          )}
+          style={isNegative ? undefined : labelInside ? { right: `${100 - percent}%` } : { left: `${percent}%` }}
+        >
+          {label}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -246,20 +281,24 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
             </span>
           </div>
 
-          <div className="mt-4 px-1 py-1 sm:px-2">
+          <div className="mt-2 px-1 sm:mt-3 sm:px-2">
             <div className="relative mt-1">
-              <div className="absolute left-0 right-0 top-5 h-1 rounded-full bg-foreground/10" />
-                <div className="absolute left-0 top-5 h-1 rounded-full bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" style={{ width: `${currentTimelinePercent}%` }} />
+              <div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-foreground/10" />
+                <div className="absolute left-0 top-3 h-1 rounded-full bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" style={{ width: `${currentTimelinePercent}%` }} />
 
-              <div className="absolute left-0 top-5 -translate-x-1/2 -translate-y-1/2"><div className="size-3 rounded-full border-2 border-background bg-primary shadow-[0_0_0_1px_rgb(var(--primary)/0.35)]" /></div>
+              <div className="absolute left-0 top-[0.875rem] -translate-x-1/2 -translate-y-1/2"><div className="size-3 rounded-full border-2 border-background bg-primary shadow-[0_0_0_1px_rgb(var(--primary)/0.35)]" /></div>
 
-              <div className="absolute top-5 -translate-x-1/2 -translate-y-1/2" style={{ left: `${currentTimelinePercent}%` }}>
-                <div className="size-4 rounded-full border-2 border-background bg-accent-strong shadow-[0_0_0_1px_rgb(var(--accent-strong)/0.38)]" />
+              <div className="absolute top-[0.875rem] -translate-x-1/2 -translate-y-1/2" style={{ left: `${currentTimelinePercent}%` }}>
+                <div className="relative grid size-5 place-items-center">
+                  <span className="absolute size-5 animate-ping rounded-full bg-emerald-400/35" />
+                  <span className="absolute size-4 rounded-full bg-emerald-400/18" />
+                  <span className="relative size-3.5 rounded-full border-2 border-background bg-[rgb(var(--primary-strong))] shadow-[0_0_0_1px_rgb(var(--primary-strong)/0.35)]" />
+                </div>
               </div>
 
-              <div className="absolute right-0 top-5 translate-x-1/2 -translate-y-1/2"><div className="size-3 rounded-full border-2 border-background bg-muted-foreground shadow-[0_0_0_1px_rgb(var(--border)/0.5)]" /></div>
+              <div className="absolute right-0 top-[0.875rem] translate-x-1/2 -translate-y-1/2"><div className="size-3 rounded-full border-2 border-background bg-muted-foreground shadow-[0_0_0_1px_rgb(var(--border)/0.5)]" /></div>
 
-              <div className="grid grid-cols-3 gap-2 pt-8 text-center">
+              <div className="grid grid-cols-3 gap-2 pt-6 text-center">
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium text-muted-foreground">{t("competitions.detail.timelineStart")}</p>
                   <p className="mt-0.5 text-xs font-semibold text-foreground">{formatCompactDate(competition.createdAt, locale)}</p>
@@ -418,16 +457,39 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                 <div className="grid gap-2">
                   {selectedMember.goals.length > 0 ? (
                     selectedMember.goals.map((goal) => (
-                      <div className="surface-soft-card rounded-[0.85rem] p-2.5" key={goal.id}>
+                      <div className="surface-soft-card rounded-[0.85rem] p-3" key={goal.id}>
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">{t(`personalGoal.metrics.${goal.metricKey}`)}</p>
-                          <span className="text-xs tabular-nums text-muted-foreground">{formatProgressValue(goal.progressPercent)}</span>
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 text-xs font-semibold tabular-nums",
+                              goal.progressPercent < 0 ? "text-[rgb(var(--primary-strong))]" : "text-muted-foreground",
+                            )}
+                          >
+                            {goal.progressPercent < 0 ? <TrendingDown aria-hidden="true" className="size-3.5" /> : null}
+                            {formatProgressValue(goal.progressPercent)}
+                          </span>
                         </div>
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]">
-                          <div
-                            className="h-full rounded-full bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] transition-[width] duration-300"
-                            style={{ width: `${Math.max(0, Math.min(100, goal.progressPercent))}%` }}
-                          />
+                        <ProgressBar className="mt-2 h-1.5" hasGoals value={goal.progressPercent} label="" />
+                        <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-lg border border-border/60 bg-background/70 text-center">
+                          <div className="min-w-0 px-2 py-1.5">
+                            <p className="text-[10px] font-medium text-muted-foreground">{t("personalGoal.list.start")}</p>
+                            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-foreground">
+                              {formatGoalValue(goal.startValue, goal.unit)}
+                            </p>
+                          </div>
+                          <div className="min-w-0 border-x border-border/60 px-2 py-1.5">
+                            <p className="text-[10px] font-medium text-muted-foreground">{t("personalGoal.list.current")}</p>
+                            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-[rgb(var(--primary-strong))]">
+                              {formatGoalValue(goal.latestValue, goal.unit)}
+                            </p>
+                          </div>
+                          <div className="min-w-0 px-2 py-1.5">
+                            <p className="text-[10px] font-medium text-muted-foreground">{t("personalGoal.list.target")}</p>
+                            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-foreground">
+                              {formatGoalValue(goal.targetValue, goal.unit)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))

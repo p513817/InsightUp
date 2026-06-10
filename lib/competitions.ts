@@ -339,8 +339,26 @@ export function getCompetitionMemberByUserId(competition: CompetitionProgress | 
   return competition?.members.find((member) => member.userId === userId) ?? null;
 }
 
+function getCompetitionMemberSortGroup(member: CompetitionMemberProgress) {
+  if (member.status === "declined" || member.status === "removed") {
+    return 2;
+  }
+
+  if (member.goalCount <= 0) {
+    return 1;
+  }
+
+  return 0;
+}
+
 export function getCompetitionLeaderBoard(competition: CompetitionProgress | null) {
   return [...(competition?.members ?? [])].sort((left, right) => {
+    const leftGroup = getCompetitionMemberSortGroup(left);
+    const rightGroup = getCompetitionMemberSortGroup(right);
+    if (leftGroup !== rightGroup) {
+      return leftGroup - rightGroup;
+    }
+
     if (right.progressPercent !== left.progressPercent) {
       return right.progressPercent - left.progressPercent;
     }

@@ -12,10 +12,12 @@ declare
   v_luna_id constant uuid := '22222222-2222-4222-8222-222222222222';
   v_kai_id constant uuid := '33333333-3333-4333-8333-333333333333';
   v_mia_id constant uuid := '44444444-4444-4444-8444-444444444444';
+  v_noah_id constant uuid := '55555555-5555-4555-8555-555555555555';
 
   v_luna_member_id constant uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   v_kai_member_id constant uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   v_mia_member_id constant uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  v_noah_member_id constant uuid := '55555555-aaaa-4555-8555-aaaaaaaaaaaa';
 
   v_luna_start_record_id constant uuid := 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
   v_luna_latest_record_id constant uuid := 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
@@ -23,6 +25,8 @@ declare
   v_kai_latest_record_id constant uuid := 'bcbcbcbc-bcbc-4bcb-8bcb-bcbcbcbcbcbc';
   v_mia_start_record_id constant uuid := 'ffffffff-ffff-4fff-8fff-ffffffffffff';
   v_mia_latest_record_id constant uuid := '99999999-9999-4999-8999-999999999999';
+  v_noah_start_record_id constant uuid := '55555555-dddd-4555-8555-dddddddddddd';
+  v_noah_latest_record_id constant uuid := '55555555-eeee-4555-8555-eeeeeeeeeeee';
 
 begin
   -- Demo auth users.
@@ -78,6 +82,19 @@ begin
       false,
       timezone('utc', now()),
       timezone('utc', now())
+    ),
+    (
+      v_noah_id,
+      'authenticated',
+      'authenticated',
+      'noah.lin.demo@example.com',
+      timezone('utc', now()),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Noah Lin"}'::jsonb,
+      false,
+      false,
+      timezone('utc', now()),
+      timezone('utc', now())
     )
   on conflict (id) do update
   set
@@ -89,7 +106,7 @@ begin
     is_anonymous = excluded.is_anonymous,
     updated_at = excluded.updated_at;
 
-  -- Demo profiles with visible avatars for stack preview.
+  -- Demo profiles. Noah intentionally has no avatar so the UI fallback can be checked.
   insert into public.user_profiles (user_id, display_name, avatar_url, friend_code)
   values
     (
@@ -109,6 +126,12 @@ begin
       'Mia Wang',
       'https://i.pravatar.cc/100?img=47',
       'MIAWANG001'
+    ),
+    (
+      v_noah_id,
+      'Noah Lin',
+      null,
+      'NOAHLIN001'
     )
   on conflict (user_id) do update
   set
@@ -162,6 +185,18 @@ begin
       'Mia Wang',
       'https://i.pravatar.cc/100?img=47',
       'MIAWANG001',
+      'participant',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now())
+    ),
+    (
+      v_noah_member_id,
+      v_competition_id,
+      v_noah_id,
+      'Noah Lin',
+      null,
+      'NOAHLIN001',
       'participant',
       'accepted',
       v_owner_id,
@@ -326,6 +361,48 @@ begin
       'Demo latest record for Mia',
       timezone('utc', now()),
       timezone('utc', now())
+    ),
+    (
+      v_noah_start_record_id,
+      v_noah_id,
+      date '2026-04-10',
+      176,
+      32,
+      'male',
+      80,
+      82.0,
+      34.0,
+      16.0,
+      19.5,
+      7,
+      1680,
+      2450,
+      true,
+      'manual',
+      'Demo baseline record for Noah',
+      timezone('utc', now()),
+      timezone('utc', now())
+    ),
+    (
+      v_noah_latest_record_id,
+      v_noah_id,
+      date '2026-06-07',
+      176,
+      32,
+      'male',
+      76,
+      84.5,
+      32.8,
+      18.9,
+      18.9,
+      9,
+      1695,
+      2470,
+      true,
+      'manual',
+      'Demo latest record for Noah moving toward a regressive fat percentage goal',
+      timezone('utc', now()),
+      timezone('utc', now())
     )
   on conflict (id) do update
   set
@@ -422,6 +499,22 @@ begin
       'fatPercent',
       25.0,
       22.0,
+      '%',
+      date '2026-08-08',
+      true,
+      timezone('utc', now()),
+      timezone('utc', now())
+    ),
+    (
+      '55555555-5555-4115-8115-555555555555',
+      v_noah_id,
+      'Reverse progress check',
+      v_noah_start_record_id,
+      v_competition_id,
+      v_noah_member_id,
+      'fatPercent',
+      19.5,
+      22.5,
       '%',
       date '2026-08-08',
       true,
