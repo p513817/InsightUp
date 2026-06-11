@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import type { CompetitionProgress } from "@/lib/competitions";
@@ -289,33 +290,20 @@ export function CompetitionsWorkspace({ competitions, userId }: CompetitionsWork
     return currentMember?.status === "accepted" && currentMember.goalCount <= 0;
   }).length;
   const nearestDeadline = activeCompetitions[0] ?? null;
-  const nearestDeadlineDaysLeft = nearestDeadline ? getDaysUntil(nearestDeadline.targetDate) : null;
 
   return (
     <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
       {hasCompetitions ? (
         <div className="space-y-5">
           <section>
-            <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
-              <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("competitions.stats.active")}</p>
-                <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{activeCompetitions.length}</p>
-              </div>
-              <div className="surface-soft-card min-w-[8.5rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("competitions.stats.missingGoals")}</p>
-                <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{missingGoalCount}</p>
-              </div>
-              <div className="surface-soft-card min-w-[9rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("competitions.stats.nearestDeadline")}</p>
-                <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">
-                  {nearestDeadline ? formatCompactDate(nearestDeadline.targetDate, locale) : t("competitions.stats.noActiveDeadline")}
-                </p>
-                {nearestDeadlineDaysLeft != null ? (
-                  <p className="mt-1 text-xs font-medium text-muted-foreground">
-                    {nearestDeadlineDaysLeft === 0 ? t("competitions.stats.dueToday") : t("competitions.stats.daysLeft", { count: nearestDeadlineDaysLeft })}
-                  </p>
-                ) : null}
-              </div>
+            <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
+              <CompactInfoCard label={t("competitions.stats.active")} minWidthClassName="min-w-0" value={activeCompetitions.length} />
+              <CompactInfoCard label={t("competitions.stats.missingGoals")} minWidthClassName="min-w-0" value={missingGoalCount} />
+              <CompactInfoCard
+                label={t("competitions.stats.nearestDeadline")}
+                minWidthClassName="min-w-0"
+                value={nearestDeadline ? formatCompactDate(nearestDeadline.targetDate, locale) : t("competitions.stats.noActiveDeadline")}
+              />
             </StatsScrollbarRow>
           </section>
           {activeCompetitions.length > 0 ? (

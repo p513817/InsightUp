@@ -63,23 +63,23 @@ function renderMobileColumn(column: MobileRecordColumn, record: InbodyRecord, is
 
 function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metricColumns, footerColumns }: MobileRecordCardProps) {
   return (
-    <div className="relative isolate overflow-hidden rounded-[1.75rem]">
+    <div className="relative isolate overflow-hidden rounded-[1.15rem]">
       {isBusy ? (
-        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.75rem]">
+        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.15rem]">
           <span
-            className="absolute inset-0 rounded-[1.75rem]"
+            className="absolute inset-0 rounded-[1.15rem]"
             style={{
               animation: "rotate-gradient 2s linear infinite",
               background:
                 "repeating-conic-gradient(from var(--gradient-rotation), rgb(var(--brand-sky-50) / 0) 0deg, rgb(var(--brand-sky-50) / 0) 145deg, rgb(var(--brand-mint-500) / 0.4) 155deg, rgb(var(--brand-navy-700) / 1) 160deg, rgb(var(--brand-navy-700) / 1) 195deg, rgb(var(--brand-mint-500) / 0.4) 205deg, rgb(var(--brand-sky-50) / 0) 215deg, rgb(var(--brand-sky-50) / 0) 360deg)",
             }}
           />
-          <span className="absolute inset-[1.5px] rounded-[calc(1.75rem-1.5px)]" style={{ background: "rgb(var(--background))" }} />
+          <span className="absolute inset-[1.5px] rounded-[calc(1.15rem-1.5px)]" style={{ background: "rgb(var(--background))" }} />
         </span>
       ) : null}
 
-      <Card className="relative z-10 gap-3 border-border/55 bg-card/84 p-4 sm:gap-4 sm:p-6">
-        <div className="space-y-3">
+      <Card className="relative z-10 gap-2 rounded-[1.05rem] border-border/55 bg-card/84 p-2.5 sm:p-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex flex-wrap items-center gap-2">
               {heroColumns.map((column) => (
@@ -97,10 +97,10 @@ function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metric
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+          <div className="grid grid-cols-3 gap-1">
             {metricColumns.map((column) => (
               <div className={column.columnDef.meta?.mobileCardClassName} key={column.id}>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{column.columnDef.meta?.mobileLabel}</p>
+                <p className="truncate text-[10px] font-semibold uppercase leading-none tracking-[0.1em] text-muted-foreground">{column.columnDef.meta?.mobileLabel}</p>
                 {renderMobileColumn(column, record, isBusy)}
               </div>
             ))}
@@ -197,7 +197,7 @@ export function RecordManager({
         header: t("records.manager.date"),
         meta: {
           mobileSlot: "hero",
-          mobileRender: (record) => <h3 className="font-display text-[1.25rem] leading-none text-foreground">{formatCompactDate(record.date)}</h3>,
+          mobileRender: (record) => <h3 className="font-display text-[1.12rem] leading-none text-foreground">{formatCompactDate(record.date)}</h3>,
         },
         cell: ({ row }) => <p className="font-display text-[1.05rem] text-foreground">{formatCompactDate(row.original.date)}</p>,
       },
@@ -207,8 +207,8 @@ export function RecordManager({
         meta: {
           mobileSlot: "metric",
           mobileLabel: t("records.manager.weight"),
-          mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
-          mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.weight)} kg</p>,
+          mobileCardClassName: "surface-subtle-gradient rounded-[0.7rem] border border-border/50 px-2 py-1.5",
+          mobileRender: (record) => <p className="mt-1 truncate font-display text-[0.88rem] leading-none text-foreground">{formatDecimal(record.weight)} kg</p>,
         },
         cell: ({ row }) => <span className="text-sm text-foreground">{formatDecimal(row.original.weight)} kg</span>,
       },
@@ -218,8 +218,8 @@ export function RecordManager({
         meta: {
           mobileSlot: "metric",
           mobileLabel: t("records.manager.muscle"),
-          mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
-          mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.muscle)} kg</p>,
+          mobileCardClassName: "surface-subtle-gradient rounded-[0.7rem] border border-border/50 px-2 py-1.5",
+          mobileRender: (record) => <p className="mt-1 truncate font-display text-[0.88rem] leading-none text-foreground">{formatDecimal(record.muscle)} kg</p>,
         },
         cell: ({ row }) => <span className="text-sm text-foreground">{formatDecimal(row.original.muscle)} kg</span>,
       },
@@ -229,8 +229,8 @@ export function RecordManager({
         meta: {
           mobileSlot: "metric",
           mobileLabel: t("records.manager.fatPercent"),
-          mobileCardClassName: "surface-subtle-gradient rounded-[0.8rem] border border-border/50 px-2 py-1.5",
-          mobileRender: (record) => <p className="mt-0.5 font-display text-[0.95rem] leading-tight text-foreground">{formatDecimal(record.fatPercent)}</p>,
+          mobileCardClassName: "surface-subtle-gradient rounded-[0.7rem] border border-border/50 px-2 py-1.5",
+          mobileRender: (record) => <p className="mt-1 truncate font-display text-[0.88rem] leading-none text-foreground">{formatDecimal(record.fatPercent)}</p>,
         },
         cell: ({ row }) => <span className="text-sm text-foreground">{formatDecimal(row.original.fatPercent)}</span>,
       },
@@ -337,7 +337,7 @@ export function RecordManager({
     <div className="space-y-2.5 pb-24 sm:space-y-3 sm:pb-28">
       {records.length ? (
         <div>
-          <Card className="gap-0 border-border/60 bg-card/90 p-2.5">
+          <Card className="gap-0 rounded-[1rem] border-border/60 bg-card/90 p-2">
             <div className="flex min-w-0 items-center gap-2">
               <label className="sr-only" htmlFor="record-search">
                 {t("records.manager.searchLabel")}
@@ -427,7 +427,7 @@ export function RecordManager({
               </div>
             </div>
 
-            <div className="grid gap-3 lg:hidden">
+            <div className="grid gap-2 lg:hidden">
               {pageRows.map((row) => {
                 const record = row.original;
                 const isBusy = busyRecordId === record.id;

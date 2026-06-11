@@ -1,4 +1,4 @@
--- InsightUp demo competition seed data
+-- InsightUp demo friends and competition seed data
 -- Use this in Supabase SQL Editor or as a local seed for development only.
 -- It is intentionally idempotent so you can re-run it without creating duplicates.
 
@@ -6,18 +6,35 @@ begin;
 
 do $$
 declare
-  v_competition_id constant uuid := '3af8817b-9fd0-44cd-8c07-7cf8eb8b361f';
   v_owner_id constant uuid := '1a34a5b4-a544-4fd7-9678-ceb9e450db7d';
+
+  v_competition_id constant uuid := '71f7a1af-43d4-47fd-99fe-5f9d19738f01';
+  v_second_competition_id constant uuid := '6fb1e380-83de-4d34-bc13-33cdb65d3aa1';
+  v_completed_competition_id constant uuid := '8c16f7c8-4f5b-4bb6-8fe0-7e17be3d6f21';
 
   v_luna_id constant uuid := '22222222-2222-4222-8222-222222222222';
   v_kai_id constant uuid := '33333333-3333-4333-8333-333333333333';
   v_mia_id constant uuid := '44444444-4444-4444-8444-444444444444';
   v_noah_id constant uuid := '55555555-5555-4555-8555-555555555555';
+  v_sofia_id constant uuid := '66666666-6666-4666-8666-666666666666';
+  v_ethan_id constant uuid := '77777777-7777-4777-8777-777777777777';
+  v_rina_id constant uuid := '88888888-8888-4888-8888-888888888888';
+  v_omar_id constant uuid := '99999999-1111-4999-8999-111111111111';
 
+  v_owner_member_id constant uuid := '10101010-1010-4010-8010-101010101010';
   v_luna_member_id constant uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   v_kai_member_id constant uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   v_mia_member_id constant uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
   v_noah_member_id constant uuid := '55555555-aaaa-4555-8555-aaaaaaaaaaaa';
+
+  v_second_owner_member_id constant uuid := '20202020-2020-4020-8020-202020202020';
+  v_sofia_member_id constant uuid := '66666666-aaaa-4666-8666-aaaaaaaaaaaa';
+  v_ethan_member_id constant uuid := '77777777-aaaa-4777-8777-aaaaaaaaaaaa';
+  v_rina_member_id constant uuid := '88888888-aaaa-4888-8888-aaaaaaaaaaaa';
+  v_omar_member_id constant uuid := '99999999-aaaa-4999-8999-aaaaaaaaaaaa';
+  v_completed_owner_member_id constant uuid := '30303030-3030-4030-8030-303030303030';
+  v_completed_luna_member_id constant uuid := '40404040-4040-4040-8040-404040404040';
+  v_completed_kai_member_id constant uuid := '50505050-5050-4050-8050-505050505050';
 
   v_luna_start_record_id constant uuid := 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
   v_luna_latest_record_id constant uuid := 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
@@ -27,8 +44,92 @@ declare
   v_mia_latest_record_id constant uuid := '99999999-9999-4999-8999-999999999999';
   v_noah_start_record_id constant uuid := '55555555-dddd-4555-8555-dddddddddddd';
   v_noah_latest_record_id constant uuid := '55555555-eeee-4555-8555-eeeeeeeeeeee';
-
+  v_sofia_start_record_id constant uuid := '66666666-dddd-4666-8666-dddddddddddd';
+  v_sofia_latest_record_id constant uuid := '66666666-eeee-4666-8666-eeeeeeeeeeee';
+  v_ethan_start_record_id constant uuid := '77777777-dddd-4777-8777-dddddddddddd';
+  v_ethan_latest_record_id constant uuid := '77777777-eeee-4777-8777-eeeeeeeeeeee';
+  v_rina_only_record_id constant uuid := '88888888-dddd-4888-8888-dddddddddddd';
 begin
+  -- Ensure the fixed demo owner exists in clean local databases without
+  -- overwriting a real account that already uses this id.
+  insert into auth.users (
+    id,
+    aud,
+    role,
+    email,
+    email_confirmed_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    is_sso_user,
+    is_anonymous,
+    created_at,
+    updated_at
+  )
+  values (
+    v_owner_id,
+    'authenticated',
+    'authenticated',
+    'demo.owner@example.com',
+    timezone('utc', now()),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"full_name":"Demo Owner"}'::jsonb,
+    false,
+    false,
+    timezone('utc', now()),
+    timezone('utc', now())
+  )
+  on conflict (id) do nothing;
+
+  insert into public.user_profiles (user_id, display_name, avatar_url, friend_code)
+  values (v_owner_id, 'Demo Owner', null, 'DEMOOWNER1')
+  on conflict (user_id) do nothing;
+
+  -- Demo competitions are created here so the seed can be run from a clean dev database.
+  insert into public.competitions (
+    id,
+    owner_id,
+    name,
+    target_date,
+    status,
+    created_at,
+    updated_at
+  )
+  values
+    (
+      v_competition_id,
+      v_owner_id,
+      'Summer recomposition sprint',
+      date '2026-08-08',
+      'active',
+      timezone('utc', now()) - interval '12 days',
+      timezone('utc', now())
+    ),
+    (
+      v_second_competition_id,
+      v_owner_id,
+      'June consistency challenge',
+      date '2026-07-15',
+      'active',
+      timezone('utc', now()) - interval '4 days',
+      timezone('utc', now())
+    ),
+    (
+      v_completed_competition_id,
+      v_owner_id,
+      'May finish-line check',
+      date '2026-05-31',
+      'completed',
+      timezone('utc', now()) - interval '45 days',
+      timezone('utc', now()) - interval '11 days'
+    )
+  on conflict (id) do update
+  set
+    name = excluded.name,
+    target_date = excluded.target_date,
+    status = excluded.status,
+    deleted_at = null,
+    updated_at = timezone('utc', now());
+
   -- Demo auth users.
   insert into auth.users (
     id,
@@ -95,6 +196,58 @@ begin
       false,
       timezone('utc', now()),
       timezone('utc', now())
+    ),
+    (
+      v_sofia_id,
+      'authenticated',
+      'authenticated',
+      'sofia.hsu.demo@example.com',
+      timezone('utc', now()),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Sofia Hsu"}'::jsonb,
+      false,
+      false,
+      timezone('utc', now()),
+      timezone('utc', now())
+    ),
+    (
+      v_ethan_id,
+      'authenticated',
+      'authenticated',
+      'ethan.tan.demo@example.com',
+      timezone('utc', now()),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Ethan Tan"}'::jsonb,
+      false,
+      false,
+      timezone('utc', now()),
+      timezone('utc', now())
+    ),
+    (
+      v_rina_id,
+      'authenticated',
+      'authenticated',
+      'rina.kim.demo@example.com',
+      timezone('utc', now()),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Rina Kim"}'::jsonb,
+      false,
+      false,
+      timezone('utc', now()),
+      timezone('utc', now())
+    ),
+    (
+      v_omar_id,
+      'authenticated',
+      'authenticated',
+      'omar.ali.demo@example.com',
+      timezone('utc', now()),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Omar Ali"}'::jsonb,
+      false,
+      false,
+      timezone('utc', now()),
+      timezone('utc', now())
     )
   on conflict (id) do update
   set
@@ -106,33 +259,17 @@ begin
     is_anonymous = excluded.is_anonymous,
     updated_at = excluded.updated_at;
 
-  -- Demo profiles. Noah intentionally has no avatar so the UI fallback can be checked.
+  -- Demo profiles. Noah and Omar intentionally have no avatar so fallback states can be checked.
   insert into public.user_profiles (user_id, display_name, avatar_url, friend_code)
   values
-    (
-      v_luna_id,
-      'Luna Lee',
-      'https://i.pravatar.cc/100?img=32',
-      'LUNALEE001'
-    ),
-    (
-      v_kai_id,
-      'Kai Chen',
-      'https://i.pravatar.cc/100?img=12',
-      'KAICHEN001'
-    ),
-    (
-      v_mia_id,
-      'Mia Wang',
-      'https://i.pravatar.cc/100?img=47',
-      'MIAWANG001'
-    ),
-    (
-      v_noah_id,
-      'Noah Lin',
-      null,
-      'NOAHLIN001'
-    )
+    (v_luna_id, 'Luna Lee', 'https://i.pravatar.cc/100?img=32', 'LUNALEE001'),
+    (v_kai_id, 'Kai Chen', 'https://i.pravatar.cc/100?img=12', 'KAICHEN001'),
+    (v_mia_id, 'Mia Wang', 'https://i.pravatar.cc/100?img=47', 'MIAWANG001'),
+    (v_noah_id, 'Noah Lin', null, 'NOAHLIN001'),
+    (v_sofia_id, 'Sofia Hsu', 'https://i.pravatar.cc/100?img=5', 'SOFIAHSU01'),
+    (v_ethan_id, 'Ethan Tan', 'https://i.pravatar.cc/100?img=15', 'ETHANTAN01'),
+    (v_rina_id, 'Rina Kim', 'https://i.pravatar.cc/100?img=25', 'RINAKIM001'),
+    (v_omar_id, 'Omar Ali', null, 'OMARALI001')
   on conflict (user_id) do update
   set
     display_name = excluded.display_name,
@@ -140,7 +277,20 @@ begin
     friend_code = excluded.friend_code,
     updated_at = timezone('utc', now());
 
-  -- Use the existing competition and add demo participants.
+  -- Directional demo friendships for the owner account.
+  insert into public.user_friendships (user_id, friend_user_id, created_at)
+  values
+    (v_owner_id, v_luna_id, timezone('utc', now()) - interval '28 days'),
+    (v_owner_id, v_kai_id, timezone('utc', now()) - interval '26 days'),
+    (v_owner_id, v_mia_id, timezone('utc', now()) - interval '24 days'),
+    (v_owner_id, v_noah_id, timezone('utc', now()) - interval '20 days'),
+    (v_owner_id, v_sofia_id, timezone('utc', now()) - interval '13 days'),
+    (v_owner_id, v_ethan_id, timezone('utc', now()) - interval '9 days'),
+    (v_owner_id, v_rina_id, timezone('utc', now()) - interval '7 days'),
+    (v_owner_id, v_omar_id, timezone('utc', now()) - interval '2 days')
+  on conflict (user_id, friend_user_id) do nothing;
+
+  -- Demo competition memberships. The first competition includes mixed progress.
   insert into public.competition_members (
     id,
     competition_id,
@@ -155,6 +305,18 @@ begin
   )
   values
     (
+      v_owner_member_id,
+      v_competition_id,
+      v_owner_id,
+      'Demo Owner',
+      null,
+      null,
+      'owner',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '12 days'
+    ),
+    (
       v_luna_member_id,
       v_competition_id,
       v_luna_id,
@@ -164,7 +326,7 @@ begin
       'participant',
       'accepted',
       v_owner_id,
-      timezone('utc', now())
+      timezone('utc', now()) - interval '11 days'
     ),
     (
       v_kai_member_id,
@@ -176,7 +338,7 @@ begin
       'participant',
       'accepted',
       v_owner_id,
-      timezone('utc', now())
+      timezone('utc', now()) - interval '10 days'
     ),
     (
       v_mia_member_id,
@@ -188,7 +350,7 @@ begin
       'participant',
       'accepted',
       v_owner_id,
-      timezone('utc', now())
+      timezone('utc', now()) - interval '9 days'
     ),
     (
       v_noah_member_id,
@@ -200,7 +362,103 @@ begin
       'participant',
       'accepted',
       v_owner_id,
-      timezone('utc', now())
+      timezone('utc', now()) - interval '8 days'
+    ),
+    (
+      v_second_owner_member_id,
+      v_second_competition_id,
+      v_owner_id,
+      'Demo Owner',
+      null,
+      null,
+      'owner',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '4 days'
+    ),
+    (
+      v_sofia_member_id,
+      v_second_competition_id,
+      v_sofia_id,
+      'Sofia Hsu',
+      'https://i.pravatar.cc/100?img=5',
+      'SOFIAHSU01',
+      'participant',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '4 days'
+    ),
+    (
+      v_ethan_member_id,
+      v_second_competition_id,
+      v_ethan_id,
+      'Ethan Tan',
+      'https://i.pravatar.cc/100?img=15',
+      'ETHANTAN01',
+      'participant',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '3 days'
+    ),
+    (
+      v_rina_member_id,
+      v_second_competition_id,
+      v_rina_id,
+      'Rina Kim',
+      'https://i.pravatar.cc/100?img=25',
+      'RINAKIM001',
+      'participant',
+      'invited',
+      v_owner_id,
+      null
+    ),
+    (
+      v_omar_member_id,
+      v_second_competition_id,
+      v_omar_id,
+      'Omar Ali',
+      null,
+      'OMARALI001',
+      'participant',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '1 day'
+    ),
+    (
+      v_completed_owner_member_id,
+      v_completed_competition_id,
+      v_owner_id,
+      'Demo Owner',
+      null,
+      null,
+      'owner',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '45 days'
+    ),
+    (
+      v_completed_luna_member_id,
+      v_completed_competition_id,
+      v_luna_id,
+      'Luna Lee',
+      'https://i.pravatar.cc/100?img=32',
+      'LUNALEE001',
+      'participant',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '44 days'
+    ),
+    (
+      v_completed_kai_member_id,
+      v_completed_competition_id,
+      v_kai_id,
+      'Kai Chen',
+      'https://i.pravatar.cc/100?img=12',
+      'KAICHEN001',
+      'participant',
+      'accepted',
+      v_owner_id,
+      timezone('utc', now()) - interval '43 days'
     )
   on conflict (competition_id, user_id) where deleted_at is null do update
   set
@@ -213,7 +471,7 @@ begin
     joined_at = excluded.joined_at,
     updated_at = timezone('utc', now());
 
-  -- Demo InBody records that make the leaderboard visibly different.
+  -- Demo InBody records that make friend cards and leaderboards visibly different.
   insert into public.inbody_records (
     id,
     user_id,
@@ -236,174 +494,19 @@ begin
     updated_at
   )
   values
-    (
-      v_luna_start_record_id,
-      v_luna_id,
-      date '2026-04-01',
-      164,
-      27,
-      'female',
-      79,
-      59.4,
-      28.6,
-      11.1,
-      18.2,
-      5,
-      1330,
-      1850,
-      true,
-      'manual',
-      'Demo baseline record for Luna',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_luna_latest_record_id,
-      v_luna_id,
-      date '2026-06-01',
-      164,
-      27,
-      'female',
-      82,
-      58.7,
-      29.1,
-      10.6,
-      17.2,
-      5,
-      1345,
-      1860,
-      true,
-      'manual',
-      'Demo latest record for Luna',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_kai_start_record_id,
-      v_kai_id,
-      date '2026-04-20',
-      170,
-      29,
-      'male',
-      74,
-      72.0,
-      31.2,
-      14.0,
-      19.4,
-      8,
-      1580,
-      2300,
-      true,
-      'manual',
-      'Demo baseline record for Kai',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_kai_latest_record_id,
-      v_kai_id,
-      date '2026-06-06',
-      170,
-      29,
-      'male',
-      75,
-      70.0,
-      31.9,
-      13.1,
-      18.0,
-      7,
-      1575,
-      2290,
-      true,
-      'manual',
-      'Demo latest record for Kai',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_mia_start_record_id,
-      v_mia_id,
-      date '2026-04-15',
-      161,
-      30,
-      'female',
-      75,
-      66.0,
-      26.0,
-      18.4,
-      25.0,
-      7,
-      1360,
-      1880,
-      true,
-      'manual',
-      'Demo baseline record for Mia',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_mia_latest_record_id,
-      v_mia_id,
-      date '2026-06-05',
-      161,
-      30,
-      'female',
-      77,
-      64.8,
-      26.8,
-      17.1,
-      23.8,
-      7,
-      1372,
-      1890,
-      true,
-      'manual',
-      'Demo latest record for Mia',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_noah_start_record_id,
-      v_noah_id,
-      date '2026-04-10',
-      176,
-      32,
-      'male',
-      80,
-      82.0,
-      34.0,
-      16.0,
-      19.5,
-      7,
-      1680,
-      2450,
-      true,
-      'manual',
-      'Demo baseline record for Noah',
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      v_noah_latest_record_id,
-      v_noah_id,
-      date '2026-06-07',
-      176,
-      32,
-      'male',
-      76,
-      84.5,
-      32.8,
-      18.9,
-      18.9,
-      9,
-      1695,
-      2470,
-      true,
-      'manual',
-      'Demo latest record for Noah moving toward a regressive fat percentage goal',
-      timezone('utc', now()),
-      timezone('utc', now())
-    )
+    (v_luna_start_record_id, v_luna_id, date '2026-04-01', 164, 27, 'female', 79, 59.4, 28.6, 11.1, 18.2, 5, 1330, 1850, true, 'manual', 'Demo baseline record for Luna', timezone('utc', now()), timezone('utc', now())),
+    (v_luna_latest_record_id, v_luna_id, date '2026-06-01', 164, 27, 'female', 82, 58.7, 29.1, 10.6, 17.2, 5, 1345, 1860, true, 'manual', 'Demo latest record for Luna', timezone('utc', now()), timezone('utc', now())),
+    (v_kai_start_record_id, v_kai_id, date '2026-04-20', 170, 29, 'male', 74, 72.0, 31.2, 14.0, 19.4, 8, 1580, 2300, true, 'manual', 'Demo baseline record for Kai', timezone('utc', now()), timezone('utc', now())),
+    (v_kai_latest_record_id, v_kai_id, date '2026-06-06', 170, 29, 'male', 75, 70.0, 31.9, 13.1, 18.0, 7, 1575, 2290, true, 'manual', 'Demo latest record for Kai', timezone('utc', now()), timezone('utc', now())),
+    (v_mia_start_record_id, v_mia_id, date '2026-04-15', 161, 30, 'female', 75, 66.0, 26.0, 18.4, 25.0, 7, 1360, 1880, true, 'manual', 'Demo baseline record for Mia', timezone('utc', now()), timezone('utc', now())),
+    (v_mia_latest_record_id, v_mia_id, date '2026-06-05', 161, 30, 'female', 77, 64.8, 26.8, 17.1, 23.8, 7, 1372, 1890, true, 'manual', 'Demo latest record for Mia', timezone('utc', now()), timezone('utc', now())),
+    (v_noah_start_record_id, v_noah_id, date '2026-04-10', 176, 32, 'male', 80, 82.0, 34.0, 16.0, 19.5, 7, 1680, 2450, true, 'manual', 'Demo baseline record for Noah', timezone('utc', now()), timezone('utc', now())),
+    (v_noah_latest_record_id, v_noah_id, date '2026-06-07', 176, 32, 'male', 76, 84.5, 32.8, 18.9, 22.4, 9, 1695, 2470, true, 'manual', 'Demo latest record for Noah with regression', timezone('utc', now()), timezone('utc', now())),
+    (v_sofia_start_record_id, v_sofia_id, date '2026-05-01', 158, 26, 'female', 72, 55.2, 24.8, 14.3, 25.9, 6, 1245, 1730, true, 'manual', 'Demo baseline record for Sofia', timezone('utc', now()), timezone('utc', now())),
+    (v_sofia_latest_record_id, v_sofia_id, date '2026-06-09', 158, 26, 'female', 80, 54.1, 25.9, 12.6, 23.3, 5, 1280, 1760, true, 'manual', 'Demo latest record for Sofia with strong progress', timezone('utc', now()), timezone('utc', now())),
+    (v_ethan_start_record_id, v_ethan_id, date '2026-05-10', 182, 34, 'male', 86, 78.5, 36.4, 10.8, 13.8, 4, 1795, 2630, true, 'manual', 'Demo baseline record for Ethan', timezone('utc', now()), timezone('utc', now())),
+    (v_ethan_latest_record_id, v_ethan_id, date '2026-06-08', 182, 34, 'male', 88, 79.4, 37.2, 10.4, 13.1, 4, 1810, 2660, true, 'manual', 'Demo latest record for Ethan near target', timezone('utc', now()), timezone('utc', now())),
+    (v_rina_only_record_id, v_rina_id, date '2026-03-28', 167, 31, 'female', 69, 62.0, 25.1, 19.0, 30.6, 8, 1320, 1810, false, 'manual', 'Demo old record for Rina, excluded from charts to test stale/non-chart data', timezone('utc', now()), timezone('utc', now()))
   on conflict (id) do update
   set
     recorded_at = excluded.recorded_at,
@@ -423,7 +526,7 @@ begin
     notes = excluded.notes,
     updated_at = excluded.updated_at;
 
-  -- Demo goals linked to the competition so the leaderboard has visible progress.
+  -- Demo goals linked to competitions so leaderboards show achieved, positive, zero, and negative progress.
   insert into public.user_personal_goals (
     id,
     user_id,
@@ -441,86 +544,16 @@ begin
     updated_at
   )
   values
-    (
-      '11111111-1111-4111-8111-111111111111',
-      v_luna_id,
-      'Summer cut',
-      v_luna_start_record_id,
-      v_competition_id,
-      v_luna_member_id,
-      'weight',
-      59.4,
-      58.4,
-      'kg',
-      date '2026-08-08',
-      true,
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      '22222222-2222-4112-8112-222222222222',
-      v_luna_id,
-      'Summer cut',
-      v_luna_start_record_id,
-      v_competition_id,
-      v_luna_member_id,
-      'muscle',
-      28.6,
-      29.5,
-      'kg',
-      date '2026-08-08',
-      true,
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      '44444444-4444-4114-8114-444444444444',
-      v_kai_id,
-      'Build strength',
-      v_kai_start_record_id,
-      v_competition_id,
-      v_kai_member_id,
-      'weight',
-      72.0,
-      68.0,
-      'kg',
-      date '2026-08-08',
-      true,
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      '33333333-3333-4113-8113-333333333333',
-      v_mia_id,
-      'Lean down',
-      v_mia_start_record_id,
-      v_competition_id,
-      v_mia_member_id,
-      'fatPercent',
-      25.0,
-      22.0,
-      '%',
-      date '2026-08-08',
-      true,
-      timezone('utc', now()),
-      timezone('utc', now())
-    ),
-    (
-      '55555555-5555-4115-8115-555555555555',
-      v_noah_id,
-      'Reverse progress check',
-      v_noah_start_record_id,
-      v_competition_id,
-      v_noah_member_id,
-      'fatPercent',
-      19.5,
-      22.5,
-      '%',
-      date '2026-08-08',
-      true,
-      timezone('utc', now()),
-      timezone('utc', now())
-    )
+    ('11111111-1111-4111-8111-111111111111', v_luna_id, 'Summer recomposition', v_luna_start_record_id, v_competition_id, v_luna_member_id, 'weight', 59.4, 58.4, 'kg', date '2026-08-08', true, timezone('utc', now()), timezone('utc', now())),
+    ('22222222-2222-4112-8112-222222222222', v_luna_id, 'Summer recomposition', v_luna_start_record_id, v_competition_id, v_luna_member_id, 'muscle', 28.6, 29.5, 'kg', date '2026-08-08', true, timezone('utc', now()), timezone('utc', now())),
+    ('44444444-4444-4114-8114-444444444444', v_kai_id, 'Build strength', v_kai_start_record_id, v_competition_id, v_kai_member_id, 'weight', 72.0, 68.0, 'kg', date '2026-08-08', true, timezone('utc', now()), timezone('utc', now())),
+    ('33333333-3333-4113-8113-333333333333', v_mia_id, 'Lean down', v_mia_start_record_id, v_competition_id, v_mia_member_id, 'fatPercent', 25.0, 22.0, '%', date '2026-08-08', true, timezone('utc', now()), timezone('utc', now())),
+    ('55555555-5555-4115-8115-555555555555', v_noah_id, 'Reverse progress check', v_noah_start_record_id, v_competition_id, v_noah_member_id, 'fatPercent', 19.5, 18.5, '%', date '2026-08-08', true, timezone('utc', now()), timezone('utc', now())),
+    ('66666666-6666-4116-8116-666666666666', v_sofia_id, 'Fat loss push', v_sofia_start_record_id, v_second_competition_id, v_sofia_member_id, 'fat', 14.3, 12.5, 'kg', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
+    ('77777777-7777-4117-8117-777777777777', v_ethan_id, 'Score climb', v_ethan_start_record_id, v_second_competition_id, v_ethan_member_id, 'score', 86, 89, 'pts', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
+    ('88888888-8888-4118-8118-888888888888', v_rina_id, 'Fresh start', v_rina_only_record_id, v_second_competition_id, v_rina_member_id, 'weight', 62.0, 60.0, 'kg', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
+    ('90909090-9090-4090-8090-909090909090', v_luna_id, 'May finish-line check', v_luna_start_record_id, v_completed_competition_id, v_completed_luna_member_id, 'weight', 59.4, 59.0, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now())),
+    ('91919191-9191-4091-8091-919191919191', v_kai_id, 'May finish-line check', v_kai_start_record_id, v_completed_competition_id, v_completed_kai_member_id, 'muscle', 31.2, 31.8, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now()))
   on conflict (id) do update
   set
     title = excluded.title,

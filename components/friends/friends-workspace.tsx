@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddFriendDialog } from "@/components/friends/add-friend-dialog";
 import { FriendsTable } from "@/components/friends/friends-table";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
@@ -34,9 +35,21 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 
 function sortFriends(friends: FriendSnapshot[]) {
   return [...friends].sort((left, right) => {
-    const leftValue = new Date(left.latestRecordedAt || left.linkedAt).getTime();
-    const rightValue = new Date(right.latestRecordedAt || right.linkedAt).getTime();
-    return rightValue - leftValue;
+    if (left.latestRecordedAt && right.latestRecordedAt) {
+      const leftSnapshotTime = new Date(left.latestRecordedAt).getTime();
+      const rightSnapshotTime = new Date(right.latestRecordedAt).getTime();
+      return rightSnapshotTime - leftSnapshotTime;
+    }
+
+    if (left.latestRecordedAt) {
+      return -1;
+    }
+
+    if (right.latestRecordedAt) {
+      return 1;
+    }
+
+    return new Date(right.linkedAt).getTime() - new Date(left.linkedAt).getTime();
   });
 }
 
@@ -90,19 +103,10 @@ export function FriendsWorkspace({ initialFriends }: FriendsWorkspaceProps) {
   return (
     <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
       <section>
-        <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
-          <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("friends.title")}</p>
-            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{friends.length}</p>
-          </div>
-          <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("friends.snapshotCount")}</p>
-            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{activeSnapshots}/{friends.length || 0}</p>
-          </div>
-          <div className="surface-soft-card min-w-[8.25rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("friends.latestDate")}</p>
-            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{formatCompactDate(freshestFriend?.latestRecordedAt, locale)}</p>
-          </div>
+        <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
+          <CompactInfoCard label={t("friends.title")} minWidthClassName="min-w-0" value={friends.length} />
+          <CompactInfoCard label={t("friends.snapshotCount")} minWidthClassName="min-w-0" value={`${activeSnapshots}/${friends.length || 0}`} />
+          <CompactInfoCard label={t("friends.latestDate")} minWidthClassName="min-w-0" value={formatCompactDate(freshestFriend?.latestRecordedAt, locale)} />
         </StatsScrollbarRow>
       </section>
 

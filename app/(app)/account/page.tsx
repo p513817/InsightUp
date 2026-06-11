@@ -1,4 +1,5 @@
 import { FriendCodeCard } from "@/components/friends/friend-code-card";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { ensureCurrentUserProfile } from "@/lib/friends/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatCompactDate, getUserInitials, summarizeUser } from "@/lib/presentation";
@@ -65,9 +66,8 @@ export default async function AccountPage() {
 
         <div className="relative z-10 mx-auto max-w-5xl">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_0.7fr_1.15fr]">
-            <div className="surface-glass-card rounded-[1rem] p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("account.title")}</p>
-              <div className="mt-3 flex items-start gap-2.5">
+            <CompactInfoCard className="min-w-0" label={t("account.title")} minWidthClassName="" variant="glass">
+              <div className="mt-2 flex items-start gap-2.5">
                 {summary.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img alt={summary.name} className="size-11 rounded-full border border-border object-cover shadow-[0_6px_14px_rgba(16,35,63,0.07)] sm:size-12" src={summary.avatarUrl} />
@@ -82,17 +82,11 @@ export default async function AccountPage() {
                   <p className="mt-1 break-all text-[11px] leading-5 text-muted-foreground">{summary.email || "Signed in with Google"}</p>
                 </div>
               </div>
-            </div>
+            </CompactInfoCard>
 
-            <div className="surface-soft-card rounded-[1rem] p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("account.joinedAt")}</p>
-              <p className="mt-2 font-display text-2xl text-foreground">{formatCompactDate(summary.createdAt, locale)}</p>
-            </div>
+            <CompactInfoCard className="min-w-0" label={t("account.joinedAt")} minWidthClassName="" value={formatCompactDate(summary.createdAt, locale)} />
 
-            <div className="surface-soft-card rounded-[1rem] p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{t("common.settings")}</p>
-              <p className="mt-2 font-display text-2xl text-foreground">{planDisplayName}</p>
-            </div>
+            <CompactInfoCard className="min-w-0" label={t("common.settings")} minWidthClassName="" value={planDisplayName} valueClassName="break-words leading-tight" />
 
             <FriendCodeCard friendCode={ownProfile.friendCode} />
           </div>

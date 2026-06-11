@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { useTranslations } from "@/components/i18n-provider";
-import { cn } from "@/lib/utils";
 
 interface FriendCodeCardProps {
   className?: string;
@@ -76,11 +76,10 @@ export function FriendCodeCard({ className, description, friendCode, title }: Fr
   }
 
   return (
-    <div className={cn("surface-soft-card rounded-[1rem] p-4", className)}>
-      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{title || t("friends.friendCode")}</p>
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <CompactInfoCard className={className} label={title || t("friends.friendCode")} minWidthClassName="">
+      <div className="mt-2 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="break-all font-display text-[1.45rem] leading-tight text-foreground sm:text-[1.6rem]">{friendCode}</p>
+          <p className="break-all font-display text-[1.12rem] leading-tight text-foreground">{friendCode}</p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">{description || t("friends.myFriendCodeHint")}</p>
         </div>
 
@@ -89,6 +88,6 @@ export function FriendCodeCard({ className, description, friendCode, title }: Fr
           {copied ? t("common.copied") : t("common.copy")}
         </Button>
       </div>
-    </div>
+    </CompactInfoCard>
   );
 }

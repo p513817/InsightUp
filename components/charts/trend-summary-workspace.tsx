@@ -4,6 +4,7 @@ import { useMemo, useState, type ComponentType } from "react";
 import { AlertTriangle, ClipboardList, Lightbulb, LoaderCircle, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { FAB_BASE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -37,16 +38,19 @@ interface TrendSummaryWorkspaceProps {
   initialSummary?: TrendSummaryResponse | null;
 }
 
-function buildUsageBadge(t: ReturnType<typeof useTranslations>, data: TrendSummaryResponse) {
-  return `${t("summary.usage.label")} ${data.usageCount ?? 0} / ${data.dailyLimit == null ? t("summary.usage.unlimited") : data.dailyLimit}`;
+function buildUsageQuota(t: ReturnType<typeof useTranslations>, data: TrendSummaryResponse) {
+  return `${data.usageCount ?? 0}/${data.dailyLimit == null ? t("summary.usage.unlimited") : data.dailyLimit}`;
 }
 
-function buildSourceLabel(t: ReturnType<typeof useTranslations>, data: TrendSummaryResponse) {
-  return data.provider === "gemini"
-    ? t("summary.source.gemini")
-    : data.reused
-      ? t("summary.source.cacheReused")
-      : t("summary.source.cache");
+function formatModelShortName(modelName: string | null) {
+  if (!modelName) {
+    return null;
+  }
+
+  return modelName
+    .replace(/^gemini-/i, "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWorkspaceProps) {
@@ -54,12 +58,12 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
   const locale = useLocale();
   const [generating, setGenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [modelDialogOpen, setModelDialogOpen] = useState(false);
   const [summary, setSummary] = useState<string | null>(initialSummary?.summary ?? null);
   const [structuredSummary, setStructuredSummary] = useState<TrendSummaryResponse["structuredSummary"]>(initialSummary?.structuredSummary ?? null);
   const [requestDate, setRequestDate] = useState<string | null>(initialSummary?.requestDate ?? null);
   const [canGenerate, setCanGenerate] = useState(initialSummary?.canGenerate ?? true);
-  const [usageBadge, setUsageBadge] = useState<string | null>(initialSummary ? buildUsageBadge(t, initialSummary) : null);
-  const [sourceLabel, setSourceLabel] = useState<string | null>(initialSummary ? buildSourceLabel(t, initialSummary) : null);
+  const [usageQuota, setUsageQuota] = useState<string | null>(initialSummary ? buildUsageQuota(t, initialSummary) : null);
   const [modelLabel, setModelLabel] = useState<string | null>(initialSummary?.modelName ?? null);
 
   const hasSummary = useMemo(() => Boolean(summary || structuredSummary), [structuredSummary, summary]);
@@ -69,14 +73,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
     setStructuredSummary(data.structuredSummary ?? null);
     setRequestDate(data.requestDate);
     setCanGenerate(data.canGenerate ?? true);
-    setUsageBadge(`${t("summary.usage.label")} ${data.usageCount ?? 0} / ${data.dailyLimit == null ? t("summary.usage.unlimited") : data.dailyLimit}`);
-    setSourceLabel(
-      data.provider === "gemini"
-        ? t("summary.source.gemini")
-        : data.reused
-          ? t("summary.source.cacheReused")
-          : t("summary.source.cache"),
-    );
+    setUsageQuota(buildUsageQuota(t, data));
     setModelLabel(data.modelName || null);
   }
 
@@ -131,23 +128,40 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
     <div className="mx-auto w-full max-w-4xl space-y-4 pb-24 sm:pb-28">
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-4xl space-y-3">
-          <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1fr_1fr_1fr_1.1fr]">
-            <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.date")}</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{requestDate ? formatCompactDate(requestDate, locale) : t("summary.errors.noContent")}</p>
-            </div>
-            <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.limit")}</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{usageBadge || t("common.loading")}</p>
-            </div>
-            <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.source")}</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{sourceLabel || t("common.notAvailable")}</p>
-            </div>
-            <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("summary.usage.model")}</p>
-              <p className="mt-1 break-words font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{modelLabel || t("common.notAvailable")}</p>
-            </div>
+          <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
+            <CompactInfoCard
+              label={t("summary.usage.date")}
+              minWidthClassName="min-w-0"
+              value={requestDate ? formatCompactDate(requestDate, locale) : t("summary.errors.noContent")}
+              valueClassName="break-words leading-tight"
+              variant="glass"
+            />
+            <CompactInfoCard
+              label={t("summary.usage.limit")}
+              minWidthClassName="min-w-0"
+              value={usageQuota || t("common.loading")}
+              valueClassName="break-words leading-tight"
+            />
+            <CompactInfoCard
+              className={modelLabel ? "cursor-pointer transition hover:border-primary/35 active:scale-[0.99]" : undefined}
+              label={t("summary.usage.model")}
+              minWidthClassName="min-w-0"
+              onClick={modelLabel ? () => setModelDialogOpen(true) : undefined}
+              role={modelLabel ? "button" : undefined}
+              tabIndex={modelLabel ? 0 : undefined}
+              value={formatModelShortName(modelLabel) || t("common.notAvailable")}
+              valueClassName="truncate leading-tight"
+              onKeyDown={
+                modelLabel
+                  ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setModelDialogOpen(true);
+                      }
+                    }
+                  : undefined
+              }
+            />
           </StatsScrollbarRow>
 
         </div>
@@ -229,6 +243,15 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
               <span>{t("summary.loading.regenerate")}</span>
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={setModelDialogOpen} open={modelDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="border-b-0 pb-3">
+            <DialogTitle>{t("summary.usage.model")}</DialogTitle>
+            <DialogDescription>{modelLabel || t("common.notAvailable")}</DialogDescription>
+          </DialogHeader>
         </DialogContent>
       </Dialog>
     </div>

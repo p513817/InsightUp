@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { GoalMetricProgressCard } from "@/components/ui/goal-metric-progress-card";
 import { GoalProgressBar } from "@/components/ui/goal-progress-bar";
@@ -410,19 +411,10 @@ function GoalSection({
   return (
     <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
       <section>
-        <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
-          <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("personalGoal.stats.total")}</p>
-            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{goalGroups.length}</p>
-          </div>
-          <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("personalGoal.stats.progress")}</p>
-            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{completedGroups.length}/{goalGroups.length || 0}</p>
-          </div>
-          <div className="surface-soft-card min-w-[8.25rem] shrink-0 rounded-[0.875rem] px-3 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("personalGoal.stats.latestDate")}</p>
-            <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{formatCompactDate(latestRecord?.date, locale)}</p>
-          </div>
+        <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
+          <CompactInfoCard label={t("personalGoal.stats.total")} minWidthClassName="min-w-0" value={goalGroups.length} />
+          <CompactInfoCard label={t("personalGoal.stats.progress")} minWidthClassName="min-w-0" value={`${completedGroups.length}/${goalGroups.length || 0}`} />
+          <CompactInfoCard label={t("personalGoal.stats.latestDate")} minWidthClassName="min-w-0" value={formatCompactDate(latestRecord?.date, locale)} />
         </StatsScrollbarRow>
       </section>
 

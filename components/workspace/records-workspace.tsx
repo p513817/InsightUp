@@ -10,6 +10,7 @@ import { DashboardWelcomeDialog } from "@/components/dashboard/dashboard-welcome
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
+import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { PageLoading } from "@/components/ui/page-loading";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { buildChartPayload } from "@/lib/inbody/records";
@@ -638,24 +639,24 @@ export function RecordsWorkspace({
       <section className="relative p-1 sm:p-2">
         <div className="relative z-10 mx-auto max-w-5xl">
           <StatsScrollbarRow
-            className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.05fr_0.95fr_1fr]"
+            className="grid grid-cols-3 gap-1.5 lg:grid-cols-[1.05fr_0.95fr_1fr]"
           >
-            <div className="surface-glass-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Latest measurement" : "最近量測"}</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
-                {formatCompactDate(latestRecord?.date)}
-              </p>
-            </div>
-            <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Included in charts" : "納入圖表"}</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">
-                {includedCount}/{records.length || 0}
-              </p>
-            </div>
-            <div className="surface-soft-card min-w-[8.75rem] shrink-0 rounded-[0.875rem] px-3 py-3 sm:min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{locale === "en" ? "Excluded" : "已排除"}</p>
-              <p className="mt-1 font-display text-[1.2rem] leading-tight text-foreground sm:text-[1.35rem]">{excludedCount}</p>
-            </div>
+            <CompactInfoCard
+              label={locale === "en" ? "Latest measurement" : "最近量測"}
+              minWidthClassName="min-w-0"
+              value={formatCompactDate(latestRecord?.date)}
+              variant="glass"
+            />
+            <CompactInfoCard
+              label={locale === "en" ? "Included in charts" : "納入圖表"}
+              minWidthClassName="min-w-0"
+              value={`${includedCount}/${records.length || 0}`}
+            />
+            <CompactInfoCard
+              label={locale === "en" ? "Excluded" : "已排除"}
+              minWidthClassName="min-w-0"
+              value={excludedCount}
+            />
           </StatsScrollbarRow>
         </div>
       </section>
