@@ -35,6 +35,11 @@ const COMPACT_CARD_CLASS = "min-h-[7.4rem] gap-1 py-2 pl-3 pr-3";
 const COMPACT_CHART_CLASS = "h-[4rem] rounded-[0.9rem] px-1 py-0 sm:h-[4.75rem]";
 const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
 const METRIC_REVEAL_INTERVAL_MS = 280;
+const TREND_TONE_COLOR = {
+  negative: "rgb(var(--danger))",
+  neutral: "rgb(var(--primary-strong))",
+  positive: "rgb(var(--success))",
+} as const;
 
 const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
   auto: `grid grid-cols-1 gap-2 ${AUTO_TWO_COLUMN_BREAKPOINT_CLASS}`,
@@ -275,6 +280,7 @@ function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) 
 
 interface SortableMetricCardProps {
   canHide: boolean;
+  deltaTone: ReturnType<typeof getMetricProgressDirection>;
   editMode: boolean;
   formattedDelta: string;
   headerValueText?: string | null;
@@ -284,7 +290,7 @@ interface SortableMetricCardProps {
   showTrendLine: boolean;
 }
 
-function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText, metric, onHide, points, showTrendLine }: SortableMetricCardProps) {
+function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, headerValueText, metric, onHide, points, showTrendLine }: SortableMetricCardProps) {
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
     id: metric.key,
     transition: {
@@ -333,7 +339,9 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
   const trendLine = useMemo(() => buildLinearTrendPoints(points), [points]);
   const chartPoints = showTrendLine ? trendLine.points : points.map((point) => ({ ...point, trendValue: null }));
   const trendDirectionTone = getMetricProgressDirection(metric.key, trendLine.slope);
-  const trendLineStroke = trendDirectionTone === "positive" ? "#245da8" : trendDirectionTone === "negative" ? "#5f82aa" : "rgb(var(--primary-strong))";
+  const trendLineStroke = TREND_TONE_COLOR[trendDirectionTone];
+  const shouldUseDeltaTone = showTrendLine && deltaTone !== "neutral";
+  const deltaToneClass = deltaTone === "positive" ? "text-success" : deltaTone === "negative" ? "text-danger" : "";
 
   return (
     <Card
@@ -383,7 +391,12 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
           </div>
         </div>
         <div className="flex min-w-0 items-center justify-end text-right">
-          <p className="whitespace-nowrap text-sm font-semibold leading-none tabular-nums" style={{ color: metric.color }}>{formattedDelta}</p>
+          <p
+            className={`whitespace-nowrap text-sm font-semibold leading-none tabular-nums ${shouldUseDeltaTone ? deltaToneClass : ""}`}
+            style={shouldUseDeltaTone ? undefined : { color: metric.color }}
+          >
+            {formattedDelta}
+          </p>
         </div>
       </div>
 
@@ -732,6 +745,7 @@ export function MiniTrendGrid({
                 >
                   <SortableMetricCard
                     canHide={canHideVisibleMetric}
+                    deltaTone={getMetricProgressDirection(metric.key, delta)}
                     editMode={editMode}
                     formattedDelta={formatDelta(metric, delta)}
                     headerValueText={showHeaderValue ? formatMetricValue(metric, latestValue) : null}
