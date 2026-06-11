@@ -246,6 +246,7 @@
                              "layoutOne":  "Single",
                              "layoutTwo":  "Double",
                              "visibility":  "Display",
+                             "trendLine":  "Trend",
                              "visibleMetrics":  "Visible metrics",
                              "shareShort":  "Share",
                              "shareTrendData":  "Share trend data",

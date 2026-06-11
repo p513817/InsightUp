@@ -1,5 +1,5 @@
-const REDUCE_IS_BETTER_KEYS = new Set(["weight", "fat", "fatPercent", "visceralFatLevel"]);
-const INCREASE_IS_BETTER_KEYS = new Set(["muscle", "score"]);
+const REDUCE_IS_BETTER_KEYS = new Set(["weight", "fat", "fatPercent", "visceralFatLevel", "fatRatio"]);
+const INCREASE_IS_BETTER_KEYS = new Set(["muscle", "score", "bmr", "recommendedCalories", "muscleRatio"]);
 
 export function getMetricProgressDirection(metricKey: string, delta: number | null | undefined) {
   if (delta == null || Number.isNaN(Number(delta)) || Number(delta) === 0) {

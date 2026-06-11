@@ -7,26 +7,43 @@ type TrendPoint = {
 type GraphicalItem = {
   item?: {
     props?: {
+      dataKey?: string;
       stroke?: string;
+      strokeDasharray?: string;
       strokeWidth?: number;
     };
   };
   props?: {
+    dataKey?: string;
     points?: TrendPoint[];
     stroke?: string;
+    strokeDasharray?: string;
     strokeWidth?: number;
   };
 };
 
 type DirectionalTrendOverlayProps = {
   formattedGraphicalItems?: GraphicalItem[];
+  strokeOpacity?: number;
 };
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-function renderSegments(points: TrendPoint[], stroke: string, strokeWidth: number, keyPrefix: string) {
+function renderSegments({
+  keyPrefix,
+  points,
+  stroke,
+  strokeOpacity,
+  strokeWidth,
+}: {
+  keyPrefix: string;
+  points: TrendPoint[];
+  stroke: string;
+  strokeOpacity: number;
+  strokeWidth: number;
+}) {
   if (points.length < 2) {
     return null;
   }
@@ -63,6 +80,7 @@ function renderSegments(points: TrendPoint[], stroke: string, strokeWidth: numbe
         strokeDasharray={isDownward ? "6 5" : undefined}
         strokeLinecap="round"
         strokeLinejoin="round"
+        strokeOpacity={strokeOpacity}
         strokeWidth={strokeWidth}
         vectorEffect="non-scaling-stroke"
       />
@@ -70,7 +88,10 @@ function renderSegments(points: TrendPoint[], stroke: string, strokeWidth: numbe
   });
 }
 
-export function DirectionalTrendOverlay({ formattedGraphicalItems = [] }: DirectionalTrendOverlayProps) {
+export function DirectionalTrendOverlay({
+  formattedGraphicalItems = [],
+  strokeOpacity = 1,
+}: DirectionalTrendOverlayProps) {
   if (!formattedGraphicalItems.length) {
     return null;
   }
@@ -78,10 +99,22 @@ export function DirectionalTrendOverlay({ formattedGraphicalItems = [] }: Direct
   return (
     <g pointerEvents="none">
       {formattedGraphicalItems.flatMap((item, index) => {
+        const dataKey = item.item?.props?.dataKey ?? item.props?.dataKey;
+        const strokeDasharray = item.item?.props?.strokeDasharray ?? item.props?.strokeDasharray;
+        if (dataKey === "trendValue" || strokeDasharray) {
+          return [];
+        }
+
         const points = item.props?.points ?? [];
         const stroke = item.item?.props?.stroke ?? item.props?.stroke ?? "#0f172a";
         const strokeWidth = item.item?.props?.strokeWidth ?? item.props?.strokeWidth ?? 2;
-        return renderSegments(points, stroke, strokeWidth, `trend-${index}`) ?? [];
+        return renderSegments({
+          keyPrefix: `trend-${index}`,
+          points,
+          stroke,
+          strokeOpacity,
+          strokeWidth,
+        }) ?? [];
       })}
     </g>
   );

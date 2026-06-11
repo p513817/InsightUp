@@ -234,6 +234,7 @@
                              "layoutOne":  "單欄",
                              "layoutTwo":  "雙欄",
                              "visibility":  "顯示",
+                             "trendLine":  "趨勢",
                              "visibleMetrics":  "顯示指標",
                              "shareTrendData":  "分享趨勢",
                              "twoColumnsUnsupported":  "目前螢幕寬度不支援雙欄",

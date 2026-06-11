@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Columns2, Eye, EyeOff, RectangleHorizontal, Share2 } from "lucide-react";
+import { Columns2, Eye, EyeOff, RectangleHorizontal, Share2, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
@@ -32,6 +32,7 @@ interface RecordsWorkspaceProps {
 type TrendMode = "overall" | "segmental";
 
 const TREND_LAYOUT_STORAGE_KEY = "insightup.dashboard.trend-layout";
+const TREND_LINE_STORAGE_KEY = "insightup.dashboard.trend-line";
 
 const MIN_TWO_COLUMN_WIDTH = 360;
 const OVERALL_CHART_METRIC_KEYS = ["weight", "muscle", "fat", "fatPercent", "score", "visceralFatLevel", "bmr", "recommendedCalories"];
@@ -185,7 +186,7 @@ function TrendToolButton({
             : "rounded-[0.9rem]"
       } ${
         active
-          ? "border-white/34 bg-white/24 text-primary-foreground shadow-[0_6px_14px_rgba(11,28,52,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]"
+          ? "border-transparent bg-white/22 text-primary-foreground shadow-[0_6px_14px_rgba(11,28,52,0.18),inset_0_1px_0_rgba(255,255,255,0.28),inset_0_-1px_0_rgba(7,23,44,0.12)]"
           : "border-transparent bg-transparent text-primary-foreground/88 hover:bg-white/18 hover:text-primary-foreground"
       }`}
       onClick={onClick}
@@ -217,6 +218,7 @@ export function RecordsWorkspace({
   const searchTrendMode = searchParams.get("trend");
   const trendMode: TrendMode = searchTrendMode === "segmental" ? "segmental" : "overall";
   const [trendLayout, setTrendLayout] = useState<TrendGridLayout>("one");
+  const [showTrendLine, setShowTrendLine] = useState(false);
   const [supportsTwoColumnLayout, setSupportsTwoColumnLayout] = useState(true);
   const [trendEditMode, setTrendEditMode] = useState(false);
   const [isDashboardChartRenderStarted, setIsDashboardChartRenderStarted] = useState(mode !== "dashboard");
@@ -394,6 +396,10 @@ export function RecordsWorkspace({
   }, []);
 
   useEffect(() => {
+    setShowTrendLine(window.localStorage.getItem(TREND_LINE_STORAGE_KEY) === "true");
+  }, []);
+
+  useEffect(() => {
     function syncSupportedLayouts() {
       const nextSupportsTwoColumnLayout = window.innerWidth >= MIN_TWO_COLUMN_WIDTH;
       setSupportsTwoColumnLayout(nextSupportsTwoColumnLayout);
@@ -425,6 +431,14 @@ export function RecordsWorkspace({
     const currentIndex = allowedLayouts.indexOf(trendLayout);
     const nextLayout = allowedLayouts[(currentIndex + 1) % allowedLayouts.length] as TrendGridLayout;
     applyTrendLayout(nextLayout);
+  }
+
+  function toggleTrendLine() {
+    setShowTrendLine((current) => {
+      const next = !current;
+      window.localStorage.setItem(TREND_LINE_STORAGE_KEY, String(next));
+      return next;
+    });
   }
 
   async function handleSave(values: RecordFormValues) {
@@ -546,6 +560,7 @@ export function RecordsWorkspace({
                 layout={trendLayout}
                 onRenderStart={handleDashboardChartRenderStart}
                 onRenderComplete={handleOverallChartRenderComplete}
+                showTrendLine={showTrendLine}
               />
             ) : (
               <div className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />
@@ -568,6 +583,7 @@ export function RecordsWorkspace({
                         layout={trendLayout}
                         onRenderStart={handleDashboardChartRenderStart}
                         onRenderComplete={() => handleSegmentChartRenderComplete(segment.key)}
+                        showTrendLine={showTrendLine}
                       />
                     </>
                   ) : (
@@ -602,6 +618,9 @@ export function RecordsWorkspace({
             </TrendToolButton>
             <TrendToolButton active={trendEditMode} label={t("dashboardTrendUi.visibility")} onClick={() => setTrendEditMode((current) => !current)}>
               {trendEditMode ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </TrendToolButton>
+            <TrendToolButton active={showTrendLine} label={t("dashboardTrendUi.trendLine")} onClick={toggleTrendLine}>
+              <TrendingUp className="size-4" />
             </TrendToolButton>
             <TrendToolButton edge="right" label={t("dashboardTrendUi.shareShort")} onClick={() => router.push("/share")}>
               <Share2 className="size-4" />

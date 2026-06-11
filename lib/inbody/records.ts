@@ -91,7 +91,7 @@ function getOverallMetrics(locale: Locale): ChartMetric[] {
     { key: "muscle", label: getMetricLabel("muscle", locale), color: "#3d7bb2", unit: "kg", axis: "mass" },
     { key: "fat", label: getMetricLabel("fat", locale), color: "#b56878", unit: "kg", axis: "mass" },
     { key: "fatPercent", label: getMetricLabel("fatPercent", locale), color: "#8a659f", unit: "%", axis: "ratio" },
-    { key: "score", label: getMetricLabel("score", locale), color: "#79d7c3", unit: "pt", axis: "ratio" },
+    { key: "score", label: getMetricLabel("score", locale), color: "#3f8f82", unit: "pt", axis: "ratio" },
     { key: "visceralFatLevel", label: getMetricLabel("visceralFatLevel", locale), color: "#5e88a7", unit: "lvl", axis: "ratio" },
     { key: "bmr", label: getMetricLabel("bmr", locale), color: "#71839a", unit: "kcal", axis: "ratio" },
     { key: "recommendedCalories", label: getMetricLabel("recommendedCalories", locale), color: "#4d67a8", unit: "kcal", axis: "ratio" },

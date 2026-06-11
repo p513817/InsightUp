@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useLocale } from "@/components/i18n-provider";
 import { Card } from "@/components/ui/card";
 import { DirectionalTrendOverlay } from "@/components/charts/directional-trend-line";
+import { getMetricProgressDirection } from "@/lib/inbody/progress";
 import type { ChartMetric, ChartPayload } from "@/lib/inbody/types";
 import { formatChartDate, formatDecimal, formatMetricValue } from "@/lib/presentation";
 
@@ -20,6 +21,7 @@ interface MiniTrendGridProps {
   layout?: TrendGridLayout;
   onRenderStart?: () => void;
   onRenderComplete?: () => void;
+  showTrendLine?: boolean;
 }
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
@@ -66,10 +68,17 @@ function formatDelta(metric: ChartMetric, delta: number | null) {
   return `${delta > 0 ? "+" : delta < 0 ? "-" : ""}${formatted}`;
 }
 
-type MiniChartDotProps = DotProps & { index?: number; metric: ChartMetric; payload?: any; totalPoints?: number; visibleLabelIndexes?: Set<number> | null };
+type MiniChartDotProps = DotProps & {
+  dimmed?: boolean;
+  index?: number;
+  metric: ChartMetric;
+  payload?: any;
+  totalPoints?: number;
+  visibleLabelIndexes?: Set<number> | null;
+};
 
 function MiniChartDot(props: MiniChartDotProps) {
-  const { cx, cy, index = 0, metric, payload, totalPoints = 0, visibleLabelIndexes } = props;
+  const { cx, cy, dimmed = false, index = 0, metric, payload, totalPoints = 0, visibleLabelIndexes } = props;
   const value = payload?.value as number | null | undefined;
 
   if (typeof cx !== "number" || typeof cy !== "number" || value == null) {
@@ -80,14 +89,14 @@ function MiniChartDot(props: MiniChartDotProps) {
 
   return (
     <g>
-      <circle cx={cx} cy={cy} fill={metric.color} r={4} stroke="#f7fbff" strokeWidth={2} />
+      <circle cx={cx} cy={cy} fill={metric.color} opacity={dimmed ? 0.42 : 1} r={4} stroke="#f7fbff" strokeWidth={2} />
       <text
         data-dot-label="true"
         data-dot-label-index={index}
         fill="#61758f"
         fontSize="10"
         fontWeight="600"
-        opacity={shouldShowLabel ? 1 : 0}
+        opacity={shouldShowLabel ? (dimmed ? 0.5 : 1) : 0}
         pointerEvents="none"
         textAnchor="middle"
         x={cx}
@@ -174,6 +183,44 @@ function buildVisibleDotLabelIndexes(points: Array<{ value: number | null }>, ca
   return visibleIndexes;
 }
 
+function buildLinearTrendPoints(points: Array<{ date: string; label: string; value: number | null }>) {
+  const samples = points
+    .map((point, index) => ({ index, value: point.value }))
+    .filter((point): point is { index: number; value: number } => point.value != null);
+
+  if (samples.length < 2) {
+    return {
+      direction: "flat" as const,
+      points: points.map((point) => ({ ...point, trendValue: null })),
+      slope: 0,
+    };
+  }
+
+  const count = samples.length;
+  const sumX = samples.reduce((total, point) => total + point.index, 0);
+  const sumY = samples.reduce((total, point) => total + point.value, 0);
+  const sumXY = samples.reduce((total, point) => total + point.index * point.value, 0);
+  const sumXX = samples.reduce((total, point) => total + point.index * point.index, 0);
+  const denominator = count * sumXX - sumX * sumX;
+
+  if (denominator === 0) {
+    return {
+      direction: "flat" as const,
+      points: points.map((point) => ({ ...point, trendValue: null })),
+      slope: 0,
+    };
+  }
+
+  const slope = (count * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / count;
+
+  return {
+    direction: slope > 0 ? ("up" as const) : slope < 0 ? ("down" as const) : ("flat" as const),
+    points: points.map((point, index) => ({ ...point, trendValue: slope * index + intercept })),
+    slope,
+  };
+}
+
 function sortMetricsBySavedOrder(metrics: ChartMetric[], savedOrder: string[]) {
   if (!savedOrder.length) {
     return metrics;
@@ -234,9 +281,10 @@ interface SortableMetricCardProps {
   metric: ChartMetric;
   onHide: (metricKey: string) => void;
   points: Array<{ date: string; label: string; value: number | null }>;
+  showTrendLine: boolean;
 }
 
-function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText, metric, onHide, points }: SortableMetricCardProps) {
+function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText, metric, onHide, points, showTrendLine }: SortableMetricCardProps) {
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
     id: metric.key,
     transition: {
@@ -282,6 +330,10 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
   }
 
   const visibleLabelIndexes = useMemo(() => buildVisibleDotLabelIndexes(points, cardWidth), [cardWidth, points]);
+  const trendLine = useMemo(() => buildLinearTrendPoints(points), [points]);
+  const chartPoints = showTrendLine ? trendLine.points : points.map((point) => ({ ...point, trendValue: null }));
+  const trendDirectionTone = getMetricProgressDirection(metric.key, trendLine.slope);
+  const trendLineStroke = trendDirectionTone === "positive" ? "#4d9975" : trendDirectionTone === "negative" ? "#c96d6d" : "rgb(var(--primary-strong))";
 
   return (
     <Card
@@ -337,7 +389,7 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
 
       <div className={`surface-chart-shell ${COMPACT_CHART_CLASS}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={points} margin={{ top: 18, right: 16, bottom: 2, left: 16 }}>
+          <LineChart data={chartPoints} margin={{ top: 18, right: 16, bottom: 2, left: 16 }}>
             <YAxis domain={["dataMin - 1", "dataMax + 1"]} hide />
             <Tooltip
               content={({ active, payload }) => {
@@ -345,7 +397,8 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
                   return null;
                 }
 
-                const point = payload[0]?.payload as { date?: string; value?: number | null } | undefined;
+                const valuePayload = payload.find((item) => item.dataKey === "value") ?? payload[0];
+                const point = valuePayload?.payload as { date?: string; value?: number | null } | undefined;
                 return (
                   <div className="surface-tooltip rounded-xl px-3 py-2">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{formatChartDate(point?.date)}</p>
@@ -356,14 +409,26 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
             />
             <Line
               dataKey="value"
-              dot={<MiniChartDot metric={metric} totalPoints={points.length} visibleLabelIndexes={visibleLabelIndexes} />}
+              dot={<MiniChartDot dimmed={showTrendLine} metric={metric} totalPoints={points.length} visibleLabelIndexes={visibleLabelIndexes} />}
               isAnimationActive={false}
               stroke={metric.color}
-              strokeOpacity={0}
+              strokeOpacity={showTrendLine ? 0.24 : 0}
               strokeLinecap="round"
-              strokeWidth={3}
+              strokeWidth={showTrendLine ? 2.4 : 3}
             />
-            <Customized component={DirectionalTrendOverlay} />
+            <Customized component={(props: any) => <DirectionalTrendOverlay {...props} strokeOpacity={showTrendLine ? 0.18 : 1} />} />
+            {showTrendLine ? (
+              <Line
+                activeDot={false}
+                dataKey="trendValue"
+                dot={false}
+                isAnimationActive={false}
+                stroke={trendLineStroke}
+                strokeLinecap="round"
+                strokeOpacity={0.34}
+                strokeWidth={11}
+              />
+            ) : null}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -378,6 +443,7 @@ export function MiniTrendGrid({
   layout = "auto",
   onRenderStart,
   onRenderComplete,
+  showTrendLine = false,
 }: MiniTrendGridProps) {
   const locale = useLocale();
   const [isChartReady, setIsChartReady] = useState(false);
@@ -672,6 +738,7 @@ export function MiniTrendGrid({
                     metric={metric}
                     onHide={hideMetric}
                     points={points}
+                    showTrendLine={showTrendLine}
                   />
                 </div>
               );
