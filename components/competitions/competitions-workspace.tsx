@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import type { CompetitionProgress } from "@/lib/competitions";
 import { getCompetitionMemberByUserId } from "@/lib/competitions";
 import { formatCompactDate, getUserInitials } from "@/lib/presentation";
@@ -74,6 +75,33 @@ function getCompetitionMembersForPreview(members: CompetitionProgress["members"]
   });
 }
 
+function getDaysUntil(date: string) {
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const target = new Date(date);
+  const targetStart = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  return Math.max(0, Math.ceil((targetStart - todayStart) / dayMs));
+}
+
+function getCompetitionTimeProgressPercent(createdAt: string, targetDate: string) {
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const created = new Date(createdAt);
+  const createdStart = new Date(created.getFullYear(), created.getMonth(), created.getDate()).getTime();
+  const target = new Date(targetDate);
+  const targetStart = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+
+  if (targetStart <= createdStart) {
+    return todayStart >= targetStart ? 100 : 0;
+  }
+
+  const elapsed = todayStart - createdStart;
+  const duration = targetStart - createdStart;
+  return Math.max(0, Math.min(100, Math.round((elapsed / duration) * 100)));
+}
+
 function CompetitionAvatarStack({ members }: { members: CompetitionProgress["members"] }) {
   const previewMembers = getCompetitionMembersForPreview(members).slice(0, 4);
   const overflowCount = members.length - previewMembers.length;
@@ -112,10 +140,12 @@ function CompetitionAvatarStack({ members }: { members: CompetitionProgress["mem
 
 function CompetitionSection({
   title,
+  countLabel,
   competitions,
   userId,
 }: {
   title: string;
+  countLabel: string;
   competitions: CompetitionProgress[];
   userId: string;
 }) {
@@ -137,41 +167,62 @@ function CompetitionSection({
   }
 
   return (
-    <section className="space-y-3">
-      <div className="px-1">
+    <section className="space-y-2">
+      <div className="flex items-center justify-between gap-3 px-1">
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        <p className="text-xs text-muted-foreground">{countLabel}</p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid min-w-0 gap-2.5 md:grid-cols-2">
         {competitions.map((competition) => {
           const currentMember = getCompetitionMemberByUserId(competition, userId);
-          const acceptedMembers = competition.members.filter((member) => member.status === "accepted").length;
           const isInvited = currentMember?.status === "invited";
+          const daysLeft = getDaysUntil(competition.targetDate);
+          const timeProgressPercent = getCompetitionTimeProgressPercent(competition.createdAt, competition.targetDate);
+          const visibleTimeProgressPercent = timeProgressPercent > 0 && timeProgressPercent < 7 ? 7 : timeProgressPercent;
+          const deadlineLabel =
+            competition.status === "active"
+              ? daysLeft === 0
+                ? t("competitions.stats.dueToday")
+                : t("competitions.stats.daysLeft", { count: daysLeft })
+              : t(`competitions.state.${competition.status}`);
 
           const cardInner = (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="mt-1 break-words font-display text-[1.25rem] leading-tight text-foreground">{competition.name}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{formatCompactDate(competition.targetDate, locale)}</p>
-                </div>
-
-                <Badge variant={competition.status === "active" ? "default" : "neutral"}>{t(`competitions.state.${competition.status}`)}</Badge>
-              </div>
-
-              <div className="mt-4 flex items-end justify-between gap-4">
-                <div className="min-w-0">
-                  <CompetitionAvatarStack members={competition.members} />
-                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>
-                      {t("competitions.card.members")} {competition.members.length}
-                    </span>
-                    <span>
-                      {t("competitions.stats.accepted")} {acceptedMembers}
-                    </span>
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/8 text-[rgb(var(--primary-strong))]">
+                    <Trophy className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="break-words font-display text-[1.02rem] leading-tight text-foreground">{competition.name}</h3>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{formatCompactDate(competition.targetDate, locale)}</p>
                   </div>
                 </div>
+
+                {competition.status === "active" ? (
+                  <span className="inline-flex min-h-7 shrink-0 items-center rounded-full border border-primary/12 bg-primary/8 px-2.5 text-[11px] font-semibold text-[rgb(var(--primary-strong))]">
+                    {deadlineLabel}
+                  </span>
+                ) : (
+                  <Badge variant="neutral">{deadlineLabel}</Badge>
+                )}
               </div>
+
+              <div className="mt-3 flex items-end justify-between gap-4">
+                <div className="min-w-0">
+                  <CompetitionAvatarStack members={competition.members} />
+                </div>
+              </div>
+              <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1 bg-[linear-gradient(90deg,rgb(var(--primary)/0.16)_0%,rgb(var(--accent)/0.18)_100%)]">
+                <span
+                  className="block h-full rounded-r-full bg-[linear-gradient(90deg,rgb(var(--primary))_0%,rgb(var(--accent))_100%)]"
+                  style={{ width: `${competition.status === "active" ? visibleTimeProgressPercent : 100}%` }}
+                />
+              </span>
+              <span className="pointer-events-none absolute bottom-1.5 right-2 rounded-full bg-white/72 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-[rgb(var(--primary-strong))] shadow-[0_1px_4px_rgba(16,35,63,0.08)]">
+                {competition.status === "active" ? timeProgressPercent : 100}%
+              </span>
               {isInvited ? (
                 <div className="relative mt-4 overflow-hidden rounded-[1rem] border border-accent/25 bg-[linear-gradient(180deg,rgba(236,253,243,0.95),rgba(240,251,246,0.82))] p-3 pl-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
                   <div className="absolute inset-y-0 left-0 w-1 bg-accent/70" />
@@ -200,7 +251,7 @@ function CompetitionSection({
           if (isInvited) {
             return (
               <article
-                className="surface-soft-card min-w-0 rounded-[1.35rem] border border-accent/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(245,250,248,0.96))] p-4 shadow-[0_12px_28px_rgba(16,35,63,0.07)]"
+                className="surface-soft-card relative min-w-0 overflow-hidden rounded-[1.15rem] border border-accent/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(245,250,248,0.96))] p-3 shadow-[0_12px_28px_rgba(16,35,63,0.07)]"
                 key={competition.id}
               >
                 {cardInner}
@@ -210,7 +261,7 @@ function CompetitionSection({
 
           return (
             <Link
-              className="surface-soft-card group min-w-0 rounded-[1.35rem] p-4 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]"
+              className="surface-soft-card group relative min-w-0 overflow-hidden rounded-[1.15rem] p-3 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]"
               href={`/competitions/${competition.id}`}
               key={competition.id}
             >
@@ -225,6 +276,7 @@ function CompetitionSection({
 
 export function CompetitionsWorkspace({ competitions, userId }: CompetitionsWorkspaceProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const activeCompetitions = [...competitions]
     .filter((competition) => competition.status === "active")
     .sort((left, right) => left.targetDate.localeCompare(right.targetDate));
@@ -232,13 +284,56 @@ export function CompetitionsWorkspace({ competitions, userId }: CompetitionsWork
     .filter((competition) => competition.status !== "active")
     .sort((left, right) => right.targetDate.localeCompare(left.targetDate));
   const hasCompetitions = competitions.length > 0;
+  const missingGoalCount = activeCompetitions.filter((competition) => {
+    const currentMember = getCompetitionMemberByUserId(competition, userId);
+    return currentMember?.status === "accepted" && currentMember.goalCount <= 0;
+  }).length;
+  const nearestDeadline = activeCompetitions[0] ?? null;
+  const nearestDeadlineDaysLeft = nearestDeadline ? getDaysUntil(nearestDeadline.targetDate) : null;
 
   return (
     <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
       {hasCompetitions ? (
-        <div className="space-y-6">
-          {activeCompetitions.length > 0 ? <CompetitionSection competitions={activeCompetitions} title={t("competitions.state.active")} userId={userId} /> : null}
-          {endedCompetitions.length > 0 ? <CompetitionSection competitions={endedCompetitions} title={t("competitions.state.completed")} userId={userId} /> : null}
+        <div className="space-y-5">
+          <section>
+            <StatsScrollbarRow className="stats-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
+              <div className="surface-soft-card min-w-[7.75rem] shrink-0 rounded-[0.875rem] px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("competitions.stats.active")}</p>
+                <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{activeCompetitions.length}</p>
+              </div>
+              <div className="surface-soft-card min-w-[8.5rem] shrink-0 rounded-[0.875rem] px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("competitions.stats.missingGoals")}</p>
+                <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">{missingGoalCount}</p>
+              </div>
+              <div className="surface-soft-card min-w-[9rem] shrink-0 rounded-[0.875rem] px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t("competitions.stats.nearestDeadline")}</p>
+                <p className="mt-1 font-display text-[1.25rem] leading-tight text-foreground">
+                  {nearestDeadline ? formatCompactDate(nearestDeadline.targetDate, locale) : t("competitions.stats.noActiveDeadline")}
+                </p>
+                {nearestDeadlineDaysLeft != null ? (
+                  <p className="mt-1 text-xs font-medium text-muted-foreground">
+                    {nearestDeadlineDaysLeft === 0 ? t("competitions.stats.dueToday") : t("competitions.stats.daysLeft", { count: nearestDeadlineDaysLeft })}
+                  </p>
+                ) : null}
+              </div>
+            </StatsScrollbarRow>
+          </section>
+          {activeCompetitions.length > 0 ? (
+            <CompetitionSection
+              competitions={activeCompetitions}
+              countLabel={t("competitions.list.remaining", { count: activeCompetitions.length })}
+              title={t("competitions.list.activeTitle")}
+              userId={userId}
+            />
+          ) : null}
+          {endedCompetitions.length > 0 ? (
+            <CompetitionSection
+              competitions={endedCompetitions}
+              countLabel={t("competitions.list.historyCount", { count: endedCompetitions.length })}
+              title={t("competitions.list.historyTitle")}
+              userId={userId}
+            />
+          ) : null}
         </div>
       ) : (
         <section className="surface-state-panel flex flex-col items-center gap-3 rounded-[1.75rem] p-8 text-center">

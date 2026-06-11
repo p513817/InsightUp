@@ -473,24 +473,38 @@
                                        "action":  "建立競賽"
                                    },
                          "stats":  {
-                                       "total":  "競賽數",
-                                       "pending":  "待回覆邀請",
+                                         "total":  "競賽數",
+                                         "active":  "進行中",
+                                         "missingGoals":  "待設定目標",
+                                         "nearestDeadline":  "最近截止",
+                                         "daysLeft":  "剩餘 {count} 天",
+                                         "dueToday":  "今天截止",
+                                         "noActiveDeadline":  "-",
+                                         "pending":  "待回覆邀請",
                                        "goals":  "目標數",
                                        "members":  "參與者",
                                        "accepted":  "已加入"
                                    },
-                         "card":  {
-                                      "deadline":  "目標日期",
-                                      "members":  "參與者",
-                                      "goalCount":  "目標數",
-                                      "myRank":  "我的排名",
-                                      "acceptedMembers":  "{count} 人已加入",
-                                      "invitedMembers":  "{count} 人受邀",
-                                      "goalProgress":  "{count} 個目標已設定",
-                                      "noGoals":  "尚未設定目標"
-                                  },
-                         "status":  {
-                                        "accepted":  "已加入",
+                          "card":  {
+                                        "deadline":  "目標日期",
+                                        "members":  "參與者",
+                                        "goalCount":  "目標數",
+                                        "myRank":  "我的排名",
+                                        "competitionProgress":  "競賽進度",
+                                        "myProgress":  "我的進度",
+                                        "acceptedMembers":  "{count} 人已加入",
+                                        "invitedMembers":  "{count} 人受邀",
+                                        "goalProgress":  "{count} 個目標已設定",
+                                        "noGoals":  "尚未設定目標"
+                                    },
+                          "list":  {
+                                       "activeTitle":  "進行中的競賽",
+                                       "historyTitle":  "已結束歷史紀錄",
+                                       "remaining":  "{count} 個進行中",
+                                       "historyCount":  "{count} 筆"
+                                   },
+                          "status":  {
+                                          "accepted":  "已加入",
                                         "declined":  "已婉拒",
                                         "removed":  "已移除",
                                         "invited":  "已邀請",

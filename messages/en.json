@@ -457,24 +457,38 @@
                                        "action":  "Create competition"
                                    },
                          "stats":  {
-                                       "total":  "Competitions",
-                                       "pending":  "Pending invites",
+                                        "total":  "Competitions",
+                                        "active":  "Active",
+                                        "missingGoals":  "Needs goals",
+                                        "nearestDeadline":  "Nearest deadline",
+                                        "daysLeft":  "{count} days left",
+                                        "dueToday":  "Due today",
+                                        "noActiveDeadline":  "-",
+                                        "pending":  "Pending invites",
                                        "goals":  "Goals",
                                        "members":  "Members",
                                        "accepted":  "Accepted"
                                    },
                          "card":  {
-                                      "deadline":  "Target date",
-                                      "members":  "Members",
-                                      "goalCount":  "Goals",
-                                      "myRank":  "My rank",
-                                      "acceptedMembers":  "{count} accepted",
-                                      "invitedMembers":  "{count} invited",
-                                      "goalProgress":  "{count} goals set",
-                                      "noGoals":  "No goals yet"
+                                        "deadline":  "Target date",
+                                        "members":  "Members",
+                                        "goalCount":  "Goals",
+                                        "myRank":  "My rank",
+                                        "competitionProgress":  "Competition progress",
+                                        "myProgress":  "My progress",
+                                        "acceptedMembers":  "{count} accepted",
+                                        "invitedMembers":  "{count} invited",
+                                        "goalProgress":  "{count} goals set",
+                                        "noGoals":  "No goals yet"
+                                    },
+                         "list":  {
+                                      "activeTitle":  "Active competitions",
+                                      "historyTitle":  "Competition history",
+                                      "remaining":  "{count} active",
+                                      "historyCount":  "{count} records"
                                   },
                          "status":  {
-                                        "accepted":  "Accepted",
+                                          "accepted":  "Accepted",
                                         "declined":  "Declined",
                                         "removed":  "Removed",
                                         "invited":  "Invited",
