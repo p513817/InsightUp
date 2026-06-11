@@ -8,7 +8,7 @@ do $$
 declare
   v_owner_id constant uuid := '1a34a5b4-a544-4fd7-9678-ceb9e450db7d';
 
-  v_competition_id constant uuid := '71f7a1af-43d4-47fd-99fe-5f9d19738f01';
+  v_competition_id constant uuid := '3af8817b-9fd0-44cd-8c07-7cf8eb8b361f';
   v_second_competition_id constant uuid := '6fb1e380-83de-4d34-bc13-33cdb65d3aa1';
   v_completed_competition_id constant uuid := '8c16f7c8-4f5b-4bb6-8fe0-7e17be3d6f21';
 
@@ -49,6 +49,13 @@ declare
   v_ethan_start_record_id constant uuid := '77777777-dddd-4777-8777-dddddddddddd';
   v_ethan_latest_record_id constant uuid := '77777777-eeee-4777-8777-eeeeeeeeeeee';
   v_rina_only_record_id constant uuid := '88888888-dddd-4888-8888-dddddddddddd';
+  v_rina_latest_record_id constant uuid := '88888888-eeee-4888-8888-eeeeeeeeeeee';
+  v_omar_start_record_id constant uuid := '99999999-dddd-4999-8999-dddddddddddd';
+  v_omar_latest_record_id constant uuid := '99999999-eeee-4999-8999-eeeeeeeeeeee';
+
+  v_owner_display_name text;
+  v_owner_avatar_url text;
+  v_owner_friend_code text;
 begin
   -- Ensure the fixed demo owner exists in clean local databases without
   -- overwriting a real account that already uses this id.
@@ -84,6 +91,14 @@ begin
   values (v_owner_id, 'Demo Owner', null, 'DEMOOWNER1')
   on conflict (user_id) do nothing;
 
+  select
+    coalesce(p.display_name, 'Demo Owner'),
+    p.avatar_url,
+    p.friend_code
+  into v_owner_display_name, v_owner_avatar_url, v_owner_friend_code
+  from public.user_profiles p
+  where p.user_id = v_owner_id;
+
   -- Demo competitions are created here so the seed can be run from a clean dev database.
   insert into public.competitions (
     id,
@@ -98,7 +113,7 @@ begin
     (
       v_competition_id,
       v_owner_id,
-      'Summer recomposition sprint',
+      '一起變好',
       date '2026-08-08',
       'active',
       timezone('utc', now()) - interval '12 days',
@@ -107,7 +122,7 @@ begin
     (
       v_second_competition_id,
       v_owner_id,
-      'June consistency challenge',
+      '夏日大作戰',
       date '2026-07-15',
       'active',
       timezone('utc', now()) - interval '4 days',
@@ -116,7 +131,7 @@ begin
     (
       v_completed_competition_id,
       v_owner_id,
-      'May finish-line check',
+      '五月前哨站',
       date '2026-05-31',
       'completed',
       timezone('utc', now()) - interval '45 days',
@@ -308,9 +323,9 @@ begin
       v_owner_member_id,
       v_competition_id,
       v_owner_id,
-      'Demo Owner',
-      null,
-      null,
+      v_owner_display_name,
+      v_owner_avatar_url,
+      v_owner_friend_code,
       'owner',
       'accepted',
       v_owner_id,
@@ -368,13 +383,13 @@ begin
       v_second_owner_member_id,
       v_second_competition_id,
       v_owner_id,
-      'Demo Owner',
-      null,
-      null,
+      v_owner_display_name,
+      v_owner_avatar_url,
+      v_owner_friend_code,
       'owner',
       'accepted',
       v_owner_id,
-      timezone('utc', now()) - interval '4 days'
+      null
     ),
     (
       v_sofia_member_id,
@@ -408,9 +423,9 @@ begin
       'https://i.pravatar.cc/100?img=25',
       'RINAKIM001',
       'participant',
-      'invited',
+      'accepted',
       v_owner_id,
-      null
+      timezone('utc', now()) - interval '2 days'
     ),
     (
       v_omar_member_id,
@@ -428,9 +443,9 @@ begin
       v_completed_owner_member_id,
       v_completed_competition_id,
       v_owner_id,
-      'Demo Owner',
-      null,
-      null,
+      v_owner_display_name,
+      v_owner_avatar_url,
+      v_owner_friend_code,
       'owner',
       'accepted',
       v_owner_id,
@@ -506,7 +521,10 @@ begin
     (v_sofia_latest_record_id, v_sofia_id, date '2026-06-09', 158, 26, 'female', 80, 54.1, 25.9, 12.6, 23.3, 5, 1280, 1760, true, 'manual', 'Demo latest record for Sofia with strong progress', timezone('utc', now()), timezone('utc', now())),
     (v_ethan_start_record_id, v_ethan_id, date '2026-05-10', 182, 34, 'male', 86, 78.5, 36.4, 10.8, 13.8, 4, 1795, 2630, true, 'manual', 'Demo baseline record for Ethan', timezone('utc', now()), timezone('utc', now())),
     (v_ethan_latest_record_id, v_ethan_id, date '2026-06-08', 182, 34, 'male', 88, 79.4, 37.2, 10.4, 13.1, 4, 1810, 2660, true, 'manual', 'Demo latest record for Ethan near target', timezone('utc', now()), timezone('utc', now())),
-    (v_rina_only_record_id, v_rina_id, date '2026-03-28', 167, 31, 'female', 69, 62.0, 25.1, 19.0, 30.6, 8, 1320, 1810, false, 'manual', 'Demo old record for Rina, excluded from charts to test stale/non-chart data', timezone('utc', now()), timezone('utc', now()))
+    (v_rina_only_record_id, v_rina_id, date '2026-03-28', 167, 31, 'female', 69, 62.0, 25.1, 19.0, 30.6, 8, 1320, 1810, false, 'manual', 'Demo old record for Rina, excluded from charts to test stale/non-chart data', timezone('utc', now()), timezone('utc', now())),
+    (v_rina_latest_record_id, v_rina_id, date '2026-06-10', 167, 31, 'female', 71, 61.64, 25.4, 18.4, 29.8, 8, 1328, 1820, true, 'manual', 'Demo latest record for Rina with 18 percent competition progress', timezone('utc', now()), timezone('utc', now())),
+    (v_omar_start_record_id, v_omar_id, date '2026-05-12', 174, 35, 'male', 78, 80.4, 33.2, 17.4, 21.6, 8, 1668, 2390, true, 'manual', 'Demo baseline record for Omar', timezone('utc', now()), timezone('utc', now())),
+    (v_omar_latest_record_id, v_omar_id, date '2026-06-11', 174, 35, 'male', 75, 81.2, 32.7, 18.6, 22.9, 9, 1650, 2380, true, 'manual', 'Demo latest record for Omar with negative progress', timezone('utc', now()), timezone('utc', now()))
   on conflict (id) do update
   set
     recorded_at = excluded.recorded_at,
@@ -552,6 +570,7 @@ begin
     ('66666666-6666-4116-8116-666666666666', v_sofia_id, 'Fat loss push', v_sofia_start_record_id, v_second_competition_id, v_sofia_member_id, 'fat', 14.3, 12.5, 'kg', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
     ('77777777-7777-4117-8117-777777777777', v_ethan_id, 'Score climb', v_ethan_start_record_id, v_second_competition_id, v_ethan_member_id, 'score', 86, 89, 'pts', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
     ('88888888-8888-4118-8118-888888888888', v_rina_id, 'Fresh start', v_rina_only_record_id, v_second_competition_id, v_rina_member_id, 'weight', 62.0, 60.0, 'kg', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
+    ('99999999-9999-4119-8119-999999999999', v_omar_id, 'Reset the trend', v_omar_start_record_id, v_second_competition_id, v_omar_member_id, 'fatPercent', 21.6, 20.0, '%', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
     ('90909090-9090-4090-8090-909090909090', v_luna_id, 'May finish-line check', v_luna_start_record_id, v_completed_competition_id, v_completed_luna_member_id, 'weight', 59.4, 59.0, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now())),
     ('91919191-9191-4091-8091-919191919191', v_kai_id, 'May finish-line check', v_kai_start_record_id, v_completed_competition_id, v_completed_kai_member_id, 'muscle', 31.2, 31.8, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now()))
   on conflict (id) do update

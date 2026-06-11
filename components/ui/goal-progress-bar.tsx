@@ -23,8 +23,16 @@ export function GoalProgressBar({
   const setbackPercent = Math.max(0, Math.min(100, Math.abs(value)));
   const isNegative = hasGoals && value < 0;
   const isSubtle = variant === "subtle";
-  const labelInside = !isNegative && percent >= 50;
+  const displayPercent = isNegative ? setbackPercent : percent;
+  const labelInside = hasGoals && displayPercent >= 50;
   const ariaValue = Math.max(-100, Math.min(100, Math.round(value)));
+  const labelPositionStyle = isNegative
+    ? labelInside
+      ? { left: `${100 - setbackPercent}%` }
+      : { right: `${setbackPercent}%` }
+    : labelInside
+      ? { right: `${100 - percent}%` }
+      : { left: `${percent}%` };
 
   return (
     <div
@@ -58,16 +66,21 @@ export function GoalProgressBar({
         <span
           className={cn(
             "absolute top-1/2 inline-flex -translate-y-1/2 truncate rounded-full px-2.5 py-0.5 text-[11px] font-semibold tabular-nums sm:text-xs",
+            labelInside
+              ? "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]"
+              : hasGoals
+                ? "text-[rgb(var(--primary-strong))]"
+                : "text-muted-foreground",
+            isNegative ? "bg-background/82" : "",
             isNegative
-              ? "left-1 text-[rgb(var(--primary-strong))]"
+              ? labelInside
+                ? "justify-start"
+                : "justify-end"
               : labelInside
-                ? "text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]"
-                : hasGoals
-                  ? "text-[rgb(var(--primary-strong))]"
-                  : "text-muted-foreground",
-            labelInside ? "justify-end" : "justify-start",
+                ? "justify-end"
+                : "justify-start",
           )}
-          style={isNegative ? undefined : labelInside ? { right: `${100 - percent}%` } : { left: `${percent}%` }}
+          style={labelPositionStyle}
         >
           {label}
         </span>

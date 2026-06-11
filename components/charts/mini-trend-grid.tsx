@@ -333,7 +333,7 @@ function SortableMetricCard({ canHide, editMode, formattedDelta, headerValueText
   const trendLine = useMemo(() => buildLinearTrendPoints(points), [points]);
   const chartPoints = showTrendLine ? trendLine.points : points.map((point) => ({ ...point, trendValue: null }));
   const trendDirectionTone = getMetricProgressDirection(metric.key, trendLine.slope);
-  const trendLineStroke = trendDirectionTone === "positive" ? "#4d9975" : trendDirectionTone === "negative" ? "#c96d6d" : "rgb(var(--primary-strong))";
+  const trendLineStroke = trendDirectionTone === "positive" ? "#245da8" : trendDirectionTone === "negative" ? "#5f82aa" : "rgb(var(--primary-strong))";
 
   return (
     <Card

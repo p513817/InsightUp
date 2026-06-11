@@ -178,6 +178,7 @@ function CompetitionSection({
         {competitions.map((competition) => {
           const currentMember = getCompetitionMemberByUserId(competition, userId);
           const isInvited = currentMember?.status === "invited";
+          const isEnded = competition.status !== "active";
           const daysLeft = getDaysUntil(competition.targetDate);
           const timeProgressPercent = getCompetitionTimeProgressPercent(competition.createdAt, competition.targetDate);
           const visibleTimeProgressPercent = timeProgressPercent > 0 && timeProgressPercent < 7 ? 7 : timeProgressPercent;
@@ -215,13 +216,27 @@ function CompetitionSection({
                   <CompetitionAvatarStack members={competition.members} />
                 </div>
               </div>
-              <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1 bg-[linear-gradient(90deg,rgb(var(--primary)/0.16)_0%,rgb(var(--accent)/0.18)_100%)]">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute inset-x-0 bottom-0 h-1",
+                  isEnded ? "bg-foreground/10" : "bg-[linear-gradient(90deg,rgb(var(--primary-strong)/0.14)_0%,rgb(var(--primary)/0.18)_100%)]",
+                )}
+              >
                 <span
-                  className="block h-full rounded-r-full bg-[linear-gradient(90deg,rgb(var(--primary))_0%,rgb(var(--accent))_100%)]"
+                  className={cn(
+                    "block h-full rounded-r-full",
+                    isEnded ? "bg-muted-foreground/35" : "bg-[linear-gradient(90deg,rgb(var(--primary-strong))_0%,rgb(var(--primary))_100%)]",
+                  )}
                   style={{ width: `${competition.status === "active" ? visibleTimeProgressPercent : 100}%` }}
                 />
               </span>
-              <span className="pointer-events-none absolute bottom-1.5 right-2 rounded-full bg-white/72 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-[rgb(var(--primary-strong))] shadow-[0_1px_4px_rgba(16,35,63,0.08)]">
+              <span
+                className={cn(
+                  "pointer-events-none absolute bottom-1.5 right-2 rounded-full bg-white/72 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums shadow-[0_1px_4px_rgba(16,35,63,0.08)]",
+                  isEnded ? "text-muted-foreground" : "text-[rgb(var(--primary-strong))]",
+                )}
+              >
                 {competition.status === "active" ? timeProgressPercent : 100}%
               </span>
               {isInvited ? (
@@ -262,7 +277,10 @@ function CompetitionSection({
 
           return (
             <Link
-              className="surface-soft-card group relative min-w-0 overflow-hidden rounded-[1.15rem] p-3 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]"
+              className={cn(
+                "surface-soft-card group relative min-w-0 overflow-hidden rounded-[1.15rem] p-3 transition-[transform,box-shadow,border-color,opacity] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]",
+                isEnded ? "bg-muted/35 opacity-75 saturate-50 hover:opacity-90" : "",
+              )}
               href={`/competitions/${competition.id}`}
               key={competition.id}
             >

@@ -85,25 +85,36 @@ function getMetricLabel(metricKey: keyof typeof METRIC_LABEL_MAPS["zh-Hant"], lo
   return METRIC_LABEL_MAPS[locale][metricKey];
 }
 
+const CHART_BLUE_PALETTE = {
+  navy: "#17345d",
+  royal: "#245da8",
+  azure: "#2f7fc2",
+  sky: "#4c95d8",
+  steel: "#5f82aa",
+  slate: "#718aa8",
+  indigo: "#3f5f9f",
+  pale: "#7aa6d6",
+} as const;
+
 function getOverallMetrics(locale: Locale): ChartMetric[] {
   return [
-    { key: "weight", label: getMetricLabel("weight", locale), color: "#1c365f", unit: "kg", axis: "mass" },
-    { key: "muscle", label: getMetricLabel("muscle", locale), color: "#3d7bb2", unit: "kg", axis: "mass" },
-    { key: "fat", label: getMetricLabel("fat", locale), color: "#b56878", unit: "kg", axis: "mass" },
-    { key: "fatPercent", label: getMetricLabel("fatPercent", locale), color: "#8a659f", unit: "%", axis: "ratio" },
-    { key: "score", label: getMetricLabel("score", locale), color: "#3f8f82", unit: "pt", axis: "ratio" },
-    { key: "visceralFatLevel", label: getMetricLabel("visceralFatLevel", locale), color: "#5e88a7", unit: "lvl", axis: "ratio" },
-    { key: "bmr", label: getMetricLabel("bmr", locale), color: "#71839a", unit: "kcal", axis: "ratio" },
-    { key: "recommendedCalories", label: getMetricLabel("recommendedCalories", locale), color: "#4d67a8", unit: "kcal", axis: "ratio" },
+    { key: "weight", label: getMetricLabel("weight", locale), color: CHART_BLUE_PALETTE.navy, unit: "kg", axis: "mass" },
+    { key: "muscle", label: getMetricLabel("muscle", locale), color: CHART_BLUE_PALETTE.royal, unit: "kg", axis: "mass" },
+    { key: "fat", label: getMetricLabel("fat", locale), color: CHART_BLUE_PALETTE.azure, unit: "kg", axis: "mass" },
+    { key: "fatPercent", label: getMetricLabel("fatPercent", locale), color: CHART_BLUE_PALETTE.indigo, unit: "%", axis: "ratio" },
+    { key: "score", label: getMetricLabel("score", locale), color: CHART_BLUE_PALETTE.sky, unit: "pt", axis: "ratio" },
+    { key: "visceralFatLevel", label: getMetricLabel("visceralFatLevel", locale), color: CHART_BLUE_PALETTE.steel, unit: "lvl", axis: "ratio" },
+    { key: "bmr", label: getMetricLabel("bmr", locale), color: CHART_BLUE_PALETTE.slate, unit: "kcal", axis: "ratio" },
+    { key: "recommendedCalories", label: getMetricLabel("recommendedCalories", locale), color: CHART_BLUE_PALETTE.pale, unit: "kcal", axis: "ratio" },
   ];
 }
 
 function getSegmentalMetrics(locale: Locale): ChartMetric[] {
   return [
-    { key: "muscle", label: getMetricLabel("muscle", locale), color: "#3d7bb2", unit: "kg", axis: "mass" },
-    { key: "fat", label: getMetricLabel("fat", locale), color: "#b56878", unit: "kg", axis: "mass" },
-    { key: "muscleRatio", label: getMetricLabel("muscleRatio", locale), color: "#79d7c3", unit: "%", axis: "ratio" },
-    { key: "fatRatio", label: getMetricLabel("fatRatio", locale), color: "#8a659f", unit: "%", axis: "ratio" },
+    { key: "muscle", label: getMetricLabel("muscle", locale), color: CHART_BLUE_PALETTE.royal, unit: "kg", axis: "mass" },
+    { key: "fat", label: getMetricLabel("fat", locale), color: CHART_BLUE_PALETTE.azure, unit: "kg", axis: "mass" },
+    { key: "muscleRatio", label: getMetricLabel("muscleRatio", locale), color: CHART_BLUE_PALETTE.sky, unit: "%", axis: "ratio" },
+    { key: "fatRatio", label: getMetricLabel("fatRatio", locale), color: CHART_BLUE_PALETTE.indigo, unit: "%", axis: "ratio" },
   ];
 }
 
