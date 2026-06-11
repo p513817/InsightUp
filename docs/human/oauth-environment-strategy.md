@@ -1,59 +1,75 @@
-# Google OAuth 環境切換策略
+# Google OAuth 環境策略
 
-## 目標
+InsightUp 使用 Supabase Auth 的 Google OAuth。重點是：callback URL 必須和瀏覽器實際開啟的 host 一致，否則 PKCE cookie 與 redirect host 可能對不上。
 
-避免開發時把 redirect URL 寫成 localhost，部署時再手動改回正式網址。這種方式容易漏改，也容易造成 Supabase callback 出錯。
+## 固定 Callback Path
 
-## 目前採用的做法
+專案只使用這個 callback path：
 
-應用程式永遠只導向：
+```text
+/auth/callback
+```
 
-- `/auth/callback`
+完整 callback URL 由環境與目前 origin 組合，不應在程式碼中寫死 localhost 或 production domain。
 
-完整 callback URL 由以下規則組出：
+## 本地開發
 
-1. 如果目前正在瀏覽器內互動登入流程，優先使用目前頁面的 origin
-2. 如果沒有可用的目前 origin，退回 `NEXT_PUBLIC_SITE_URL`
-
-這樣可以避免本地開發時混用 `localhost` 和 `127.0.0.1`，導致 PKCE verifier cookie 寫在不同 host 上。
-
-## 建議設定
-
-### 本地開發
-
-`.env.local`
+`.env.local` 建議：
 
 ```env
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 ```
 
-重要：實際開瀏覽器測試時，請固定只用同一種 host。
+如果你用 `localhost` 開啟，就使用：
 
-- 如果 `.env.local` 寫 `127.0.0.1`，就用 `http://127.0.0.1:3000`
-- 如果你習慣用 `localhost`，就把 `NEXT_PUBLIC_SITE_URL` 改成 `http://localhost:3000`
+```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-不要在同一輪 OAuth 流程中混用 `localhost` 和 `127.0.0.1`。
+如果你啟動在不同 port，例如：
 
-### Vercel 正式環境
+```bash
+pnpm dev --port 5500
+```
 
-Vercel Environment Variables
+就要確認 Supabase Allowed Redirect URLs 有：
+
+```text
+http://localhost:5500/auth/callback
+```
+
+## Vercel Production
+
+Vercel Environment Variables：
 
 ```env
 NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
+若使用正式自訂網域，請填正式網域：
+
+```env
+NEXT_PUBLIC_SITE_URL=https://your-domain.example
+```
+
 ## Supabase Allowed Redirect URLs
 
-請同時把這些網址加進 Supabase Auth 設定：
+建議至少加入：
 
 - `http://127.0.0.1:3000/auth/callback`
 - `http://localhost:3000/auth/callback`
+- `http://localhost:5500/auth/callback`，如果本機常用 5500
 - `https://your-app.vercel.app/auth/callback`
-- 你的自訂網域 callback，如果有的話
+- `https://your-domain.example/auth/callback`，如果有正式網域
 
-## 為什麼這樣比較好
+## 除錯方向
 
-- 不需要因為環境切換去改程式碼
-- redirect 規則集中在環境變數與 Supabase 後台
-- 本地與正式環境可同時存在，不互相覆蓋
-- 對 agent 與團隊成員都比較容易理解
+登入失敗時先檢查：
+
+- 目前瀏覽器網址的 host 是否和 `NEXT_PUBLIC_SITE_URL` 一致。
+- Supabase Allowed Redirect URLs 是否包含目前 host 的 `/auth/callback`。
+- Google Provider 是否在 Supabase Auth 中啟用。
+- Browser cookie 是否被阻擋。
+- Server route 是否有讀到 Supabase session。
+
+避免在程式碼中為了修 login 而寫死某個 domain。這會讓 Preview、本地與正式環境互相干擾。

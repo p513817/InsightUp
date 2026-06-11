@@ -1,32 +1,44 @@
 # Developer Guide
 
-## Goal
+This is the English handoff guide for future agents and maintainers working at the repository root.
 
-This document is the English handoff guide for future agents and maintainers working at the repository root.
+For the fastest current-state summary, read `docs/agent/current-state.md` first.
 
 ## Project Conventions
 
-- UI language is zh-TW.
-- Human-facing docs are written in Chinese.
-- Agent-facing docs are written in English.
-- Keep the reusable UI primitives in `components/ui/` visually consistent.
+- UI language is Traditional Chinese.
+- Human-facing docs are Traditional Chinese.
+- Agent-facing docs are English.
+- User-facing copy belongs in `messages/*.json`; do not hardcode bilingual strings inside components.
+- Keep reusable UI primitives in `components/ui/` visually consistent.
+- Apply the mobile interaction baseline from `AGENTS.md`: 44px minimum touch targets, 8px spacing between adjacent controls, safe-area-aware floating controls.
 - Do not reintroduce hardcoded OAuth redirect URLs.
+- Do not reintroduce hardcoded entitlement bypasses. Feature limits must come from Supabase plan data.
 
 ## Working Model
 
-- The protected app lives under `app/(app)/`.
+- Protected app pages live under `app/(app)/`.
 - Public entry is `app/page.tsx`.
 - Auth callback is `app/auth/callback/route.ts`.
-- API routes are route handlers, not a separate server process.
+- API routes are Next.js route handlers, not a separate server process.
+- Supabase SSR helpers are the auth/session boundary for server components and route handlers.
+- The browser Supabase client must remain a singleton in the client runtime.
 
 ## Preferred Edit Surfaces
 
-- Domain changes: `lib/inbody/*`
-- Auth/session changes: `lib/supabase/*` and `middleware.ts`
-- New UI building blocks: `components/ui/*`
-- Dashboard/profile behavior: `components/workspace/records-workspace.tsx`
-- AI trend summary flow: `app/api/trend-summary/route.ts`, `lib/inbody/trend-summary.ts`, `components/charts/trend-summary-fab.tsx`
-- Plan and entitlement changes: `infra/supabase/migrations/20260506_00*_*.sql` and account-facing reads in `app/(app)/account/page.tsx`
+- Record CRUD and chart inclusion: `app/api/records/*`, `components/records/*`, `lib/inbody/records.ts`, `lib/inbody/schema.ts`
+- Chart payloads and dashboard UI: `app/api/chart-data/route.ts`, `components/charts/*`, `components/workspace/*`
+- Dashboard preferences: `app/api/preferences/dashboard/route.ts`, `lib/dashboard-preferences.ts`
+- Metric direction and delta tones: `lib/inbody/progress.ts`
+- AI trend summary: `app/api/trend-summary/route.ts`, `lib/inbody/trend-summary.ts`, `lib/inbody/trend-summary-service.ts`, `components/charts/trend-summary-fab.tsx`
+- AI scan: `app/api/records/scan/route.ts`, `lib/inbody/scan.ts`, `lib/llms/usage.ts`
+- Personal goals: `app/api/personal-goals/*`, `components/personal-goals/*`, `lib/personal-goals.ts`
+- Shared goal progress UI: `components/ui/goal-progress-bar.tsx`, `components/ui/goal-metric-progress-card.tsx`
+- Friends: `app/api/friends/*`, `components/friends/*`, `lib/friends/*`
+- Competitions: `app/api/competitions/*`, `components/competitions/*`, `lib/competitions.ts`
+- Auth/session: `lib/supabase/*`, `middleware.ts`
+- Account plan display: `app/(app)/account/page.tsx`
+- Database changes: new ordered migration under `infra/supabase/migrations/`
 
 ## Toolchain Setup
 
@@ -37,30 +49,58 @@ Install and activate the expected toolchain before running package scripts:
 3. Run `corepack prepare pnpm@10.6.5 --activate`.
 4. Run `pnpm install` from the repository root.
 
-If Corepack is unavailable, install pnpm manually and keep the package manager version aligned with `package.json`.
+On this Windows workspace, the user may already have a Git Bash session with `load_nvm` and a dev server running on a custom port. Do not restart or rebuild that server unless the user asks. Use checks only.
 
 ## Local Validation
 
 Run these from the repository root after meaningful edits:
 
-- `pnpm lint`
 - `pnpm typecheck`
-- `pnpm test`
+- focused `pnpm vitest run <test-file>`
+- `pnpm lint` for broad changes or before PR/release
+
+Focused tests currently available:
+
+- `tests/inbody-records.test.ts`
+- `tests/dashboard-preferences.test.ts`
+- `tests/friends.test.ts`
+- `tests/llms.test.ts`
+- `tests/personal-goals.test.ts`
+- `tests/inbody-progress.test.ts`
+- `tests/competitions.test.ts`
 
 ## Vercel Smoke Test
 
-After deployment-related or auth/API changes, verify these behaviors against the production Vercel environment when possible:
+After deployment-related, auth, API, or database changes, verify:
 
 - Google sign-in returns to `/dashboard`
-- record CRUD still works for the authenticated user
-- chart data renders for both overall and segmental views
-- `GET /api/trend-summary` returns the latest summary state without forcing regeneration
-- `POST /api/trend-summary` can regenerate when entitlement usage is available
+- record CRUD works for the authenticated user
+- chart inclusion toggles change chart participation without deleting history
+- overall and segmental chart views render
+- dashboard preferences persist after refresh
+- AI scan entitlement state loads and scan output appears as a draft
+- `GET /api/trend-summary` returns latest summary state without forcing regeneration
+- `POST /api/trend-summary` regenerates only when entitlement usage is available
+- personal goals show correct positive/negative progress
+- friend code add/remove and friend history work
+- competition create/edit/detail/membership/goal flows work
 - account page shows the current plan level
+
+## Database Change Rules
+
+- Prefer additive migrations.
+- Keep migrations ordered by date and sequence.
+- Do not edit already-applied migrations unless the user explicitly requests a local-only rewrite.
+- If app behavior depends on entitlement limits, add or update plan entitlement data in SQL first.
+- Keep RLS in mind for every user-owned table.
+- Prefer RPCs for multi-table writes that must be authorization-safe and atomic.
 
 ## Known Constraints
 
-- The local environment in this workspace may not have Node installed yet. If runtime validation is unavailable, keep static changes narrow and document the missing prerequisite in your final note.
-- The Supabase schema is already normalized. Do not collapse segmental data back into a single JSON blob.
+- `infra/supabase/schema.sql` is not always a full latest dump. For rollout truth, inspect ordered migrations.
 - Chart exclusion is a first-class product rule and must stay independent from deletion.
-- AI usage rules must stay database-driven through entitlements, not hardcoded by email or temporary code branches.
+- AI usage rules must stay database-driven.
+- AI scan should not directly save records without user review.
+- Competition goal target dates are locked by database triggers and should also be blocked in the frontend.
+- Competition members with no goals or declined/removed status should sort below active members with goals.
+- Windows PowerShell may fail to execute `rg.exe` in this environment; use PowerShell `Get-ChildItem` and `Select-String` as fallback.

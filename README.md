@@ -1,42 +1,54 @@
 # InsightUp
 
-InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 登入、個人紀錄管理、整體與區域圖表分析，以及可控的 chart inclusion 流程。
+InsightUp is a single Next.js App Router application for tracking InBody records, long-term body composition trends, personal goals, friends, and competitions.
 
-## 目前版本重點
+The product rule that matters most: a record can exist in history without being included in chart analysis. Exclusion is not deletion.
 
-- 單一 Next.js App Router 專案，目前以 Vercel 作為正式部署目標
-- Supabase Auth + Supabase 資料庫
-- 可新增、編輯、刪除 InBody 紀錄
-- 可將紀錄保留在歷史中，但排除出圖表分析
-- 支援 AI 趨勢摘要，會先讀取最新摘要，再由使用者決定是否重新生成
-- AI 使用次數與模型池由 Supabase entitlement 資料控制
-- 中文 UI、英文 Agent 文件、中文操作文件
-- 舊版靜態 demo 已歸檔到 `archive/legacy-demo/`
+## Current Product Surface
 
-## 技術棧
+- Google sign-in through Supabase Auth.
+- InBody record CRUD with soft deletion and chart inclusion toggles.
+- Dashboard trend charts for overall and segmental metrics.
+- Dashboard preferences for layout, metric order, and trend display.
+- AI trend summaries through Gemini, with cached/latest fetch separated from explicit regeneration.
+- AI scan draft input for InBody sheets, controlled by daily feature entitlement.
+- Personal goals with positive, zero, and negative progress handling.
+- Friends by friend code, friend snapshots, and friend history comparison.
+- Competitions with invited members, member goals, leaderboard progress, and owner-managed membership.
+- Account plan display from Supabase subscription tables.
+
+## Stack
 
 - Next.js App Router
+- React 19
 - TypeScript
 - Tailwind CSS
-- shadcn-style UI primitives
-- Supabase SSR
+- shadcn-style local UI primitives
+- Supabase Auth, Postgres, RLS, and SSR helpers
 - Recharts
 - React Hook Form + Zod
 - Vitest
+- Gemini via `@google/genai`
+- Vercel production deployment
 
-## 快速開始
+## Quick Start
 
-1. 安裝 Node 22。
-2. 執行 `corepack enable`。
-3. 執行 `corepack prepare pnpm@10.6.5 --activate`。
-4. 複製 `.env.example` 成 `.env.local`。
-5. 填入 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`NEXT_PUBLIC_SITE_URL`、`GEMINI_API_KEY`。
-6. 在 Supabase 依序套用 `infra/supabase/migrations/20260422_001_init.sql`、`infra/supabase/migrations/20260424_001_dashboard_preferences.sql`、`infra/supabase/migrations/20260424_002_friends.sql`、`infra/supabase/migrations/20260506_001_llm_trend_daily_summaries.sql`、`infra/supabase/migrations/20260506_002_add_model_name_to_llm_trend_daily_summaries.sql`、`infra/supabase/migrations/20260506_003_llm_feature_entitlements.sql`。
-7. 執行 `pnpm install`。
-8. 執行 `pnpm dev`。
-9. 開啟 `http://127.0.0.1:3000`。
+1. Install Node 22 LTS.
+2. Run `corepack enable`.
+3. Run `corepack prepare pnpm@10.6.5 --activate`.
+4. Copy `.env.example` to `.env.local`.
+5. Fill:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SITE_URL`
+   - `GEMINI_API_KEY`
+6. Apply Supabase migrations in filename order from `infra/supabase/migrations/`.
+7. Run `pnpm install`.
+8. Run `pnpm dev`.
 
-## 常用指令
+Do not hardcode localhost or production URLs. OAuth redirect behavior must stay driven by `NEXT_PUBLIC_SITE_URL` and the current request origin.
+
+## Common Commands
 
 - `pnpm dev`
 - `pnpm lint`
@@ -44,33 +56,59 @@ InsightUp 是一個用來追蹤 InBody 指標的 Next.js 專案，支援 Google 
 - `pnpm test`
 - `pnpm build`
 
-## 文件導覽
+When a user already has a dev server running, do not restart it unless they ask. Use targeted checks such as `pnpm typecheck` or focused Vitest files.
 
-- 中文本地開發與測試：`docs/human/local-development.md`
-- 中文 OAuth 環境策略：`docs/human/oauth-environment-strategy.md`
-- 中文 Vercel 部署：`docs/human/vercel-deployment.md`
-- 中文產品使用說明：`docs/human/usage-guide.md`
-- 英文 Agent 開發說明：`docs/agent/developer-guide.md`
-- 英文架構總覽：`docs/agent/architecture.md`
-- 英文 Supabase schema 說明：`docs/agent/supabase-schema.md`
-- Supabase SQL 與 migration：`infra/supabase/`
+## Documentation Map
 
-## Supabase 與 OAuth
+Read these first when continuing development:
 
-這個版本不再把 redirect URL 寫死在程式裡。
+- Agent quick handoff: `docs/agent/current-state.md`
+- Architecture: `docs/agent/architecture.md`
+- Developer guide: `docs/agent/developer-guide.md`
+- Supabase schema and migration notes: `docs/agent/supabase-schema.md`
+- Roadmap: `docs/agent/roadmap.md`
 
-應用程式會用 `NEXT_PUBLIC_SITE_URL` 或目前來源網域組出 `/auth/callback`，所以開發與正式環境只需要：
+Human-facing docs:
 
-- 在 `.env.local` / Vercel Environment Variables 設定對應的 site URL
-- 在 Supabase Auth 的 Allowed Redirect URLs 加入本地與正式網域
+- Local development: `docs/human/local-development.md`
+- OAuth environment strategy: `docs/human/oauth-environment-strategy.md`
+- Vercel deployment: `docs/human/vercel-deployment.md`
+- Product usage guide: `docs/human/usage-guide.md`
+- Visual theme: `docs/human/visual-theme.md`
+- Landing/product positioning: `docs/human/landing.md`
 
-## 部署摘要
+## Repository Map
 
-目前正式部署建議使用 Vercel，至少需要設定：
+- `app/`: App Router pages, route handlers, layouts, and auth callback.
+- `components/`: UI primitives and feature components.
+- `lib/`: Supabase helpers, InBody domain logic, friends, goals, competitions, i18n, and LLM helpers.
+- `messages/`: localized UI strings. Do not hardcode user-facing bilingual copy in components.
+- `tests/`: Vitest coverage for domain helpers and feature workflows.
+- `infra/supabase/`: schema snapshot, ordered migrations, and seed files.
+- `docs/agent/`: English docs optimized for future coding agents.
+- `docs/human/`: Traditional Chinese user/deployment docs.
+- `archive/legacy-demo/`: historical static demo only.
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SITE_URL`
-- `GEMINI_API_KEY`
+## Supabase Notes
 
-`.env.example` 已包含目前開發與 Vercel 部署需要的基本環境變數範例。
+For rollout, trust ordered migrations in `infra/supabase/migrations/` more than `infra/supabase/schema.sql`. The schema snapshot is useful context, but newer features such as daily feature usage, personal goals, competitions, and competition RPC fixes are migration-driven.
+
+Important RPCs:
+
+- `resolve_my_feature_entitlement`
+- `list_friend_latest_records`
+- `list_friend_records_history`
+- `create_competition_with_members`
+- `update_competition_with_members`
+- `delete_competition_with_members`
+- `list_my_competitions_with_progress`
+
+## Development Invariants
+
+- Keep record exclusion separate from deletion.
+- Keep deletion soft by default through `deleted_at`.
+- Keep AI usage limits database-driven through entitlement data.
+- Keep AI scan review-first; scan output should populate a draft, not silently write final records.
+- Keep competition goal target dates locked to the competition target date.
+- Keep protected data user-owned through Supabase RLS and server-side session checks.
+- Keep UI changes aligned with local primitives, i18n keys, and mobile touch targets.
