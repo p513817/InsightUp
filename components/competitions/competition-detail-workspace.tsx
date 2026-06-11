@@ -361,23 +361,13 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                     <Badge variant={selectedMember.goalCount > 0 ? "default" : "neutral"}>
                       {selectedMember.goalCount > 0 ? t("competitions.detail.goalReady") : t("competitions.detail.goalMissing")}
                     </Badge>
-                    <Button
-                      aria-label={t("common.close")}
-                      className="size-8 shrink-0 px-0"
-                      onClick={() => setSelectedMember(null)}
-                      title={t("common.close")}
-                      type="button"
-                      variant="outline"
-                    >
-                      <X className="size-4" />
-                    </Button>
                   </div>
                 </div>
               </DialogHeader>
 
               <div className="space-y-4 p-4 sm:p-5">
                 <div className="surface-soft-card rounded-[0.95rem] p-3">
-                  <GoalProgressBar className="h-5" hasGoals={selectedMember.goalCount > 0} value={selectedMember.progressPercent} />
+                  <GoalProgressBar className="h-7" hasGoals={selectedMember.goalCount > 0} value={selectedMember.progressPercent} />
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="inline-flex min-h-8 items-center rounded-full border border-border/70 bg-background/80 px-2.5 text-[11px] font-medium tracking-[0.08em] text-muted-foreground">
                       {t("competitions.detail.latestRecord")} {selectedMember.latestRecordDate ? formatCompactDate(selectedMember.latestRecordDate, locale) : t("competitions.detail.noRecord")}
@@ -393,7 +383,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                     selectedMember.goals.map((goal) => (
                       <GoalMetricProgressCard
                         className="surface-soft-card bg-background/60"
-                        detail={`${t("personalGoal.list.start")} ${formatGoalValue(goal.startValue, goal.unit)} / ${t("personalGoal.list.current")} ${formatGoalValue(goal.latestValue, goal.unit)} / ${t("personalGoal.list.target")} ${formatGoalValue(goal.targetValue, goal.unit)}`}
+                        detail={`${formatGoalValue(goal.startValue, goal.unit)} → ${formatGoalValue(goal.targetValue, goal.unit)} · ${t("personalGoal.list.current")} ${formatGoalValue(goal.latestValue, goal.unit)}`}
                         key={goal.id}
                         metricLabel={t(`personalGoal.metrics.${goal.metricKey}`)}
                         progressPercent={goal.progressPercent}
@@ -408,7 +398,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                   <div className="flex justify-end pt-1">
                     <Button
                       className="min-h-11 w-full sm:w-auto"
-                      onClick={() => router.push(`/competitions/${competition.id}/goal/new`)}
+                      onClick={() => router.push(selectedMember.goalCount > 0 ? "/personal-goal" : `/competitions/${competition.id}/goal/new`)}
                       type="button"
                       variant="outline"
                     >

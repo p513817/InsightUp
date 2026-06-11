@@ -25,7 +25,7 @@ export function GoalMetricProgressCard({
         </div>
       </div>
 
-      <GoalProgressBar className={cn("mt-3 h-7", progressClassName)} value={progressPercent} />
+      <GoalProgressBar className={cn("mt-3 h-7", progressClassName)} value={progressPercent} variant="subtle" />
     </div>
   );
 }

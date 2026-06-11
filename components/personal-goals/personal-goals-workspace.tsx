@@ -374,7 +374,7 @@ function GoalSection({
   function renderGoalItem(goal: PersonalGoal) {
     return (
       <GoalMetricProgressCard
-        detail={`${t("personalGoal.list.start")} ${formatValue(goal.startValue, goal.unit)} / ${t("personalGoal.list.current")} ${formatValue(goal.latestValue, goal.unit)} / ${t("personalGoal.list.target")} ${formatValue(goal.targetValue, goal.unit)}`}
+        detail={`${formatValue(goal.startValue, goal.unit)} → ${formatValue(goal.targetValue, goal.unit)} · ${t("personalGoal.list.current")} ${formatValue(goal.latestValue, goal.unit)}`}
         key={goal.id}
         metricLabel={t(`personalGoal.metrics.${goal.metricKey}`)}
         progressClassName="-mx-3"

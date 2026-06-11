@@ -146,7 +146,7 @@ function getProgressRecordForGoal(records: InbodyRecord[] | undefined, targetDat
   return [...eligibleRecords].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())[0] ?? fallbackRecord;
 }
 
-function calculateGoalProgress(startValue: number, targetValue: number, latestValue: number | null) {
+export function calculatePersonalGoalProgress(startValue: number, targetValue: number, latestValue: number | null) {
   if (latestValue == null) {
     return { progressPercent: 0, isAchieved: false };
   }
@@ -154,7 +154,13 @@ function calculateGoalProgress(startValue: number, targetValue: number, latestVa
   const totalChange = targetValue - startValue;
 
   if (totalChange === 0) {
-    return { progressPercent: latestValue === targetValue ? 100 : 0, isAchieved: latestValue === targetValue };
+    if (latestValue === targetValue) {
+      return { progressPercent: 100, isAchieved: true };
+    }
+
+    const baseline = Math.max(Math.abs(targetValue), 1);
+    const regressionPercent = Math.max(1, Math.round((Math.abs(latestValue - targetValue) / baseline) * 100));
+    return { progressPercent: -regressionPercent, isAchieved: false };
   }
 
   const rawProgress = ((latestValue - startValue) / totalChange) * 100;
@@ -171,7 +177,7 @@ function mapGoalRow(row: PersonalGoalRow, latestRecord: InbodyRecord | null, pro
   const targetValue = Number(row.target_value);
   const progressRecord = getProgressRecordForGoal(progressRecords, row.target_date, latestRecord);
   const latestValue = getLatestMetricValue(progressRecord, row.metric_key);
-  const progress = calculateGoalProgress(startValue, targetValue, latestValue);
+  const progress = calculatePersonalGoalProgress(startValue, targetValue, latestValue);
 
   return {
     id: row.id,

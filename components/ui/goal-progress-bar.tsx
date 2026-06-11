@@ -9,6 +9,7 @@ interface GoalProgressBarProps {
   hasGoals?: boolean;
   label?: string | null;
   value: number;
+  variant?: "primary" | "subtle";
 }
 
 export function GoalProgressBar({
@@ -16,10 +17,12 @@ export function GoalProgressBar({
   hasGoals = true,
   value,
   label = formatGoalProgressValue(value),
+  variant = "primary",
 }: GoalProgressBarProps) {
   const percent = Math.max(0, Math.min(100, value));
   const setbackPercent = Math.max(0, Math.min(100, Math.abs(value)));
   const isNegative = hasGoals && value < 0;
+  const isSubtle = variant === "subtle";
   const labelInside = !isNegative && percent >= 50;
   const ariaValue = Math.max(-100, Math.min(100, Math.round(value)));
 
@@ -40,9 +43,12 @@ export function GoalProgressBar({
         className={cn(
           "absolute top-0 h-full rounded-full transition-[width] duration-300",
           isNegative
-            ? "right-0 bg-[repeating-linear-gradient(135deg,rgb(var(--primary-strong)/0.72)_0_6px,rgb(var(--primary)/0.34)_6px_12px)]"
+            ? isSubtle
+              ? "right-0 bg-[repeating-linear-gradient(135deg,rgb(var(--primary-strong)/0.54)_0_6px,rgb(var(--primary)/0.24)_6px_12px)]"
+              : "right-0 bg-[repeating-linear-gradient(135deg,rgb(var(--primary-strong)/0.72)_0_6px,rgb(var(--primary)/0.34)_6px_12px)]"
             : "left-0",
-          !isNegative && hasGoals ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" : "",
+          !isNegative && hasGoals && !isSubtle ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)]" : "",
+          !isNegative && hasGoals && isSubtle ? "bg-[linear-gradient(135deg,rgb(var(--primary)/0.58)_0%,rgb(var(--primary-strong)/0.78)_100%)]" : "",
           !isNegative && !hasGoals ? "bg-foreground/15" : "",
         )}
         style={{ width: `${isNegative ? setbackPercent : percent}%` }}
