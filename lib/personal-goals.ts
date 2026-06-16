@@ -1,40 +1,16 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getPersonalGoalMetrics,
+  PERSONAL_GOAL_METRIC_KEYS,
+  type PersonalGoalMetric,
+  type PersonalGoalMetricKey,
+} from "@/lib/inbody/metrics";
 import type { InbodyRecord } from "@/lib/inbody/types";
 
-export const PERSONAL_GOAL_METRIC_KEYS = [
-  "weight",
-  "muscle",
-  "fat",
-  "fatPercent",
-  "score",
-  "visceralFatLevel",
-  "bmr",
-  "recommendedCalories",
-] as const;
+export { PERSONAL_GOAL_METRIC_KEYS, type PersonalGoalMetric, type PersonalGoalMetricKey };
 
-export type PersonalGoalMetricKey = (typeof PERSONAL_GOAL_METRIC_KEYS)[number];
-
-export type PersonalGoalMetric = {
-  key: PersonalGoalMetricKey;
-  recordKey: keyof Pick<
-    InbodyRecord,
-    "weight" | "muscle" | "fat" | "fatPercent" | "score" | "visceralFatLevel" | "bmr" | "recommendedCalories"
-  >;
-  unit: string;
-  step: number;
-};
-
-export const PERSONAL_GOAL_METRICS: PersonalGoalMetric[] = [
-  { key: "weight", recordKey: "weight", unit: "kg", step: 0.1 },
-  { key: "muscle", recordKey: "muscle", unit: "kg", step: 0.1 },
-  { key: "fat", recordKey: "fat", unit: "kg", step: 0.1 },
-  { key: "fatPercent", recordKey: "fatPercent", unit: "%", step: 0.1 },
-  { key: "score", recordKey: "score", unit: "pt", step: 1 },
-  { key: "visceralFatLevel", recordKey: "visceralFatLevel", unit: "lvl", step: 1 },
-  { key: "bmr", recordKey: "bmr", unit: "kcal", step: 10 },
-  { key: "recommendedCalories", recordKey: "recommendedCalories", unit: "kcal", step: 10 },
-];
+export const PERSONAL_GOAL_METRICS: PersonalGoalMetric[] = getPersonalGoalMetrics();
 
 export const personalGoalCreateSchema = z.object({
   title: z.string().trim().max(80).nullable().optional(),

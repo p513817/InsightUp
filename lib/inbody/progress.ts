@@ -1,20 +1,7 @@
-const REDUCE_IS_BETTER_KEYS = new Set(["weight", "fat", "fatPercent", "visceralFatLevel", "fatRatio"]);
-const INCREASE_IS_BETTER_KEYS = new Set(["muscle", "score", "bmr", "recommendedCalories", "muscleRatio"]);
+import { getMetricProgressTone } from "@/lib/inbody/metrics";
 
 export function getMetricProgressDirection(metricKey: string, delta: number | null | undefined) {
-  if (delta == null || Number.isNaN(Number(delta)) || Number(delta) === 0) {
-    return "neutral" as const;
-  }
-
-  if (REDUCE_IS_BETTER_KEYS.has(metricKey)) {
-    return Number(delta) < 0 ? ("positive" as const) : ("negative" as const);
-  }
-
-  if (INCREASE_IS_BETTER_KEYS.has(metricKey)) {
-    return Number(delta) > 0 ? ("positive" as const) : ("negative" as const);
-  }
-
-  return "neutral" as const;
+  return getMetricProgressTone(metricKey, delta);
 }
 
 export function getMetricDeltaToneClass(metricKey: string, delta: number | null | undefined) {
