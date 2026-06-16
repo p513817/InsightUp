@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Copy, Eye, GitCompareArrows, LoaderCircle, Trash2 } from "lucide-react";
+import { Copy, GitCompareArrows, LoaderCircle, Trash2, UserRoundSearch } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -137,7 +137,7 @@ function FriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBu
         <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
           <Button asChild aria-label={`${t("friends.view")} ${friend.displayName}`} className="size-8" size="icon" title={t("friends.view")} variant="outline">
             <Link href={`/friends/${friend.friendUserId}`}>
-              <Eye className="size-3.5" />
+              <UserRoundSearch className="size-3.5" />
             </Link>
           </Button>
           <Button asChild aria-label={`${t("friends.compare")} ${friend.displayName}`} className="size-8" size="icon" title={t("friends.compare")} variant="outline">
