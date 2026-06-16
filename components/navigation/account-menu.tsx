@@ -7,6 +7,7 @@ import { LoaderCircle, LogOut, Mail, UserRound } from "lucide-react";
 import { useLocale, useTranslations, setLocaleCookie, getLocaleLabel } from "@/components/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { ROUND_ACTION_FEEDBACK_CLASS } from "@/components/ui/floating-action-styles";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { AppUserSummary } from "@/lib/presentation";
 import { locales, type Locale } from "@/lib/i18n";
 
@@ -39,10 +40,6 @@ function MenuLink({ href, icon, label, onNavigate }: { href: string; icon: React
   );
 }
 
-function getFirstDisplayCharacter(name: string) {
-  return Array.from(name.trim())[0]?.toUpperCase() || "I";
-}
-
 export function AccountMenu({ user, compact = false, collapseProgress = compact ? 1 : 0 }: AccountMenuProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -50,7 +47,6 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
   const progress = Math.min(Math.max(collapseProgress, 0), 1);
   const expandedProgress = compact ? 0 : 1 - progress;
   const isCollapsed = expandedProgress === 0;
@@ -63,10 +59,6 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
     "--account-text-width": `${11 * expandedProgress}rem`,
     "--account-text-opacity": expandedProgress,
   };
-
-  useEffect(() => {
-    setImageFailed(false);
-  }, [user.avatarUrl]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -119,13 +111,14 @@ export function AccountMenu({ user, compact = false, collapseProgress = compact 
         type="button"
         style={isCollapsed ? { outline: "none", height: "2.625rem", width: "2.625rem" } : { outline: "none", height: "3.25rem", width: "3.25rem" }}
       >
-        <div className="flex items-center justify-center rounded-full bg-card/78 transition-[height,width] duration-500 ease-out w-[var(--account-avatar-size)] h-[var(--account-avatar-size)] mx-auto">
-          {!user.avatarUrl || imageFailed ? (
-            <span className="text-base font-semibold text-primary">{getFirstDisplayCharacter(user.name)}</span>
-          ) : (
-            <img alt={user.name} className="w-full h-full rounded-full object-cover bg-card/78" onError={() => setImageFailed(true)} src={user.avatarUrl} />
-          )}
-        </div>
+        <UserAvatar
+          avatarUrl={user.avatarUrl}
+          className="mx-auto flex h-[var(--account-avatar-size)] w-[var(--account-avatar-size)] items-center justify-center overflow-hidden rounded-full bg-card/78 transition-[height,width] duration-500 ease-out"
+          fallbackClassName="text-sm font-semibold text-primary"
+          imageClassName="rounded-full bg-card/78"
+          loading="eager"
+          name={user.name}
+        />
       </button>
 
       {isOpen ? (

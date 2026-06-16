@@ -11,6 +11,7 @@ declare
   v_competition_id constant uuid := '3af8817b-9fd0-44cd-8c07-7cf8eb8b361f';
   v_second_competition_id constant uuid := '6fb1e380-83de-4d34-bc13-33cdb65d3aa1';
   v_completed_competition_id constant uuid := '8c16f7c8-4f5b-4bb6-8fe0-7e17be3d6f21';
+  v_invited_competition_id constant uuid := '4e6f8b6c-7196-49d4-9d97-4de7716c8c41';
 
   v_luna_id constant uuid := '22222222-2222-4222-8222-222222222222';
   v_kai_id constant uuid := '33333333-3333-4333-8333-333333333333';
@@ -35,6 +36,9 @@ declare
   v_completed_owner_member_id constant uuid := '30303030-3030-4030-8030-303030303030';
   v_completed_luna_member_id constant uuid := '40404040-4040-4040-8040-404040404040';
   v_completed_kai_member_id constant uuid := '50505050-5050-4050-8050-505050505050';
+  v_invited_sofia_member_id constant uuid := '60606060-6060-4060-8060-606060606060';
+  v_invited_owner_member_id constant uuid := '70707070-7070-4070-8070-707070707070';
+  v_invited_ethan_member_id constant uuid := '80808080-8080-4080-8080-808080808080';
 
   v_luna_start_record_id constant uuid := 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
   v_luna_latest_record_id constant uuid := 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
@@ -305,6 +309,34 @@ begin
     (v_owner_id, v_omar_id, timezone('utc', now()) - interval '2 days')
   on conflict (user_id, friend_user_id) do nothing;
 
+  -- A separate active competition owned by a friend where the demo owner is still invited.
+  insert into public.competitions (
+    id,
+    owner_id,
+    name,
+    target_date,
+    status,
+    created_at,
+    updated_at
+  )
+  values (
+    v_invited_competition_id,
+    v_sofia_id,
+    '六月夥伴邀請賽',
+    date '2026-08-31',
+    'active',
+    timezone('utc', now()) - interval '1 day',
+    timezone('utc', now())
+  )
+  on conflict (id) do update
+  set
+    owner_id = excluded.owner_id,
+    name = excluded.name,
+    target_date = excluded.target_date,
+    status = excluded.status,
+    deleted_at = null,
+    updated_at = timezone('utc', now());
+
   -- Demo competition memberships. The first competition includes mixed progress.
   insert into public.competition_members (
     id,
@@ -474,6 +506,42 @@ begin
       'accepted',
       v_owner_id,
       timezone('utc', now()) - interval '43 days'
+    ),
+    (
+      v_invited_sofia_member_id,
+      v_invited_competition_id,
+      v_sofia_id,
+      'Sofia Hsu',
+      'https://i.pravatar.cc/100?img=5',
+      'SOFIAHSU01',
+      'owner',
+      'accepted',
+      v_sofia_id,
+      timezone('utc', now()) - interval '1 day'
+    ),
+    (
+      v_invited_owner_member_id,
+      v_invited_competition_id,
+      v_owner_id,
+      v_owner_display_name,
+      v_owner_avatar_url,
+      v_owner_friend_code,
+      'participant',
+      'invited',
+      v_sofia_id,
+      null
+    ),
+    (
+      v_invited_ethan_member_id,
+      v_invited_competition_id,
+      v_ethan_id,
+      'Ethan Tan',
+      'https://i.pravatar.cc/100?img=15',
+      'ETHANTAN01',
+      'participant',
+      'accepted',
+      v_sofia_id,
+      timezone('utc', now()) - interval '12 hours'
     )
   on conflict (competition_id, user_id) where deleted_at is null do update
   set
@@ -572,7 +640,9 @@ begin
     ('88888888-8888-4118-8118-888888888888', v_rina_id, 'Fresh start', v_rina_only_record_id, v_second_competition_id, v_rina_member_id, 'weight', 62.0, 60.0, 'kg', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
     ('99999999-9999-4119-8119-999999999999', v_omar_id, 'Reset the trend', v_omar_start_record_id, v_second_competition_id, v_omar_member_id, 'fatPercent', 21.6, 20.0, '%', date '2026-07-15', true, timezone('utc', now()), timezone('utc', now())),
     ('90909090-9090-4090-8090-909090909090', v_luna_id, 'May finish-line check', v_luna_start_record_id, v_completed_competition_id, v_completed_luna_member_id, 'weight', 59.4, 59.0, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now())),
-    ('91919191-9191-4091-8091-919191919191', v_kai_id, 'May finish-line check', v_kai_start_record_id, v_completed_competition_id, v_completed_kai_member_id, 'muscle', 31.2, 31.8, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now()))
+    ('91919191-9191-4091-8091-919191919191', v_kai_id, 'May finish-line check', v_kai_start_record_id, v_completed_competition_id, v_completed_kai_member_id, 'muscle', 31.2, 31.8, 'kg', date '2026-05-31', true, timezone('utc', now()) - interval '45 days', timezone('utc', now())),
+    ('92929292-9292-4092-8092-929292929292', v_sofia_id, 'Invite sprint', v_sofia_start_record_id, v_invited_competition_id, v_invited_sofia_member_id, 'fat', 14.3, 12.2, 'kg', date '2026-08-31', true, timezone('utc', now()) - interval '1 day', timezone('utc', now())),
+    ('93939393-9393-4093-8093-939393939393', v_ethan_id, 'Invite sprint', v_ethan_start_record_id, v_invited_competition_id, v_invited_ethan_member_id, 'muscle', 36.4, 38.0, 'kg', date '2026-08-31', true, timezone('utc', now()) - interval '1 day', timezone('utc', now()))
   on conflict (id) do update
   set
     title = excluded.title,

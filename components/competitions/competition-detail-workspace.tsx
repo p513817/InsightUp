@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GoalMetricProgressCard } from "@/components/ui/goal-metric-progress-card";
 import { GoalProgressBar } from "@/components/ui/goal-progress-bar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CompetitionProgress } from "@/lib/competitions";
 import { attachCurrentUserMember, getCompetitionLeaderBoard } from "@/lib/competitions";
-import { formatCompactDate, getUserInitials } from "@/lib/presentation";
+import { formatCompactDate } from "@/lib/presentation";
 import { cn } from "@/lib/utils";
 
 interface CompetitionDetailWorkspaceProps {
@@ -94,16 +95,13 @@ function getCompetitionTimeline(createdAt: string, targetDate: string) {
 }
 
 function MemberAvatar({ member }: { member: CompetitionProgress["members"][number] }) {
-  const fallback = getUserInitials(member.displayName);
-
   return (
-    <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,243,249,0.96))] text-xs font-semibold text-primary shadow-[0_6px_14px_rgba(15,35,63,0.08)]">
-      {member.avatarUrl ? (
-        <img alt={member.displayName} className="size-full object-cover" loading="lazy" src={member.avatarUrl} />
-      ) : (
-        <span aria-hidden="true">{fallback}</span>
-      )}
-    </div>
+    <UserAvatar
+      avatarUrl={member.avatarUrl}
+      className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,243,249,0.96))] text-xs font-semibold text-primary shadow-[0_6px_14px_rgba(15,35,63,0.08)]"
+      fallbackClassName="text-xs font-semibold text-primary"
+      name={member.displayName}
+    />
   );
 }
 

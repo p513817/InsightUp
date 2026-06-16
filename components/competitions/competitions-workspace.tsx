@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CompetitionProgress } from "@/lib/competitions";
 import { getCompetitionMemberByUserId } from "@/lib/competitions";
-import { formatCompactDate, getUserInitials } from "@/lib/presentation";
+import { formatCompactDate } from "@/lib/presentation";
 import { cn } from "@/lib/utils";
 
 interface CompetitionsWorkspaceProps {
@@ -110,23 +111,18 @@ function CompetitionAvatarStack({ members }: { members: CompetitionProgress["mem
   return (
     <div className="flex items-center">
       {previewMembers.map((member, index) => {
-        const fallback = getUserInitials(member.displayName);
-
         return (
-          <div
+          <UserAvatar
+            avatarUrl={member.avatarUrl}
             className={cn(
               "relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,243,249,0.96))] text-[11px] font-semibold text-primary shadow-[0_6px_14px_rgba(15,35,63,0.08)]",
               index > 0 ? "-ml-2.5" : "",
             )}
+            fallbackClassName="text-[11px] font-semibold text-primary"
             key={member.id}
+            name={member.displayName}
             title={member.displayName}
-          >
-            {member.avatarUrl ? (
-              <img alt={member.displayName} className="size-full object-cover" loading="lazy" src={member.avatarUrl} />
-            ) : (
-              <span aria-hidden="true">{fallback}</span>
-            )}
-          </div>
+          />
         );
       })}
 
