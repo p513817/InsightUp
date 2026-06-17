@@ -44,6 +44,10 @@ const TIMELINE_TICK_AVERAGE_CHAR_WIDTH = 0.58;
 const SHARE_COLOR_SWATCHES = ["#ffffff", "#64748b", "#2563eb", "#10b981", "#f59e0b", "#ef4444"];
 const DEFAULT_RECORD_LIMIT = 5;
 const DEFAULT_SELECTED_METRIC_IDS = ["weight", "muscle", "fatPercent"];
+const SHARE_TEXT_SHADOW_LIGHT =
+  "0 1px 0 rgba(255,255,255,0.74), 0 2px 5px rgba(16,35,63,0.12), 0 8px 18px rgba(16,35,63,0.08)";
+const SHARE_TEXT_SHADOW_DARK =
+  "0 1px 1px rgba(0,0,0,0.38), 0 3px 8px rgba(0,0,0,0.28), 0 10px 22px rgba(0,0,0,0.18)";
 
 function getNumericValue(value: string | number | null | undefined) {
   if (value == null || value === "") {
@@ -60,6 +64,10 @@ function isWhiteColor(color: string) {
 
 function isPresetShareColor(color: string) {
   return SHARE_COLOR_SWATCHES.some((swatch) => swatch.toLowerCase() === color.toLowerCase());
+}
+
+function getShareTextShadow(background: ShareBackground) {
+  return background === "dark" ? SHARE_TEXT_SHADOW_DARK : SHARE_TEXT_SHADOW_LIGHT;
 }
 
 function withReadableMetricLabel(metric: ChartMetric, labels: Record<string, string>) {
@@ -408,6 +416,7 @@ function TimelineTick({
   payload,
   fill,
   slotWidth,
+  textShadow,
   visibleDateSet,
 }: {
   x?: number;
@@ -415,6 +424,7 @@ function TimelineTick({
   payload?: { value?: string };
   fill?: string;
   slotWidth: number;
+  textShadow: string;
   visibleDateSet: Set<string>;
 }) {
   const value = payload?.value;
@@ -434,10 +444,10 @@ function TimelineTick({
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      <text dominantBaseline="middle" fill={fill} fontSize={monthLabel.fontSize} fontWeight={800} textAnchor="middle" x={0} y={4}>
+      <text dominantBaseline="middle" fill={fill} fontSize={monthLabel.fontSize} fontWeight={800} style={{ textShadow }} textAnchor="middle" x={0} y={4}>
         {monthLabel.text}
       </text>
-      <text dominantBaseline="middle" fill={fill} fontSize={dayLabel.fontSize} fontWeight={800} textAnchor="middle" x={0} y={13}>
+      <text dominantBaseline="middle" fill={fill} fontSize={dayLabel.fontSize} fontWeight={800} style={{ textShadow }} textAnchor="middle" x={0} y={13}>
         {dayLabel.text}
       </text>
     </g>
@@ -594,7 +604,7 @@ function OptionPill({
   );
 }
 
-function MetricTrendPreview({ background, item, visibleDates }: { background: ShareBackground; item: ShareMetric; visibleDates: string[] }) {
+function MetricTrendPreview({ background, item, textShadow, visibleDates }: { background: ShareBackground; item: ShareMetric; textShadow: string; visibleDates: string[] }) {
   const visibleDateSet = useMemo(() => new Set(visibleDates), [visibleDates]);
   const chartPoints = useMemo(
     () =>
@@ -608,14 +618,14 @@ function MetricTrendPreview({ background, item, visibleDates }: { background: Sh
   return (
     <div className={cn("grid min-h-[2.45rem] min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-center gap-2 rounded-[0.75rem] px-2.5 py-1", background === "dark" ? "bg-white/7" : "bg-white/62")}>
       <div className="min-w-0">
-        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color }}>
+        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color, textShadow }}>
           {item.metric.label}
         </p>
         <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-          <p className="font-display text-base leading-none tabular-nums" style={{ color: item.metric.color }}>
+          <p className="font-display text-base leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
             {formatShareNumber(item.latestValue)}
           </p>
-          <p className="truncate text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color }}>
+          <p className="truncate text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
             {formatDelta(item.delta)}
           </p>
         </div>
@@ -652,7 +662,7 @@ function MetricTrendPreview({ background, item, visibleDates }: { background: Sh
                 dataKey="labelValue"
                 formatter={(value: number | null) => (value != null ? formatShareNumber(value) : "")}
                 position="top"
-                style={{ fill: item.metric.color, fontSize: 7.5, fontWeight: 700 }}
+                style={{ fill: item.metric.color, fontSize: 7.5, fontWeight: 700, textShadow }}
               />
             </Line>
             <Customized component={DirectionalTrendOverlay} />
@@ -668,12 +678,14 @@ function ShareTimelineChart({
   dateColor,
   onVisibleTicksChange,
   points,
+  textShadow,
   ticks,
 }: {
   background: ShareBackground;
   dateColor: string;
   onVisibleTicksChange: (ticks: string[]) => void;
   points: ShareMetric["points"];
+  textShadow: string;
   ticks: string[];
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -724,7 +736,7 @@ function ShareTimelineChart({
             axisLine={{ stroke: background === "dark" ? "#ffffff26" : "#0000001a" }}
             dataKey="date"
             interval={0}
-            tick={<TimelineTick fill={dateColor} slotWidth={tickSlotWidth} visibleDateSet={visibleTickSet} />}
+            tick={<TimelineTick fill={dateColor} slotWidth={tickSlotWidth} textShadow={textShadow} visibleDateSet={visibleTickSet} />}
             tickLine={false}
             ticks={visibleTicks}
           />
@@ -736,18 +748,18 @@ function ShareTimelineChart({
   );
 }
 
-function MetricCurrentPreview({ background, item }: { background: ShareBackground; item: ShareMetric }) {
+function MetricCurrentPreview({ background, item, textShadow }: { background: ShareBackground; item: ShareMetric; textShadow: string }) {
   return (
     <div className={cn("grid min-h-[2.45rem] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[0.75rem] px-2.5 py-1", background === "dark" ? "bg-white/7" : "bg-white/62")}>
       <div className="min-w-0">
-        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color }}>
+        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color, textShadow }}>
           {item.metric.label}
         </p>
-        <p className="mt-0.5 font-display text-base leading-none tabular-nums" style={{ color: item.metric.color }}>
+        <p className="mt-0.5 font-display text-base leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
           {formatShareNumber(item.latestValue)}
         </p>
       </div>
-      <p className="shrink-0 text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color }}>
+      <p className="shrink-0 text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
         {formatDelta(item.delta)}
       </p>
     </div>
@@ -792,6 +804,7 @@ function SharePreviewContent({
   brandLabel: string;
 }) {
   const [visibleTimelineDates, setVisibleTimelineDates] = useState<string[]>(timelineDates);
+  const textShadow = getShareTextShadow(background);
 
   useEffect(() => {
     setVisibleTimelineDates(timelineDates);
@@ -804,7 +817,7 @@ function SharePreviewContent({
   return (
     <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
       <div className="min-w-0">
-        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))} style={{ color: titleColor }}>
+        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))} style={{ color: titleColor, textShadow }}>
           <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{previewTitle}</h2> : null}</div>
         </div>
       </div>
@@ -813,9 +826,9 @@ function SharePreviewContent({
         {selectedMetrics.length ? (
           selectedMetrics.map((item) =>
             shareStyle === "trend" ? (
-              <MetricTrendPreview background={background} item={item} key={item.id} visibleDates={visibleTimelineDates} />
+              <MetricTrendPreview background={background} item={item} key={item.id} textShadow={textShadow} visibleDates={visibleTimelineDates} />
             ) : (
-              <MetricCurrentPreview background={background} item={item} key={item.id} />
+              <MetricCurrentPreview background={background} item={item} key={item.id} textShadow={textShadow} />
             ),
           )
         ) : (
@@ -827,9 +840,9 @@ function SharePreviewContent({
 
       <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
         <div className="flex h-6 items-end pb-[3px]">
-          <p className="truncate font-display text-sm leading-none" style={{ color: brandColor }}>{brandLabel}</p>
+          <p className="truncate font-display text-sm leading-none" style={{ color: brandColor, textShadow }}>{brandLabel}</p>
         </div>
-        {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} onVisibleTicksChange={handleVisibleTicksChange} points={timelinePoints} ticks={timelineDates} /> : null}
+        {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} onVisibleTicksChange={handleVisibleTicksChange} points={timelinePoints} textShadow={textShadow} ticks={timelineDates} /> : null}
       </div>
     </div>
   );
