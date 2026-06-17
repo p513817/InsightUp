@@ -13,6 +13,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test-auth:smoke": "node scripts/e2e-test-auth-smoke.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {

@@ -37,6 +37,7 @@ For the fastest current-state summary, read `docs/agent/current-state.md` first.
 - Friends: `app/api/friends/*`, `components/friends/*`, `lib/friends/*`
 - Competitions: `app/api/competitions/*`, `components/competitions/*`, `lib/competitions.ts`
 - Auth/session: `lib/supabase/*`, `middleware.ts`
+- E2E test auth and seed personas: `docs/agent/e2e-test-auth.md`, `app/test-auth/page.tsx`, `components/test-auth/*`, `app/api/test-auth/*`, `lib/test-auth/*`
 - Account plan display: `app/(app)/account/page.tsx`
 - Database changes: new ordered migration under `infra/supabase/migrations/`
 
@@ -68,6 +69,7 @@ Focused tests currently available:
 - `tests/personal-goals.test.ts`
 - `tests/inbody-progress.test.ts`
 - `tests/competitions.test.ts`
+- `tests/test-auth.test.ts`
 
 ## Vercel Smoke Test
 

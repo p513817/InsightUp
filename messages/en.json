@@ -45,6 +45,34 @@
                  "productIntro":  "Product intro",
                  "googleLogin":  "Continue with Google"
              },
+    "testAuth":  {
+                     "eyebrow":  "Local testing",
+                     "title":  "Test Persona Login",
+                     "description":  "Choose a test case. The app resets the matching data and logs in with the intended test perspective without going through Google OAuth.",
+                     "missingServiceRole":  "SUPABASE_SERVICE_ROLE_KEY is missing. Fill it in .env.local and restart the dev server before resetting or logging in.",
+                     "secretLabel":  "Test auth secret",
+                     "secretPlaceholder":  "Paste E2E_TEST_AUTH_SECRET",
+                     "scenarioLabel":  "Seed scenario",
+                     "personaLabel":  "Persona",
+                     "destinationLabel":  "Open after login",
+                     "caseLabel":  "Test case",
+                     "caseMeta":  "{persona} · {destination}",
+                     "selectedCase":  "Selected case",
+                     "seedScenario":  "Seed scenario",
+                     "loginPerspective":  "Login perspective",
+                     "friendCodeLabel":  "Friend code",
+                     "friendCode":  "Friend code: {code}",
+                     "reset":  "Reset scenario",
+                     "login":  "Log in as persona",
+                     "startCase":  "Reset and log in",
+                     "status":  {
+                                    "resetting":  "Resetting scenario...",
+                                    "resetSuccess":  "Scenario reset. You can log in now.",
+                                    "loggingIn":  "Logging in...",
+                                    "loginSuccess":  "Logged in. Opening workspace...",
+                                    "failed":  "Request failed."
+                                }
+                 },
     "auth":  {
                  "signal":  {
                                 "insightTitle":  "Insight",

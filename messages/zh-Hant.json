@@ -38,6 +38,34 @@
                  "productIntro":  "產品介紹",
                  "googleLogin":  "使用 Google 開始使用"
              },
+    "testAuth":  {
+                     "eyebrow":  "本機測試",
+                     "title":  "測試使用者登入",
+                     "description":  "選一個測試案例，系統會自動重置對應資料並用正確的測試視角登入，不需要走 Google OAuth 畫面。",
+                     "missingServiceRole":  "目前缺少 SUPABASE_SERVICE_ROLE_KEY。請先填入 .env.local，並重啟 dev server 後再 reset 或登入。",
+                     "secretLabel":  "測試登入密鑰",
+                     "secretPlaceholder":  "貼上 E2E_TEST_AUTH_SECRET",
+                     "scenarioLabel":  "Seed 情境",
+                     "personaLabel":  "測試使用者",
+                     "destinationLabel":  "登入後開啟",
+                     "caseLabel":  "測試案例",
+                     "caseMeta":  "{persona} · {destination}",
+                     "selectedCase":  "目前選擇",
+                     "seedScenario":  "資料情境",
+                     "loginPerspective":  "登入視角",
+                     "friendCodeLabel":  "好友 ID",
+                     "friendCode":  "好友 ID：{code}",
+                     "reset":  "重置情境",
+                     "login":  "用此使用者登入",
+                     "startCase":  "重置並登入",
+                     "status":  {
+                                    "resetting":  "正在重置情境...",
+                                    "resetSuccess":  "情境已重置，可以登入測試使用者。",
+                                    "loggingIn":  "登入中...",
+                                    "loginSuccess":  "已登入，正在開啟工作區...",
+                                    "failed":  "請求失敗。"
+                                }
+                 },
     "auth":  {
                  "signal":  {
                                 "insightTitle":  "Insight",

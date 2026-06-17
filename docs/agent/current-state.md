@@ -33,6 +33,7 @@ This is the fastest handoff file for future agents. Read this before scanning th
 - Friends: `app/api/friends/*`, `components/friends/*`, `lib/friends/*`
 - Competitions: `app/api/competitions/*`, `components/competitions/*`, `lib/competitions.ts`
 - Auth/session: `lib/supabase/*`, `middleware.ts`, `app/auth/callback/route.ts`
+- E2E test auth/personas: `docs/agent/e2e-test-auth.md`, `app/test-auth/page.tsx`, `components/test-auth/*`, `app/api/test-auth/*`, `lib/test-auth/*`
 - i18n: `components/i18n-provider.tsx`, `lib/i18n.ts`, `lib/i18n/server.ts`, `messages/*.json`
 
 ## Database Truth
@@ -59,6 +60,7 @@ Focused Vitest files:
 - `tests/personal-goals.test.ts`
 - `tests/inbody-progress.test.ts`
 - `tests/competitions.test.ts`
+- `tests/test-auth.test.ts`
 
 Default validation after meaningful code changes:
 
