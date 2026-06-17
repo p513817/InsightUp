@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/components/i18n-provider";
 
 interface DashboardWelcomeDialogProps {
+  hasRecords?: boolean;
   open?: boolean;
 }
 
-export function DashboardWelcomeDialog({ open = false }: DashboardWelcomeDialogProps) {
+export function DashboardWelcomeDialog({ hasRecords = false, open = false }: DashboardWelcomeDialogProps) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -58,7 +59,7 @@ export function DashboardWelcomeDialog({ open = false }: DashboardWelcomeDialogP
           <Button asChild className="h-12 w-full rounded-[1rem]">
             <a href="/records/new">
               <Plus className="size-5" />
-              {t("records.empty.action")}
+              {t(hasRecords ? "dashboard.welcomeAddRecord" : "dashboard.welcomeAddFirstRecord")}
             </a>
           </Button>
         </div>

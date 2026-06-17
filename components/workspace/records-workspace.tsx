@@ -537,7 +537,7 @@ export function RecordsWorkspace({
             onAdd={openCreateDialog}
           />
         </div>
-        <DashboardWelcomeDialog open={shouldShowWelcomeDialog} />
+        <DashboardWelcomeDialog hasRecords={records.length > 0} open={shouldShowWelcomeDialog} />
         </>
       );
     }
@@ -629,7 +629,7 @@ export function RecordsWorkspace({
           </div>
         </div>
       </div>
-      <DashboardWelcomeDialog open={shouldShowWelcomeDialog} />
+      <DashboardWelcomeDialog hasRecords={records.length > 0} open={shouldShowWelcomeDialog} />
       </>
     );
   }

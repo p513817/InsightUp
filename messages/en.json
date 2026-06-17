@@ -264,6 +264,8 @@
     "dashboard":  {
                       "welcomeTitle":  "Welcome back",
                       "welcomeBody":  "Review the trends first, then go back to the records for details.",
+                      "welcomeAddFirstRecord":  "Add your first record",
+                      "welcomeAddRecord":  "Add record",
                       "recordCount":  "{count} records"
                   },
     "dashboardTrendUi":  {

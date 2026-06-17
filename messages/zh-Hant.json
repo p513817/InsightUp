@@ -257,6 +257,8 @@
     "dashboard":  {
                       "welcomeTitle":  "歡迎回來",
                       "welcomeBody":  "先看趨勢，再回到紀錄整理細節。",
+                      "welcomeAddFirstRecord":  "新增第一筆資料",
+                      "welcomeAddRecord":  "新增資料",
                       "recordCount":  "{count} 筆紀錄"
                   },
     "dashboardTrendUi":  {
