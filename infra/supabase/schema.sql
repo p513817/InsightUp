@@ -421,7 +421,7 @@ drop policy if exists "Users can view their own records" on public.inbody_record
 create policy "Users can view their own records"
 on public.inbody_records
 for select
-using (auth.uid() = user_id and deleted_at is null);
+using (auth.uid() = user_id);
 
 drop policy if exists "Users can insert their own records" on public.inbody_records;
 create policy "Users can insert their own records"
