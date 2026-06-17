@@ -14,8 +14,9 @@ import type { ChartMetric, InbodyRecord } from "@/lib/inbody/types";
 import { formatChartDate } from "@/lib/presentation";
 import { cn } from "@/lib/utils";
 
-type ShareStyle = "trend" | "current";
+type ShareStyle = "trend" | "current" | "cid";
 type ShareBackground = "light" | "dark" | "transparent" | "custom";
+type ShareLayout = "one" | "two";
 type SharePosition = "top" | "center" | "bottom";
 type TitleMode = "show" | "hide";
 type TitleAlign = "left" | "center" | "right";
@@ -29,6 +30,17 @@ type ShareMetric = {
   previousValue: number | null;
   delta: number | null;
   points: Array<{ date: string; value: number | null }>;
+};
+
+type CidBodyType = "C" | "I" | "D";
+type CidSizeType = "large" | "small" | null;
+
+type CidMetric = {
+  color: string;
+  id: string;
+  label: string;
+  percentage: number | null;
+  value: number | null;
 };
 
 const EXPORT_IMAGE_WIDTH = 1080;
@@ -48,6 +60,11 @@ const SHARE_TEXT_SHADOW_LIGHT =
   "0 1px 0 rgba(255,255,255,0.74), 0 2px 5px rgba(16,35,63,0.12), 0 8px 18px rgba(16,35,63,0.08)";
 const SHARE_TEXT_SHADOW_DARK =
   "0 1px 1px rgba(0,0,0,0.38), 0 3px 8px rgba(0,0,0,0.28), 0 10px 22px rgba(0,0,0,0.18)";
+const CID_METRIC_IDS = ["weight", "muscle", "fat"];
+const CID_SCALE_PADDING = 10;
+const CID_SCALE_STEP = 10;
+const CID_SCALE_MIN_SPAN = 60;
+const CID_STANDARD_BMI = 22;
 
 function getNumericValue(value: string | number | null | undefined) {
   if (value == null || value === "") {
@@ -92,6 +109,142 @@ function formatShareNumber(value: number | null | undefined) {
   }
 
   return value.toFixed(1);
+}
+
+function resolveCidScale(metrics: CidMetric[]) {
+  const percentages = metrics.map((item) => item.percentage).filter((value): value is number => value != null && Number.isFinite(value));
+  const dataMin = Math.min(100, ...percentages);
+  const dataMax = Math.max(100, ...percentages);
+  let min = Math.floor((dataMin - CID_SCALE_PADDING) / CID_SCALE_STEP) * CID_SCALE_STEP;
+  let max = Math.ceil((dataMax + CID_SCALE_PADDING) / CID_SCALE_STEP) * CID_SCALE_STEP;
+
+  if (max - min < CID_SCALE_MIN_SPAN) {
+    const midpoint = (min + max) / 2;
+    min = Math.floor((midpoint - CID_SCALE_MIN_SPAN / 2) / CID_SCALE_STEP) * CID_SCALE_STEP;
+    max = Math.ceil((midpoint + CID_SCALE_MIN_SPAN / 2) / CID_SCALE_STEP) * CID_SCALE_STEP;
+  }
+
+  const ticks = Array.from({ length: 4 }, (_, index) => Math.round(min + ((max - min) * index) / 3));
+
+  if (!ticks.includes(100)) {
+    const nearestIndex = ticks.reduce((nearest, tick, index) => (Math.abs(tick - 100) < Math.abs(ticks[nearest] - 100) ? index : nearest), 0);
+    ticks[nearestIndex] = 100;
+    ticks.sort((a, b) => a - b);
+  }
+
+  return { max, min, ticks };
+}
+
+function getCidScalePosition(percentage: number, scale: { min: number; max: number }) {
+  return Math.max(0, Math.min(100, ((percentage - scale.min) / (scale.max - scale.min)) * 100));
+}
+
+function getCidStandardFatRatio(gender: InbodyRecord["gender"]) {
+  if (gender === "male") {
+    return 0.18;
+  }
+
+  if (gender === "female") {
+    return 0.25;
+  }
+
+  return 0.23;
+}
+
+function getCidStandardMuscleRatio(gender: InbodyRecord["gender"]) {
+  if (gender === "male") {
+    return 0.45;
+  }
+
+  if (gender === "female") {
+    return 0.36;
+  }
+
+  return 0.42;
+}
+
+function getCidStandardWeight(record: InbodyRecord | null, fallbackWeight: number | null) {
+  const height = getNumericValue(record?.height);
+
+  if (height && height > 0) {
+    return CID_STANDARD_BMI * (height / 100) ** 2;
+  }
+
+  return fallbackWeight && fallbackWeight > 0 ? fallbackWeight : null;
+}
+
+function buildCidMetricAnalysis(record: InbodyRecord | null, metrics: ShareMetric[]) {
+  const weight = getNumericValue(record?.weight);
+  const muscle = getNumericValue(record?.muscle);
+  const fat = getNumericValue(record?.fat);
+  const standardWeight = getCidStandardWeight(record, weight);
+  const gender = record?.gender ?? "unknown";
+
+  const standardValues = {
+    fat: standardWeight != null ? standardWeight * getCidStandardFatRatio(gender) : null,
+    muscle: standardWeight != null ? standardWeight * getCidStandardMuscleRatio(gender) : null,
+    weight: standardWeight,
+  };
+
+  const values = { fat, muscle, weight };
+
+  return CID_METRIC_IDS.map((id) => {
+    const item = metrics.find((metric) => metric.id === id);
+    const value = values[id as keyof typeof values];
+    const standardValue = standardValues[id as keyof typeof standardValues];
+
+    return {
+      color: item?.metric.color ?? "#17345d",
+      id,
+      label: item?.metric.label ?? id,
+      percentage: value != null && standardValue != null && standardValue > 0 ? (value / standardValue) * 100 : null,
+      value,
+    };
+  });
+}
+
+function resolveCidBodyType(metrics: CidMetric[]) {
+  const weight = metrics.find((item) => item.id === "weight")?.percentage;
+  const muscle = metrics.find((item) => item.id === "muscle")?.percentage;
+  const fat = metrics.find((item) => item.id === "fat")?.percentage;
+
+  if (weight == null || muscle == null || fat == null) {
+    return "I" as const;
+  }
+
+  const tolerance = 4;
+
+  if (muscle + tolerance < weight && muscle + tolerance < fat) {
+    return "C" as const;
+  }
+
+  if (muscle > weight + tolerance && muscle > fat + tolerance) {
+    return "D" as const;
+  }
+
+  return "I" as const;
+}
+
+function resolveCidSizeType(metrics: CidMetric[], bodyType: CidBodyType) {
+  if (bodyType === "I") {
+    return null;
+  }
+
+  const weight = metrics.find((item) => item.id === "weight")?.percentage;
+
+  if (weight == null) {
+    return null;
+  }
+
+  if (weight >= 110) {
+    return "large" as const;
+  }
+
+  if (weight <= 90) {
+    return "small" as const;
+  }
+
+  return null;
 }
 
 function formatTimelineDateParts(date: string | undefined) {
@@ -766,6 +919,124 @@ function MetricCurrentPreview({ background, item, textShadow }: { background: Sh
   );
 }
 
+function CidScaleAxis({
+  background,
+  color,
+  metrics,
+  textShadow,
+}: {
+  background: ShareBackground;
+  color: string;
+  metrics: CidMetric[];
+  textShadow: string;
+}) {
+  const scale = resolveCidScale(metrics);
+
+  return (
+    <div className="relative h-4 min-w-0">
+      {scale.ticks.map((tick) => (
+        <span
+          className={cn("absolute bottom-0 -translate-x-1/2 text-[0.5rem] font-black leading-none tabular-nums", tick === 100 ? "opacity-75" : "opacity-45")}
+          key={tick}
+          style={{
+            color: color || (background === "dark" ? "#ffffff" : "#10213a"),
+            left: `${getCidScalePosition(tick, scale)}%`,
+            textShadow,
+          }}
+        >
+          {tick}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function CidSharePreview({
+  background,
+  bodyType,
+  brandColor,
+  brandLabel,
+  headingColor,
+  metrics,
+  sizeType,
+  textShadow,
+}: {
+  background: ShareBackground;
+  bodyType: CidBodyType;
+  brandColor: string;
+  brandLabel: string;
+  headingColor: string;
+  metrics: CidMetric[];
+  sizeType: CidSizeType;
+  textShadow: string;
+}) {
+  const t = useTranslations();
+  const scale = resolveCidScale(metrics);
+  const standardMarkerLeft = `${getCidScalePosition(100, scale)}%`;
+  const markerPoints = metrics.map((item) => {
+    const percentage = item.percentage ?? 0;
+    const x = getCidScalePosition(percentage, scale);
+
+    return { item, width: `${Math.max(4, x)}%` };
+  });
+
+  return (
+    <div className="flex min-h-0 w-full min-w-0 flex-col gap-2">
+      <div className={cn("relative rounded-[1.15rem] px-3.5 py-2.5", background === "dark" ? "bg-white/8" : "bg-white/68")}>
+        <p className="absolute right-3 top-3 max-w-[4.75rem] truncate text-right font-display text-sm leading-none" style={{ color: brandColor, textShadow }}>
+          {brandLabel}
+        </p>
+        <div className="flex min-w-0 items-end gap-2">
+          <p className="font-display text-[4.8rem] font-black leading-[0.82]" style={{ color: headingColor, textShadow }}>
+            {bodyType}
+          </p>
+          <div className="min-w-0 pb-0.5 pr-12">
+            <p className="font-display text-2xl font-black leading-none" style={{ color: headingColor, textShadow }}>
+              {t("shareTrend.cidBodyType")}
+              {sizeType ? <span className="ml-1 text-base font-black opacity-80">{t(`shareTrend.cidSize.${sizeType}`)}</span> : null}
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-[0.68rem] font-semibold leading-tight opacity-75" style={{ color: headingColor, textShadow }}>
+              {t(`shareTrend.cidDescriptions.${bodyType}`)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("rounded-[1.15rem] px-3.5 py-2.5", background === "dark" ? "bg-white/7" : "bg-white/62")}>
+        <div className="grid min-w-0 grid-cols-[3.75rem_minmax(0,1fr)_2.65rem] items-center gap-x-2">
+          <div className="grid gap-2">
+            {markerPoints.map(({ item }) => (
+              <p className="flex h-4 items-center truncate text-[0.7rem] font-black leading-none" key={item.id} style={{ color: item.color, textShadow }}>
+                {item.label}
+              </p>
+            ))}
+          </div>
+          <div className="relative grid gap-2">
+            {markerPoints.map(({ item, width }) => (
+              <div className="flex h-4 items-center" key={item.id}>
+                <div className={cn("relative h-3 w-full overflow-hidden rounded-full", background === "dark" ? "bg-white/12" : "bg-slate-900/8")}>
+                  <div className="h-full rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 14px ${item.color}55`, width }} />
+                  <span className="absolute inset-y-0 w-px bg-white/80 shadow-[0_0_0_1px_rgba(16,35,63,0.18)]" style={{ left: standardMarkerLeft }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-2">
+            {markerPoints.map(({ item }) => (
+              <p className="flex h-4 items-center justify-end text-right font-display text-sm font-black leading-none tabular-nums" key={item.id} style={{ color: item.color, textShadow }}>
+                {formatShareNumber(item.value)}
+              </p>
+            ))}
+          </div>
+          <div aria-hidden />
+          <CidScaleAxis background={background} color={headingColor} metrics={metrics} textShadow={textShadow} />
+          <div aria-hidden />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface TrendShareWorkspaceProps {
   records: InbodyRecord[];
 }
@@ -773,6 +1044,10 @@ interface TrendShareWorkspaceProps {
 function SharePreviewContent({
   background,
   brandColor,
+  cidBodyType,
+  cidHeadingColor,
+  cidMetrics,
+  cidSizeType,
   dateColor,
   effectiveShareColumns,
   selectedMetrics,
@@ -789,6 +1064,10 @@ function SharePreviewContent({
 }: {
   background: ShareBackground;
   brandColor: string;
+  cidBodyType: CidBodyType;
+  cidHeadingColor: string;
+  cidMetrics: CidMetric[];
+  cidSizeType: CidSizeType;
   dateColor: string;
   effectiveShareColumns: 1 | 2;
   selectedMetrics: ShareMetric[];
@@ -822,8 +1101,11 @@ function SharePreviewContent({
         </div>
       </div>
 
-      <div className={cn("grid w-full min-w-0 gap-1.5", effectiveShareColumns === 1 ? "grid-cols-1" : "grid-cols-2")}>
-        {selectedMetrics.length ? (
+      {shareStyle === "cid" ? (
+        <CidSharePreview background={background} bodyType={cidBodyType} brandColor={brandColor} brandLabel={brandLabel} headingColor={cidHeadingColor} metrics={cidMetrics} sizeType={cidSizeType} textShadow={textShadow} />
+      ) : (
+        <div className={cn("grid w-full min-w-0 gap-1.5", effectiveShareColumns === 1 ? "grid-cols-1" : "grid-cols-2")}>
+          {selectedMetrics.length ? (
           selectedMetrics.map((item) =>
             shareStyle === "trend" ? (
               <MetricTrendPreview background={background} item={item} key={item.id} textShadow={textShadow} visibleDates={visibleTimelineDates} />
@@ -836,14 +1118,17 @@ function SharePreviewContent({
             {emptyLabel}
           </div>
         )}
-      </div>
-
-      <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
-        <div className="flex h-6 items-end pb-[3px]">
-          <p className="truncate font-display text-sm leading-none" style={{ color: brandColor, textShadow }}>{brandLabel}</p>
         </div>
-        {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} onVisibleTicksChange={handleVisibleTicksChange} points={timelinePoints} textShadow={textShadow} ticks={timelineDates} /> : null}
-      </div>
+      )}
+
+      {shareStyle !== "cid" ? (
+        <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
+          <div className="flex h-6 items-end pb-[3px]">
+            <p className="truncate font-display text-sm leading-none" style={{ color: brandColor, textShadow }}>{brandLabel}</p>
+          </div>
+          {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} onVisibleTicksChange={handleVisibleTicksChange} points={timelinePoints} textShadow={textShadow} ticks={timelineDates} /> : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -855,8 +1140,11 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const metricLabels = useMemo(() => buildOverallMetricLabels(t), [t]);
   const includedRecords = useMemo(() => records.filter((record) => record.isIncludedInCharts), [records]);
   const maxRecordCount = includedRecords.length;
+  const defaultPreviewTitle = t("shareTrend.previewTitle");
   const [recordLimit, setRecordLimit] = useState<number | null>(() => DEFAULT_RECORD_LIMIT);
   const [shareStyle, setShareStyle] = useState<ShareStyle>("trend");
+  const [previewTitle, setPreviewTitle] = useState(defaultPreviewTitle);
+  const [hasEditedPreviewTitle, setHasEditedPreviewTitle] = useState(false);
   const visibleRecords = useMemo(() => {
     if (!recordLimit || shareStyle !== "trend") {
       return records;
@@ -879,8 +1167,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#f8fbff");
   const [customBackgroundOpacity, setCustomBackgroundOpacity] = useState(100);
   const [sharePosition, setSharePosition] = useState<SharePosition>("bottom");
-  const [shareColumns, setShareColumns] = useState<1 | 2>(2);
-  const [titleMode, setTitleMode] = useState<TitleMode>("show");
+  const [shareLayout, setShareLayout] = useState<ShareLayout>("two");
+  const [titleMode, setTitleMode] = useState<TitleMode>("hide");
   const [titleAlign, setTitleAlign] = useState<TitleAlign>("left");
   const [textColors, setTextColors] = useState<Partial<Record<TextColorTarget, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -890,6 +1178,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const styleOptions = [
     { value: "trend" as const, label: t("shareTrend.styleTrend") },
     { value: "current" as const, label: t("shareTrend.styleCurrent") },
+    { value: "cid" as const, label: t("shareTrend.cid") },
   ];
   const backgroundOptions = [
     { value: "light" as const, label: t("shareTrend.backgroundLight") },
@@ -903,8 +1192,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     { value: "bottom" as const, label: t("shareTrend.positionBottom") },
   ];
   const columnOptions = [
-    { value: 1 as const, label: t("shareTrend.oneColumn") },
-    { value: 2 as const, label: t("shareTrend.twoColumns") },
+    { value: "one" as const, label: t("shareTrend.oneColumn") },
+    { value: "two" as const, label: t("shareTrend.twoColumns") },
   ];
   const titleModeOptions = [
     { value: "show" as const, label: t("shareTrend.show") },
@@ -928,16 +1217,24 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     [metricColors, shareMetrics],
   );
   const selectedMetrics = useMemo(() => coloredShareMetrics.filter((item) => selectedIds.includes(item.id)), [coloredShareMetrics, selectedIds]);
-  const syncMetricColor = syncMetricColors ? selectedMetrics[0]?.metric.color ?? null : null;
+  const cidShareMetrics = useMemo(() => CID_METRIC_IDS.map((id) => coloredShareMetrics.find((item) => item.id === id)).filter((item): item is ShareMetric => Boolean(item)), [coloredShareMetrics]);
+  const colorControlledMetrics = shareStyle === "cid" ? cidShareMetrics : selectedMetrics;
+  const colorControlledMetricIds = useMemo(() => colorControlledMetrics.map((item) => item.id), [colorControlledMetrics]);
+  const syncMetricColor = syncMetricColors ? colorControlledMetrics[0]?.metric.color ?? null : null;
   const timelinePoints = selectedMetrics[0]?.points ?? [];
   const timelineDates = buildTimelineDates(timelinePoints);
-  const effectiveShareColumns = shareStyle === "trend" ? 1 : shareColumns;
+  const effectiveShareColumns = shareStyle === "trend" || shareLayout !== "two" ? 1 : 2;
+  const latestIncludedRecord = includedRecords.at(-1) ?? null;
+  const cidMetrics = useMemo(() => buildCidMetricAnalysis(latestIncludedRecord, coloredShareMetrics), [coloredShareMetrics, latestIncludedRecord]);
+  const cidBodyType = useMemo(() => resolveCidBodyType(cidMetrics), [cidMetrics]);
+  const cidSizeType = useMemo(() => resolveCidSizeType(cidMetrics, cidBodyType), [cidBodyType, cidMetrics]);
   const hasEnoughData = maxRecordCount >= 2;
   const automaticTitleColor = getAutomaticTextColor(shareBackground, customBackgroundColor, customBackgroundOpacity);
   const automaticMutedTextColor = getAutomaticMutedTextColor(shareBackground, customBackgroundColor, customBackgroundOpacity);
   const effectiveTitleColor = textColors.title ?? automaticTitleColor;
   const effectiveBrandColor = textColors.brand ?? automaticMutedTextColor;
   const effectiveDateColor = textColors.date ?? automaticMutedTextColor;
+  const effectiveCidHeadingColor = syncMetricColors ? colorControlledMetrics[0]?.metric.color ?? effectiveTitleColor : effectiveTitleColor;
   const textColorOptions = [
     { value: "title" as const, label: t("shareTrend.titlePanel"), color: effectiveTitleColor },
     { value: "brand" as const, label: t("shareTrend.brand"), color: effectiveBrandColor },
@@ -947,6 +1244,12 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   useEffect(() => {
     setSelectedIds((current) => (current.length ? current : defaultSelectedIds));
   }, [defaultSelectedIds]);
+
+  useEffect(() => {
+    if (!hasEditedPreviewTitle) {
+      setPreviewTitle(defaultPreviewTitle);
+    }
+  }, [defaultPreviewTitle, hasEditedPreviewTitle]);
 
   useEffect(() => {
     if (recordLimit != null && recordLimit >= maxRecordCount) {
@@ -976,7 +1279,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
       const next = { ...current };
       let changed = false;
 
-      for (const id of selectedIds) {
+      for (const id of colorControlledMetricIds) {
         if (next[id] !== syncMetricColor) {
           next[id] = syncMetricColor;
           changed = true;
@@ -998,7 +1301,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         date: syncMetricColor,
       };
     });
-  }, [selectedIds, syncMetricColor, syncMetricColors]);
+  }, [colorControlledMetricIds, syncMetricColor, syncMetricColors]);
 
   function toggleMetric(id: string) {
     setSelectedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
@@ -1007,7 +1310,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   function updateMetricColor(id: string, color: string) {
     setMetricColors((current) => ({
       ...current,
-      ...(syncMetricColors ? Object.fromEntries(selectedIds.map((selectedId) => [selectedId, color])) : { [id]: color }),
+      ...(syncMetricColors ? Object.fromEntries(colorControlledMetricIds.map((selectedId) => [selectedId, color])) : { [id]: color }),
     }));
 
     if (syncMetricColors) {
@@ -1034,7 +1337,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     if (syncMetricColors) {
       setMetricColors((current) => ({
         ...current,
-        ...Object.fromEntries(selectedIds.map((selectedId) => [selectedId, color])),
+        ...Object.fromEntries(colorControlledMetricIds.map((selectedId) => [selectedId, color])),
       }));
     }
   }
@@ -1045,8 +1348,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
   function handleShareStyleChange(nextStyle: ShareStyle) {
     setShareStyle(nextStyle);
-    if (nextStyle === "trend") {
-      setShareColumns(1);
+    if (nextStyle === "trend" || nextStyle === "cid") {
+      setShareLayout((current) => (current === "two" ? "one" : current));
     }
   }
 
@@ -1073,7 +1376,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
   
   const saveImage = useCallback(async () => {
-    if (!selectedMetrics.length) {
+    if (shareStyle !== "cid" && !selectedMetrics.length) {
       toast.error(t("shareTrend.selectAtLeastOneMetric"));
       return;
     }
@@ -1121,7 +1424,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [latestDate, selectedMetrics, t]);
+  }, [latestDate, selectedMetrics, shareStyle, t]);
 
   if (!shareMetrics.length) {
     return (
@@ -1160,6 +1463,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
           <SharePreviewContent
             background={shareBackground}
             brandColor={effectiveBrandColor}
+            cidBodyType={cidBodyType}
+            cidHeadingColor={effectiveCidHeadingColor}
+            cidMetrics={cidMetrics}
+            cidSizeType={cidSizeType}
             dateColor={effectiveDateColor}
             effectiveShareColumns={effectiveShareColumns}
             selectedMetrics={selectedMetrics}
@@ -1171,7 +1478,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             titleColor={effectiveTitleColor}
             titleMode={titleMode}
             emptyLabel={t("shareTrend.empty")}
-            previewTitle={t("shareTrend.previewTitle")}
+            previewTitle={previewTitle}
             brandLabel={t("shareTrend.brand")}
           />
         </div>
@@ -1244,6 +1551,18 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
         {activeControl === "title" ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+            <label className="min-w-0 sm:col-span-2">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.titleText")}</span>
+              <input
+                className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 px-4 text-sm font-semibold text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground/65 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                onChange={(event) => {
+                  setHasEditedPreviewTitle(true);
+                  setPreviewTitle(event.target.value);
+                }}
+                placeholder={t("shareTrend.titlePlaceholder")}
+                value={previewTitle}
+              />
+            </label>
             <div className="min-w-0">
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.titlePanel")}</p>
               <PillScrollGroup>
@@ -1279,21 +1598,22 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               ))}
               </PillScrollGroup>
             </div>
-            {shareStyle === "current" ? (
-              <div className="min-w-0">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.columns")}</p>
-                <PillScrollGroup>
-                  {columnOptions.map((option) => (
-                    <OptionPill
-                      active={effectiveShareColumns === option.value}
-                      key={String(option.value)}
-                      onClick={() => setShareColumns(option.value)}
-                    >
-                      {option.label}
-                    </OptionPill>
-                  ))}
-                </PillScrollGroup>
-              </div>
+            {shareStyle !== "cid" ? (
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.layout")}</p>
+              <PillScrollGroup>
+                {columnOptions.map((option) => (
+                  <OptionPill
+                    active={shareLayout === option.value}
+                    disabled={shareStyle === "trend" && option.value === "two"}
+                    key={String(option.value)}
+                    onClick={() => setShareLayout(option.value)}
+                  >
+                    {option.label}
+                  </OptionPill>
+                ))}
+              </PillScrollGroup>
+            </div>
             ) : null}
             <div className="min-w-0 sm:col-span-2">
               <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
@@ -1359,7 +1679,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             </div>
             <div className="min-w-0 pr-1">
               <div className="grid gap-2">
-                {selectedMetrics.length ? selectedMetrics.map((item) => {
+                {colorControlledMetrics.length ? colorControlledMetrics.map((item) => {
                   return (
                   <div className="grid min-w-0 grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-2 border-b border-border/45 py-1.5 last:border-b-0" key={item.id}>
                     <div className="flex min-w-0 items-center">
@@ -1408,14 +1728,16 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.metricsPanel")}</p>
               <div className="flex shrink-0 gap-1.5">
                 <button
-                  className="h-7 cursor-pointer rounded-full border border-border/70 bg-background/72 px-3 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="h-7 cursor-pointer rounded-full border border-border/70 bg-background/72 px-3 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={shareStyle === "cid"}
                   onClick={() => setSelectedIds(shareMetrics.map((item) => item.id))}
                   type="button"
                 >
                   {t("shareTrend.selectAll")}
                 </button>
                 <button
-                  className="h-7 cursor-pointer rounded-full px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/8 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="h-7 cursor-pointer rounded-full px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/8 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={shareStyle === "cid"}
                   onClick={() => setSelectedIds([])}
                   type="button"
                 >
@@ -1426,17 +1748,19 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <div className="min-w-0 pr-1">
               <div className="flex flex-wrap gap-1.5">
                 {coloredShareMetrics.map((item) => {
-                  const checked = selectedIds.includes(item.id);
+                  const cidLocked = shareStyle === "cid";
+                  const checked = cidLocked ? CID_METRIC_IDS.includes(item.id) : selectedIds.includes(item.id);
 
                   return (
                     <button
                       aria-pressed={checked}
                       className={cn(
-                        "flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        "flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45",
                         checked
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "border border-border/70 bg-background/72 text-muted-foreground hover:border-primary/40 hover:bg-primary/8 hover:text-foreground",
                       )}
+                      disabled={cidLocked}
                       key={item.id}
                       onClick={() => toggleMetric(item.id)}
                       type="button"
@@ -1548,7 +1872,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <ListChecks className="size-4" />
           </button>
         </div>
-        <Button aria-label={t("shareTrend.downloadImage")} className="ai-generate-pulse pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={!selectedMetrics.length || isSaving} onClick={saveImage} size="icon" type="button">
+        <Button aria-label={t("shareTrend.downloadImage")} className="ai-generate-pulse pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={(shareStyle !== "cid" && !selectedMetrics.length) || isSaving} onClick={saveImage} size="icon" type="button">
           <Download className="size-5" />
         </Button>
       </div>

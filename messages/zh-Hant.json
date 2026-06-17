@@ -284,8 +284,11 @@
                        "style":  "圖表",
                        "background":  "背景",
                        "titlePanel":  "標題",
+                       "titleText":  "標題文字",
+                       "titlePlaceholder":  "輸入圖表標題",
                        "alignment":  "對齊",
                        "position":  "位置",
+                       "layout":  "版面",
                        "columns":  "欄位",
                        "records":  "紀錄",
                        "metricsPanel":  "數據",
@@ -306,6 +309,18 @@
                        "positionBottom":  "下方",
                        "oneColumn":  "一欄",
                        "twoColumns":  "兩欄",
+                       "cid":  "CID",
+                       "cidResult":  "體型分類",
+                       "cidBodyType":  "型人",
+                       "cidSize":  {
+                                       "large":  "（大）",
+                                       "small":  "（小）"
+                                   },
+                       "cidDescriptions":  {
+                                               "C":  "脂肪量相對明顯，適合聚焦體脂控制與穩定活動量。",
+                                               "I":  "整體比例較均衡，適合維持紀錄並微調肌肉與脂肪走勢。",
+                                               "D":  "肌肉量表現較突出，適合延續訓練並留意恢復與熱量補給。"
+                                           },
                        "show":  "顯示",
                        "hide":  "隱藏",
                        "alignLeft":  "靠左",

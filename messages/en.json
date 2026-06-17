@@ -291,8 +291,11 @@
                        "style":  "Chart",
                        "background":  "Background",
                        "titlePanel":  "Title",
+                       "titleText":  "Title text",
+                       "titlePlaceholder":  "Enter chart title",
                        "alignment":  "Alignment",
                        "position":  "Position",
+                       "layout":  "Layout",
                        "columns":  "Columns",
                        "records":  "Records",
                        "metricsPanel":  "Metrics",
@@ -313,6 +316,18 @@
                        "positionBottom":  "Bottom",
                        "oneColumn":  "One column",
                        "twoColumns":  "Two columns",
+                       "cid":  "CID",
+                       "cidResult":  "Body type",
+                       "cidBodyType":  "type",
+                       "cidSize":  {
+                                       "large":  "(large)",
+                                       "small":  "(small)"
+                                   },
+                       "cidDescriptions":  {
+                                               "C":  "Body fat is more prominent. Focus on fat control and steady activity.",
+                                               "I":  "Overall composition is balanced. Keep tracking and fine-tune muscle and fat trends.",
+                                               "D":  "Muscle mass stands out. Keep training while watching recovery and energy intake."
+                                           },
                        "show":  "Show",
                        "hide":  "Hide",
                        "alignLeft":  "Left",
