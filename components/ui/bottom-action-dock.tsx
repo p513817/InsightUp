@@ -51,7 +51,7 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
   return (
     <div
       className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 sm:bottom-4",
+        "scroll-reactive-dock pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 sm:bottom-4",
         className,
       )}
     >

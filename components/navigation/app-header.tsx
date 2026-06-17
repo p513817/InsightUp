@@ -247,8 +247,10 @@ export function AppHeader({ user }: AppHeaderProps) {
 
       if (currentScrollY < 12 || delta < -6) {
         setIsHeaderVisible(true);
+        document.documentElement.dataset.scrollDirection = "up";
       } else if (delta > 2 && !isSidebarOpen) {
         setIsHeaderVisible(false);
+        document.documentElement.dataset.scrollDirection = "down";
       }
 
       lastScrollY = Math.max(currentScrollY, 0);
@@ -268,6 +270,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         window.cancelAnimationFrame(animationFrame);
       }
 
+      delete document.documentElement.dataset.scrollDirection;
       window.removeEventListener("scroll", handleScroll);
     };
   }, [isSidebarOpen]);
