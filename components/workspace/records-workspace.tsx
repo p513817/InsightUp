@@ -538,6 +538,18 @@ export function RecordsWorkspace({
           />
         </div>
         <DashboardWelcomeDialog hasRecords={records.length > 0} open={shouldShowWelcomeDialog} />
+        <RecordFormDialog
+          initialRecord={editingRecord}
+          latestRecordForAutofill={latestRecord}
+          onOpenChange={(nextOpen) => {
+            setDialogOpen(nextOpen);
+            if (!nextOpen) {
+              setEditingRecord(null);
+            }
+          }}
+          onSubmit={handleSave}
+          open={dialogOpen}
+        />
         </>
       );
     }
