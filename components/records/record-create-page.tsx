@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale } from "@/components/i18n-provider";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
@@ -30,10 +30,13 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 
 export function RecordCreatePage({ latestRecordForAutofill = null }: RecordCreatePageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
+  const returnToParam = searchParams.get("returnTo");
+  const returnTo = returnToParam?.startsWith("/") && !returnToParam.startsWith("//") ? returnToParam : "/records";
 
   function returnToRecords() {
-    router.replace("/records");
+    router.replace(returnTo);
   }
 
   async function handleSubmit(values: RecordFormValues) {
@@ -43,6 +46,7 @@ export function RecordCreatePage({ latestRecordForAutofill = null }: RecordCreat
         method: "POST",
       });
       toast.success(locale === "en" ? "Record created." : "已新增 InBody 紀錄");
+      router.replace(returnTo);
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : locale === "en" ? "Failed to create record." : "新增紀錄失敗。");

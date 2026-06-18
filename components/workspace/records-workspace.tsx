@@ -512,8 +512,10 @@ export function RecordsWorkspace({
       return;
     }
 
-    setEditingRecord(null);
-    setDialogOpen(true);
+    const params = new URLSearchParams();
+    const returnTo = searchParams.toString() ? `/dashboard?${searchParams.toString()}` : "/dashboard";
+    params.set("returnTo", returnTo);
+    router.push(`/records/new?${params.toString()}`);
   }
 
   function openEditDialog(record: InbodyRecord) {
@@ -538,18 +540,6 @@ export function RecordsWorkspace({
           />
         </div>
         <DashboardWelcomeDialog hasRecords={records.length > 0} open={shouldShowWelcomeDialog} />
-        <RecordFormDialog
-          initialRecord={editingRecord}
-          latestRecordForAutofill={latestRecord}
-          onOpenChange={(nextOpen) => {
-            setDialogOpen(nextOpen);
-            if (!nextOpen) {
-              setEditingRecord(null);
-            }
-          }}
-          onSubmit={handleSave}
-          open={dialogOpen}
-        />
         </>
       );
     }
