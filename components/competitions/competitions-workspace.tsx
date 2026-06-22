@@ -307,19 +307,20 @@ export function CompetitionsWorkspace({ competitions, userId }: CompetitionsWork
 
   return (
     <div className="space-y-4 pb-24 sm:space-y-7 sm:pb-28">
+      <section>
+        <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
+          <CompactInfoCard label={t("competitions.stats.active")} minWidthClassName="min-w-0" value={activeCompetitions.length} />
+          <CompactInfoCard label={t("competitions.stats.missingGoals")} minWidthClassName="min-w-0" value={missingGoalCount} />
+          <CompactInfoCard
+            label={t("competitions.stats.nearestDeadline")}
+            minWidthClassName="min-w-0"
+            value={nearestDeadline ? formatCompactDate(nearestDeadline.targetDate, locale) : t("competitions.stats.noActiveDeadline")}
+          />
+        </StatsScrollbarRow>
+      </section>
+
       {hasCompetitions ? (
         <div className="space-y-5">
-          <section>
-            <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
-              <CompactInfoCard label={t("competitions.stats.active")} minWidthClassName="min-w-0" value={activeCompetitions.length} />
-              <CompactInfoCard label={t("competitions.stats.missingGoals")} minWidthClassName="min-w-0" value={missingGoalCount} />
-              <CompactInfoCard
-                label={t("competitions.stats.nearestDeadline")}
-                minWidthClassName="min-w-0"
-                value={nearestDeadline ? formatCompactDate(nearestDeadline.targetDate, locale) : t("competitions.stats.noActiveDeadline")}
-              />
-            </StatsScrollbarRow>
-          </section>
           {activeCompetitions.length > 0 ? (
             <CompetitionSection
               competitions={activeCompetitions}
