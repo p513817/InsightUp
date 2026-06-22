@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type BottomActionDockItem = {
+  active?: boolean;
   ariaLabel: string;
   disabled?: boolean;
   href?: string;
@@ -20,11 +21,15 @@ type BottomActionDockProps = {
   className?: string;
 };
 
-const dockItemClassName = (disabled?: boolean, variant?: BottomActionDockItem["variant"]) =>
+const dockItemClassName = (item: BottomActionDockItem) =>
   cn(
-    "flex h-9 min-w-[4.7rem] shrink-0 items-center justify-center gap-1.5 border px-3.5 text-primary-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70",
-    variant === "danger" ? "hover:bg-white/18" : "hover:bg-white/18",
-    disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer",
+    "flex size-[3.25rem] shrink-0 items-center justify-center border text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
+    item.disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer",
+    item.active
+      ? "border-border/45 bg-primary/8 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_6px_14px_rgba(16,35,63,0.06)]"
+      : item.variant === "danger"
+        ? "border-transparent bg-transparent hover:bg-danger/8 hover:text-danger"
+        : "border-transparent bg-transparent hover:bg-primary/5 hover:text-foreground",
   );
 
 function getDockItemEdgeClassName(index: number, count: number) {
@@ -55,28 +60,23 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
         className,
       )}
     >
-      <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-primary/38 bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] px-0.5 py-0.5 text-primary-foreground shadow-[0_12px_24px_rgba(23,52,93,0.22)]">
+      <div className="bottom-action-dock-surface pointer-events-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[2rem] px-2 py-2.5">
         {items.map((item, index) => {
             const content = (
-              <>
-                <span className="grid size-4 shrink-0 place-items-center" aria-hidden="true">
+                <span className="grid size-6 shrink-0 place-items-center [&_svg]:size-6" aria-hidden="true">
                   {item.icon}
                 </span>
-                <span className="truncate text-[0.74rem] font-semibold leading-none">{item.label}</span>
-              </>
             );
             const itemClassName = cn(
-              dockItemClassName(item.disabled, item.variant),
+              dockItemClassName(item),
               getDockItemEdgeClassName(index, items.length),
-              item.disabled
-                ? "border-transparent bg-transparent text-primary-foreground/70"
-                : "border-transparent bg-transparent text-primary-foreground/88 hover:text-primary-foreground",
             );
 
             if (item.href && !item.disabled) {
               return (
                 <Link
                   aria-label={item.ariaLabel}
+                  aria-pressed={item.active}
                   className={itemClassName}
                   href={item.href}
                   key={item.ariaLabel}
@@ -90,6 +90,7 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
             return (
               <button
                 aria-label={item.ariaLabel}
+                aria-pressed={item.active}
                 className={itemClassName}
                 disabled={item.disabled}
                 key={item.ariaLabel}

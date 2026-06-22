@@ -345,7 +345,7 @@ function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, head
 
   return (
     <Card
-      className={`dashboard-card surface-chart-shell relative overflow-hidden [will-change:transform] ${COMPACT_CARD_CLASS} ${
+      className={`dashboard-card dashboard-card-soft relative overflow-hidden [will-change:transform] ${COMPACT_CARD_CLASS} ${
         isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_22px_46px_rgba(16,35,63,0.18)]" : ""
       } ${editMode ? "border-accent/70 bg-card shadow-[0_14px_30px_rgba(23,52,93,0.13)]" : ""}`}
       data-dashboard-metric-key={metric.key}
@@ -400,7 +400,7 @@ function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, head
         </div>
       </div>
 
-      <div className={`surface-chart-shell ${COMPACT_CHART_CLASS}`}>
+      <div className={`surface-chart-shell dashboard-chart-capsule ${COMPACT_CHART_CLASS}`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartPoints} margin={{ top: 18, right: 16, bottom: 2, left: 16 }}>
             <YAxis domain={["dataMin - 1", "dataMax + 1"]} hide />

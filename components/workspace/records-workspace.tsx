@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Columns2, Eye, EyeOff, RectangleHorizontal, Share2, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
 import { CompactInfoCard } from "@/components/ui/compact-info-card";
+import { BottomActionDock } from "@/components/ui/bottom-action-dock";
 import { PageLoading } from "@/components/ui/page-loading";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { buildChartPayload } from "@/lib/inbody/records";
@@ -160,44 +161,6 @@ function getExpectedVisibleOverallMetricKeys() {
   } catch {
     return OVERALL_CHART_METRIC_KEYS;
   }
-}
-
-function TrendToolButton({
-  active,
-  children,
-  label,
-  edge,
-  onClick,
-}: {
-  active?: boolean;
-  children: ReactNode;
-  edge?: "left" | "right";
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      aria-label={label}
-      aria-pressed={active}
-      className={`flex h-9 min-w-[4.7rem] cursor-pointer items-center justify-center gap-1.5 border px-3.5 text-primary-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 ${
-        edge === "left"
-          ? "rounded-l-[1rem] rounded-r-[0.8rem]"
-          : edge === "right"
-            ? "rounded-l-[0.8rem] rounded-r-[1rem]"
-            : "rounded-[0.9rem]"
-      } ${
-        active
-          ? "border-transparent bg-white/22 text-primary-foreground shadow-[0_6px_14px_rgba(11,28,52,0.18),inset_0_1px_0_rgba(255,255,255,0.28),inset_0_-1px_0_rgba(7,23,44,0.12)]"
-          : "border-transparent bg-transparent text-primary-foreground/88 hover:bg-white/18 hover:text-primary-foreground"
-      }`}
-      onClick={onClick}
-      title={label}
-      type="button"
-    >
-      <span className="grid size-4 shrink-0 place-items-center">{children}</span>
-      <span className="truncate text-[0.74rem] font-semibold leading-none">{label}</span>
-    </button>
-  );
 }
 
 export function RecordsWorkspace({
@@ -603,33 +566,46 @@ export function RecordsWorkspace({
           )}
         </section>
 
-        <div
-          className={`scroll-reactive-dock pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 transition-[opacity,transform] ease-out motion-reduce:transition-none sm:bottom-4 ${
+        <BottomActionDock
+          className={`bottom-[calc(env(safe-area-inset-bottom)+1.55rem)] transition-[opacity,transform] ease-out motion-reduce:transition-none sm:bottom-6 ${
             isDashboardChartRenderComplete
               ? "translate-y-0 opacity-100 duration-1000"
               : "translate-y-6 opacity-0 duration-200"
           }`}
-        >
-          <div className="pointer-events-auto inline-flex items-center gap-0.5 rounded-[1.25rem] border border-primary/38 bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] px-0.5 py-0.5 text-primary-foreground shadow-[0_12px_24px_rgba(23,52,93,0.22)]">
-            <TrendToolButton
-              active={trendLayout === "two"}
-              edge="left"
-              label={t("dashboardTrendUi.layout")}
-              onClick={cycleTrendLayout}
-            >
-              {trendLayout === "two" ? <Columns2 className="size-4" /> : <RectangleHorizontal className="size-4" />}
-            </TrendToolButton>
-            <TrendToolButton active={trendEditMode} label={t("dashboardTrendUi.visibility")} onClick={() => setTrendEditMode((current) => !current)}>
-              {trendEditMode ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </TrendToolButton>
-            <TrendToolButton active={showTrendLine} label={t("dashboardTrendUi.trendLine")} onClick={toggleTrendLine}>
-              <TrendingUp className="size-4" />
-            </TrendToolButton>
-            <TrendToolButton edge="right" label={t("dashboardTrendUi.shareShort")} onClick={() => router.push("/share")}>
-              <Share2 className="size-4" />
-            </TrendToolButton>
-          </div>
-        </div>
+          items={[
+            {
+              active: trendLayout === "two",
+              ariaLabel: t("dashboardTrendUi.layout"),
+              icon: trendLayout === "two" ? <Columns2 className="size-4" /> : <RectangleHorizontal className="size-4" />,
+              label: t("dashboardTrendUi.layout"),
+              onClick: cycleTrendLayout,
+              title: t("dashboardTrendUi.layout"),
+            },
+            {
+              active: trendEditMode,
+              ariaLabel: t("dashboardTrendUi.visibility"),
+              icon: trendEditMode ? <EyeOff className="size-4" /> : <Eye className="size-4" />,
+              label: t("dashboardTrendUi.visibility"),
+              onClick: () => setTrendEditMode((current) => !current),
+              title: t("dashboardTrendUi.visibility"),
+            },
+            {
+              active: showTrendLine,
+              ariaLabel: t("dashboardTrendUi.trendLine"),
+              icon: <TrendingUp className="size-4" />,
+              label: t("dashboardTrendUi.trendLine"),
+              onClick: toggleTrendLine,
+              title: t("dashboardTrendUi.trendLine"),
+            },
+            {
+              ariaLabel: t("dashboardTrendUi.shareShort"),
+              href: "/share",
+              icon: <Share2 className="size-4" />,
+              label: t("dashboardTrendUi.shareShort"),
+              title: t("dashboardTrendUi.shareShort"),
+            },
+          ]}
+        />
       </div>
       <DashboardWelcomeDialog hasRecords={records.length > 0} open={shouldShowWelcomeDialog} />
       </>
