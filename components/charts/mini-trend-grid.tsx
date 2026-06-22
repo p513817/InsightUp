@@ -363,7 +363,7 @@ function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, head
           {editMode ? (
             <button
               aria-label={`隱藏 ${metric.label}`}
-              className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-danger/8 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45"
+              className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground transition-[background-color,color,transform] duration-180 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-danger/8 hover:text-danger active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100"
               disabled={!canHide}
               onClick={() => onHide(metric.key)}
               title={canHide ? `隱藏 ${metric.label}` : "至少保留 1 個指標"}
@@ -374,7 +374,7 @@ function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, head
           ) : (
             <button
               aria-label={`移動 ${metric.label}`}
-              className="grid size-7 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-colors duration-100 hover:bg-primary/7 hover:text-primary active:cursor-grabbing active:bg-primary/10"
+              className="grid size-7 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-[background-color,color,transform] duration-180 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-primary/7 hover:text-primary active:scale-[0.96] active:cursor-grabbing active:bg-primary/10"
               ref={setActivatorNodeRef}
               type="button"
               {...attributes}
