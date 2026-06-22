@@ -360,16 +360,23 @@ export function AppHeader({ user }: AppHeaderProps) {
           {isDashboard ? (
             <div
               aria-label={t("navigation.dashboard.label")}
-              className="surface-pill absolute left-1/2 grid h-[2.625rem] max-w-[min(32rem,52vw)] -translate-x-1/2 grid-cols-2 gap-1 rounded-full bg-card/78 p-[0.3125rem] shadow-none"
+              className="surface-pill absolute left-1/2 grid h-[2.625rem] max-w-[min(32rem,52vw)] -translate-x-1/2 grid-cols-2 gap-1 overflow-hidden rounded-full bg-card/78 p-[0.3125rem] shadow-none"
               role="tablist"
             >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none absolute bottom-[0.3125rem] left-[0.3125rem] top-[0.3125rem] z-0 w-[calc((100%-0.875rem)/2)] rounded-full bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] shadow-[0_8px_16px_rgba(23,52,93,0.14)] transition-[transform,box-shadow] duration-[520ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
+                  dashboardTrendMode === "segmental" ? "translate-x-[calc(100%+0.25rem)]" : "translate-x-0",
+                )}
+              />
               <button
                 aria-selected={dashboardTrendMode === "overall"}
                 className={cn(
-                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
+                  "relative z-10 inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-[color,transform] duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] [&_svg]:transition-transform [&_svg]:duration-[320ms]",
                   dashboardTrendMode === "overall"
-                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
+                    ? "text-primary-foreground [&_svg]:scale-110"
+                    : "text-muted-foreground hover:text-foreground [&_svg]:scale-95",
                 )}
                 onClick={() => setDashboardTrendMode("overall")}
                 role="tab"
@@ -381,10 +388,10 @@ export function AppHeader({ user }: AppHeaderProps) {
               <button
                 aria-selected={dashboardTrendMode === "segmental"}
                 className={cn(
-                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
+                  "relative z-10 inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-[color,transform] duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] [&_svg]:transition-transform [&_svg]:duration-[320ms]",
                   dashboardTrendMode === "segmental"
-                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
+                    ? "text-primary-foreground [&_svg]:scale-110"
+                    : "text-muted-foreground hover:text-foreground [&_svg]:scale-95",
                 )}
                 onClick={() => setDashboardTrendMode("segmental")}
                 role="tab"

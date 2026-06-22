@@ -411,8 +411,10 @@ export function CompetitionCreatePage({
           <Button
             aria-label={t("common.cancel")}
             className={cn("pointer-events-auto relative", FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS)}
+            disabled={isSaving}
             onClick={() => router.replace(isEditMode && competitionId ? `/competitions/${competitionId}` : "/competitions")}
             title={t("common.cancel")}
+            type="button"
             variant="outline"
           >
             <X className="relative z-10 size-6" />
