@@ -228,7 +228,7 @@ export function CompetitionCreatePage({
   }
 
   return (
-    <form className="mx-auto flex w-full max-w-6xl flex-col gap-4 pb-28 pt-1 sm:gap-5 sm:pt-3" onSubmit={handleSubmit}>
+    <form className="mx-auto flex w-full max-w-[30rem] flex-col gap-4 pb-28 pt-1 sm:gap-5 sm:pt-3" onSubmit={handleSubmit}>
       <section className="surface-muted-gradient rounded-[1rem] border border-border/80 p-3 sm:p-4">
         <div className="grid gap-3">
           <label className="block">
@@ -407,7 +407,7 @@ export function CompetitionCreatePage({
       </section>
 
       <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-[30rem] items-center justify-between gap-3">
           <Button
             aria-label={t("common.cancel")}
             className={cn("pointer-events-auto relative", FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS)}

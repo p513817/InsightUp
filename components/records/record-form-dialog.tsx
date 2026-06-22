@@ -683,7 +683,7 @@ export function RecordFormDialog({
     ? "pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7"
     : "shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]";
   const formFooterInnerClassName = isPagePresentation
-    ? "mx-auto flex w-full max-w-7xl items-center justify-between gap-3"
+    ? "mx-auto flex w-full max-w-[30rem] items-center justify-between gap-3"
     : "flex flex-wrap justify-end gap-2.5";
   const formContent = (
         <form className={formClassName} onSubmit={form.handleSubmit(handleSubmit)}>
@@ -1014,7 +1014,7 @@ export function RecordFormDialog({
 
   if (isPagePresentation) {
     return (
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pb-24 pt-3 sm:px-6 sm:pt-5 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[30rem] flex-col gap-4 px-4 pb-24 pt-3 sm:px-5 sm:pt-5">
         <header className="space-y-1.5">
           <h1 className="font-display text-2xl leading-tight text-foreground sm:text-3xl">{title}</h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>

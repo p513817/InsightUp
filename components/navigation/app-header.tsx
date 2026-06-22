@@ -342,7 +342,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         ref={headerRef}
         style={headerStyle}
       >
-        <div className="relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex h-[4.25rem] w-full max-w-[30rem] items-center justify-between gap-3 px-4 sm:px-5">
           <div className="surface-pill flex h-[2.625rem] min-w-0 items-center rounded-full bg-card/78 p-[0.3125rem] shadow-none">
             <button
               aria-label={t("navigation.menu")}

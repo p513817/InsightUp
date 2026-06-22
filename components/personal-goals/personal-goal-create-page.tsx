@@ -358,7 +358,7 @@ export function PersonalGoalCreatePage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 pb-24 pt-1 sm:gap-4 sm:pb-28 sm:pt-3">
+    <div className="mx-auto flex w-full max-w-[30rem] flex-col gap-3 pb-24 pt-1 sm:gap-4 sm:pb-28 sm:pt-3">
       <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-display text-2xl leading-tight text-foreground sm:text-3xl">
@@ -577,7 +577,7 @@ export function PersonalGoalCreatePage({
       </section>
 
       <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-[30rem] items-center justify-between gap-3">
         <Button
           aria-label={t("common.cancel")}
           className={cn("pointer-events-auto relative", FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS)}

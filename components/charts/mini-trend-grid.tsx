@@ -33,7 +33,6 @@ export type TrendGridLayout = "auto" | "one" | "two";
 
 const COMPACT_CARD_CLASS = "min-h-[7.4rem] gap-1 py-2 pl-3 pr-3";
 const COMPACT_CHART_CLASS = "h-[4rem] rounded-[1rem] px-1 py-0 sm:h-[4.75rem]";
-const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
 const METRIC_REVEAL_INTERVAL_MS = 280;
 const TREND_TONE_COLOR = {
   negative: "rgb(var(--danger))",
@@ -42,7 +41,7 @@ const TREND_TONE_COLOR = {
 } as const;
 
 const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
-  auto: `grid grid-cols-1 gap-2 ${AUTO_TWO_COLUMN_BREAKPOINT_CLASS}`,
+  auto: "grid gap-2 grid-cols-1",
   one: "grid gap-2 grid-cols-1",
   two: "grid grid-cols-2 gap-2",
 };

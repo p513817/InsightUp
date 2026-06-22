@@ -365,7 +365,8 @@ export function RecordsWorkspace({
 
   useEffect(() => {
     function syncSupportedLayouts() {
-      const nextSupportsTwoColumnLayout = window.innerWidth >= MIN_TWO_COLUMN_WIDTH;
+      const appShellWidth = document.querySelector("main")?.getBoundingClientRect().width ?? window.innerWidth;
+      const nextSupportsTwoColumnLayout = appShellWidth >= MIN_TWO_COLUMN_WIDTH;
       setSupportsTwoColumnLayout(nextSupportsTwoColumnLayout);
 
       if (!nextSupportsTwoColumnLayout) {

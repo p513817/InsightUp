@@ -7,4 +7,4 @@ export const FAB_PRIMARY_TONE_CLASS =
 export const FAB_OUTLINE_TONE_CLASS =
   "border border-border/80 bg-card/92 text-muted-foreground shadow-[0_8px_18px_rgb(15_23_42/0.10)] backdrop-blur hover:bg-card hover:text-foreground hover:shadow-[0_10px_22px_rgb(15_23_42/0.13)]";
 export const FAB_FIXED_POSITION_CLASS =
-  "fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-5 z-40 sm:bottom-7 sm:right-7";
+  "fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-[max(1.25rem,calc((100vw-30rem)/2+1.25rem))] z-40 sm:bottom-7 sm:right-[max(1.75rem,calc((100vw-30rem)/2+1.75rem))]";

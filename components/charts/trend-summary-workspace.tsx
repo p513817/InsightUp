@@ -238,7 +238,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
       )}
 
       <div className="pointer-events-none fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-4xl justify-end">
+        <div className="mx-auto flex w-full max-w-[30rem] justify-end">
           <Button
             aria-label={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
             className={`pointer-events-auto relative ${FAB_BASE_CLASS} ${FAB_PRIMARY_TONE_CLASS} sm:size-[3.75rem] ${
