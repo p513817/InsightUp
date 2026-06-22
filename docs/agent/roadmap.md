@@ -35,6 +35,7 @@ Tasks:
 - Add API-level tests or route-handler tests for scan entitlement and trend summary entitlement paths.
 - Keep `messages/*.json` coverage aligned whenever UI copy changes.
 - Add smoke-test notes for mobile viewport flows that use bottom docks and floating actions.
+- TODO: Run a focused UI/UX pilot before any broad redesign. Start with one or two surfaces, preferably the auth/account surfaces and the AI trend summary modal, using Taste Skill as an audit lens for typography, spacing, contrast, mobile ergonomics, and loading/empty/error states. Preserve existing product rules, i18n keys, route structure, chart interactions, and `components/ui/` conventions. If the pilot improves clarity without increasing complexity, expand the same treatment to the remaining product surfaces.
 
 Definition of done:
 

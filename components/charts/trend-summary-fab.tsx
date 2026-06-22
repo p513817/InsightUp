@@ -58,6 +58,7 @@ export function TrendSummaryFab({
   const [usageBadge, setUsageBadge] = useState<string | null>(null);
   const [sourceLabel, setSourceLabel] = useState<string | null>(null);
   const [modelLabel, setModelLabel] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const sections: Array<{ key: SectionKey; title: string; icon: ComponentType<{ className?: string }> }> = useMemo(
@@ -100,6 +101,7 @@ export function TrendSummaryFab({
   async function fetchLatestSummary(quiet = false) {
     setLoadingSummary(!quiet);
     setRefreshingSummary(quiet);
+    setSummaryError(null);
 
     try {
       const response = await fetch("/api/trend-summary", { method: "GET" });
@@ -116,7 +118,9 @@ export function TrendSummaryFab({
         toast.message(data.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("summary.errors.fetchFailed"));
+      const message = error instanceof Error ? error.message : t("summary.errors.fetchFailed");
+      setSummaryError(message);
+      toast.error(message);
     } finally {
       setLoadingSummary(false);
       setRefreshingSummary(false);
@@ -130,6 +134,7 @@ export function TrendSummaryFab({
 
     setConfirmOpen(false);
     setGenerating(true);
+    setSummaryError(null);
 
     try {
       const response = await fetch("/api/trend-summary", {
@@ -149,7 +154,9 @@ export function TrendSummaryFab({
         toast.message(data.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("summary.errors.generateFailed"));
+      const message = error instanceof Error ? error.message : t("summary.errors.generateFailed");
+      setSummaryError(message);
+      toast.error(message);
     } finally {
       setGenerating(false);
     }
@@ -212,9 +219,7 @@ export function TrendSummaryFab({
         >
           <DialogHeader className="shrink-0 border-b-0 px-5 py-4 pb-2 sm:px-6">
             <DialogTitle className="text-[1.65rem] leading-tight">{t("summary.loading.emptyRecentTitle")}</DialogTitle>
-            <DialogDescription className="sr-only">
-              AI-generated trend summary based on your latest included InBody records.
-            </DialogDescription>
+            <DialogDescription className="sr-only">{t("summary.loading.dialogDescription")}</DialogDescription>
           </DialogHeader>
 
           <div className="shrink-0 border-b border-border/80 px-5 pt-2 pb-3 sm:px-6">
@@ -234,13 +239,40 @@ export function TrendSummaryFab({
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-3.5 sm:px-6 sm:py-4">
             {loadingSummary ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <LoaderCircle className="size-4 animate-spin" />
-                {t("summary.loading.fetching")}
+              <div className="surface-muted-gradient rounded-[1rem] border border-border/80 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <LoaderCircle className="size-4 animate-spin" />
+                  {t("summary.loading.fetching")}
+                </div>
+                <div className="mt-4 space-y-3" aria-hidden="true">
+                  <div className="h-3 w-2/3 rounded-full bg-foreground/10" />
+                  <div className="h-3 w-full rounded-full bg-foreground/8" />
+                  <div className="h-3 w-5/6 rounded-full bg-foreground/8" />
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
-                {!structuredSummary ? <p className="text-sm text-muted-foreground">{summary || t("summary.errors.noContent")}</p> : null}
+                {summaryError ? (
+                  <div className="rounded-[1rem] border border-destructive/25 bg-destructive/7 p-4">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{t("summary.errors.fetchFailed")}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{summaryError}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {!structuredSummary && !summaryError ? (
+                  <div className="surface-muted-gradient rounded-[1rem] border border-border/80 p-5 text-center">
+                    <span className="mx-auto grid size-11 place-items-center rounded-full bg-primary/7 text-primary">
+                      <Sparkles className="size-5" />
+                    </span>
+                    <p className="mt-3 font-display text-lg text-foreground">{summary ? t("summary.loading.emptyRecentTitle") : t("summary.loading.emptyTitle")}</p>
+                    <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{summary || t("summary.loading.emptyBody")}</p>
+                  </div>
+                ) : null}
 
                 {sections.map((section) => {
                   let content: string | string[] | null = null;
@@ -257,7 +289,7 @@ export function TrendSummaryFab({
 
                   return (
                     <section key={section.key} className="surface-muted-gradient rounded-[1rem] border border-border/80 p-4">
-                      <button className="flex w-full items-center justify-between gap-3 text-left" onClick={() => toggleSection(section.key)} type="button">
+                      <button className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 text-left" onClick={() => toggleSection(section.key)} type="button">
                         <span className="flex items-center gap-2">
                           <Icon className="size-4 text-muted-foreground" />
                           <span className="text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{section.title}</span>
@@ -289,11 +321,11 @@ export function TrendSummaryFab({
           </div>
 
           <div className="shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
-            <div className="flex flex-wrap justify-end gap-2.5">
-              <Button variant="outline" disabled={loadingSummary || generating} onClick={() => setOpen(false)} type="button" className="relative overflow-hidden">
+            <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+              <Button variant="outline" disabled={loadingSummary || generating} onClick={() => setOpen(false)} type="button" className="relative h-11 overflow-hidden sm:min-w-24">
                 <span>{t("summary.loading.close")}</span>
               </Button>
-              <Button disabled={loadingSummary || generating || !canGenerate} onClick={() => setConfirmOpen(true)} type="button" className="relative overflow-hidden">
+              <Button disabled={loadingSummary || generating || !canGenerate} onClick={() => setConfirmOpen(true)} type="button" className="relative h-11 overflow-hidden sm:min-w-32">
                 <span>{generating ? (summary ? t("summary.loading.regenerating") : t("summary.loading.generating")) : summary ? t("summary.loading.regenerate") : t("summary.loading.open")}</span>
               </Button>
             </div>

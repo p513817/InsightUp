@@ -42,6 +42,14 @@ function buildUsageQuota(t: ReturnType<typeof useTranslations>, data: TrendSumma
   return `${data.usageCount ?? 0}/${data.dailyLimit == null ? t("summary.usage.unlimited") : data.dailyLimit}`;
 }
 
+function buildSourceLabel(t: ReturnType<typeof useTranslations>, data: TrendSummaryResponse) {
+  if (data.provider === "gemini") {
+    return t("summary.source.gemini");
+  }
+
+  return data.reused ? t("summary.source.cacheReused") : t("summary.source.cache");
+}
+
 function formatModelShortName(modelName: string | null) {
   if (!modelName) {
     return null;
@@ -65,6 +73,8 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
   const [canGenerate, setCanGenerate] = useState(initialSummary?.canGenerate ?? true);
   const [usageQuota, setUsageQuota] = useState<string | null>(initialSummary ? buildUsageQuota(t, initialSummary) : null);
   const [modelLabel, setModelLabel] = useState<string | null>(initialSummary?.modelName ?? null);
+  const [sourceLabel, setSourceLabel] = useState<string | null>(initialSummary ? buildSourceLabel(t, initialSummary) : null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   const hasSummary = useMemo(() => Boolean(summary || structuredSummary), [structuredSummary, summary]);
 
@@ -75,6 +85,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
     setCanGenerate(data.canGenerate ?? true);
     setUsageQuota(buildUsageQuota(t, data));
     setModelLabel(data.modelName || null);
+    setSourceLabel(buildSourceLabel(t, data));
   }
 
   async function regenerateSummary() {
@@ -84,6 +95,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
 
     setConfirmOpen(false);
     setGenerating(true);
+    setSummaryError(null);
 
     try {
       const response = await fetch("/api/trend-summary", {
@@ -103,7 +115,9 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
         toast.message(data.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("summary.errors.generateFailed"));
+      const message = error instanceof Error ? error.message : t("summary.errors.generateFailed");
+      setSummaryError(message);
+      toast.error(message);
     } finally {
       setGenerating(false);
     }
@@ -164,8 +178,21 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
             />
           </StatsScrollbarRow>
 
+          {sourceLabel ? <p className="px-1 text-xs leading-5 text-muted-foreground">{sourceLabel}</p> : null}
         </div>
       </section>
+
+      {summaryError ? (
+        <Card className="border-destructive/25 bg-destructive/7 p-4">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">{t("summary.errors.generateFailed")}</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{summaryError}</p>
+            </div>
+          </div>
+        </Card>
+      ) : null}
 
       {!structuredSummary ? (
         <Card className="surface-state-panel min-h-72 items-center justify-center gap-2 p-8 text-center">

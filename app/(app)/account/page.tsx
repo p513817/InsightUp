@@ -59,36 +59,63 @@ export default async function AccountPage() {
   const planDisplayName = await getCurrentPlanDisplayName(supabase, user.id);
 
   return (
-    <div>
-      <section className="relative overflow-hidden rounded-[1.75rem] border border-border/45 bg-transparent px-3 py-3 sm:rounded-[2rem] sm:px-5 sm:py-5">
+    <div className="mx-auto w-full max-w-5xl">
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-border/55 bg-card/72 px-4 py-4 shadow-[0_14px_36px_rgba(16,35,63,0.06)] sm:rounded-[1.75rem] sm:px-5 sm:py-5">
         <div className="brand-motion-line brand-motion-line-left" />
         <div className="brand-motion-line brand-motion-line-right" />
 
-        <div className="relative z-10 mx-auto max-w-5xl">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.78fr_0.7fr_1.15fr]">
-            <CompactInfoCard className="min-w-0" label={t("account.title")} minWidthClassName="" variant="glass">
-              <div className="mt-2 flex items-start gap-2.5">
-                {summary.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img alt={summary.name} className="size-11 rounded-full border border-border object-cover shadow-[0_6px_14px_rgba(16,35,63,0.07)] sm:size-12" src={summary.avatarUrl} />
-                ) : (
-                  <div className="surface-avatar-fallback flex size-11 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground shadow-[0_6px_14px_rgba(16,35,63,0.07)] sm:size-12">
-                    {getUserInitials(summary.name)}
-                  </div>
-                )}
+        <div className="relative z-10 space-y-4">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(17rem,0.8fr)] lg:items-stretch">
+            <div className="surface-glass-card rounded-[1.15rem] p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 items-start gap-3">
+                  {summary.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt={summary.name} className="size-14 rounded-full border border-border object-cover shadow-[0_8px_18px_rgba(16,35,63,0.08)] sm:size-16" src={summary.avatarUrl} />
+                  ) : (
+                    <div className="surface-avatar-fallback flex size-14 items-center justify-center rounded-full border border-border text-base font-semibold text-foreground shadow-[0_8px_18px_rgba(16,35,63,0.08)] sm:size-16">
+                      {getUserInitials(summary.name)}
+                    </div>
+                  )}
 
-                <div className="min-w-0">
-                  <p className="break-words font-display text-[1.05rem] leading-tight text-foreground sm:text-[1.15rem]">{summary.name}</p>
-                  <p className="mt-1 break-all text-[11px] leading-5 text-muted-foreground">{summary.email || "Signed in with Google"}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-muted-foreground">{t("account.title")}</p>
+                    <h1 className="mt-2 break-words font-display text-[1.6rem] leading-tight text-foreground sm:text-[2rem]">{summary.name}</h1>
+                    <p className="mt-1 break-all text-sm leading-6 text-muted-foreground">{summary.email || t("account.signedInWithGoogle")}</p>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            <CompactInfoCard
+              className="min-w-0 px-4 py-4 sm:px-5"
+              label={t("account.plan")}
+              minWidthClassName=""
+              value={planDisplayName}
+              valueClassName="break-words text-[1.55rem] leading-tight"
+              variant="glass"
+            >
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("account.planDescription")}</p>
+            </CompactInfoCard>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[minmax(0,0.62fr)_minmax(0,1.38fr)]">
+            <CompactInfoCard
+              className="min-w-0 px-4 py-4 sm:px-5"
+              label={t("account.joinedAt")}
+              minWidthClassName=""
+              value={formatCompactDate(summary.createdAt, locale)}
+              valueClassName="break-words text-[1.35rem] leading-tight"
+            >
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("account.joinedAtDescription")}</p>
             </CompactInfoCard>
 
-            <CompactInfoCard className="min-w-0" label={t("account.joinedAt")} minWidthClassName="" value={formatCompactDate(summary.createdAt, locale)} />
-
-            <CompactInfoCard className="min-w-0" label={t("common.settings")} minWidthClassName="" value={planDisplayName} valueClassName="break-words leading-tight" />
-
-            <FriendCodeCard friendCode={ownProfile.friendCode} />
+            <FriendCodeCard
+              className="min-w-0 px-4 py-4 sm:px-5"
+              description={t("account.friendCodeDescription")}
+              friendCode={ownProfile.friendCode}
+              title={t("account.friendCode")}
+            />
           </div>
         </div>
       </section>
