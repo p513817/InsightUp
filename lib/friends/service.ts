@@ -204,6 +204,44 @@ export async function ensureCurrentUserProfile(supabase: SupabaseClient, user: U
   return mapFriendProfile(data);
 }
 
+export async function ensureCurrentUserProfileExists(supabase: SupabaseClient, user: User) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle<{ user_id: string }>();
+
+  if (error) {
+    if (isMissingFriendsInfrastructure(error)) {
+      throw new MissingFriendsInfrastructureError();
+    }
+
+    throw error;
+  }
+
+  if (data) {
+    return;
+  }
+
+  const summary = summarizeUser(user);
+  const { error: upsertError } = await supabase.from("user_profiles").upsert(
+    {
+      avatar_url: summary.avatarUrl,
+      display_name: summary.name,
+      user_id: user.id,
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (upsertError) {
+    if (isMissingFriendsInfrastructure(upsertError)) {
+      throw new MissingFriendsInfrastructureError();
+    }
+
+    throw upsertError;
+  }
+}
+
 export async function listFriendSnapshots(supabase: SupabaseClient) {
   const { data, error } = await supabase.rpc("list_friend_latest_records");
 

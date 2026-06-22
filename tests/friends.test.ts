@@ -4,6 +4,7 @@ import {
   addFriendByCode,
   DuplicateFriendshipError,
   ensureCurrentUserProfile,
+  ensureCurrentUserProfileExists,
   FriendNotFoundError,
   listFriendSnapshots,
   MissingFriendsInfrastructureError,
@@ -27,6 +28,35 @@ function createProfileClient(error: { code?: string } | null) {
       };
     },
   } as unknown as SupabaseClient;
+}
+
+function createProfileExistsClient(options: { existing?: boolean; selectError?: { code?: string } | null; upsertError?: { code?: string } | null }) {
+  const upserts: Array<Record<string, unknown>> = [];
+
+  const supabase = {
+    from() {
+      return {
+        select() {
+          return {
+            eq() {
+              return {
+                maybeSingle: async () => ({
+                  data: options.existing ? { user_id: "user-1" } : null,
+                  error: options.selectError ?? null,
+                }),
+              };
+            },
+          };
+        },
+        upsert: async (payload: Record<string, unknown>) => {
+          upserts.push(payload);
+          return { error: options.upsertError ?? null };
+        },
+      };
+    },
+  } as unknown as SupabaseClient;
+
+  return { supabase, upserts };
 }
 
 function createFriendRpcClient(options: {
@@ -76,6 +106,40 @@ describe("friends service", () => {
     } as unknown as User;
 
     await expect(ensureCurrentUserProfile(supabase, user)).rejects.toBeInstanceOf(MissingFriendsInfrastructureError);
+  });
+
+  it("does not upsert the current user profile when it already exists", async () => {
+    const { supabase, upserts } = createProfileExistsClient({ existing: true });
+    const user = {
+      created_at: "2026-04-24T00:00:00.000Z",
+      email: "demo@example.com",
+      id: "user-1",
+      user_metadata: { full_name: "Demo User" },
+    } as unknown as User;
+
+    await ensureCurrentUserProfileExists(supabase, user);
+
+    expect(upserts).toEqual([]);
+  });
+
+  it("creates the current user profile only when it is missing", async () => {
+    const { supabase, upserts } = createProfileExistsClient({ existing: false });
+    const user = {
+      created_at: "2026-04-24T00:00:00.000Z",
+      email: "demo@example.com",
+      id: "user-1",
+      user_metadata: { full_name: "Demo User" },
+    } as unknown as User;
+
+    await ensureCurrentUserProfileExists(supabase, user);
+
+    expect(upserts).toEqual([
+      {
+        avatar_url: null,
+        display_name: "Demo User",
+        user_id: "user-1",
+      },
+    ]);
   });
 
   it("rejects adding yourself as a friend", async () => {

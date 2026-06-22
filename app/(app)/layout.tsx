@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/navigation/app-header";
-import { ensureCurrentUserProfile } from "@/lib/friends/service";
+import { ensureCurrentUserProfileExists } from "@/lib/friends/service";
 import { summarizeUser } from "@/lib/presentation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -14,7 +14,7 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
     redirect("/");
   }
 
-  await ensureCurrentUserProfile(supabase, user);
+  await ensureCurrentUserProfileExists(supabase, user);
 
   return (
     <div className="min-h-screen">
