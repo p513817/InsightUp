@@ -32,7 +32,7 @@ const EMPTY_INITIAL_METRIC_ORDER: string[] = [];
 export type TrendGridLayout = "auto" | "one" | "two";
 
 const COMPACT_CARD_CLASS = "min-h-[7.4rem] gap-1 py-2 pl-3 pr-3";
-const COMPACT_CHART_CLASS = "h-[4rem] rounded-[0.9rem] px-1 py-0 sm:h-[4.75rem]";
+const COMPACT_CHART_CLASS = "h-[4rem] rounded-[1rem] px-1 py-0 sm:h-[4.75rem]";
 const AUTO_TWO_COLUMN_BREAKPOINT_CLASS = "min-[900px]:grid-cols-2";
 const METRIC_REVEAL_INTERVAL_MS = 280;
 const TREND_TONE_COLOR = {
@@ -345,7 +345,7 @@ function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, head
 
   return (
     <Card
-      className={`dashboard-card dashboard-card-soft relative overflow-hidden [will-change:transform] ${COMPACT_CARD_CLASS} ${
+      className={`dashboard-card dashboard-card-soft dashboard-data-panel relative overflow-hidden border-transparent [will-change:transform] ${COMPACT_CARD_CLASS} ${
         isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_22px_46px_rgba(16,35,63,0.18)]" : ""
       } ${editMode ? "border-accent/70 bg-card shadow-[0_14px_30px_rgba(23,52,93,0.13)]" : ""}`}
       data-dashboard-metric-key={metric.key}
@@ -386,7 +386,9 @@ function SortableMetricCard({ canHide, deltaTone, editMode, formattedDelta, head
           <div className="flex min-w-0 items-baseline gap-2">
             <p className="truncate text-sm font-medium leading-none text-muted-foreground">{metric.label}</p>
             {headerValueText ? (
-              <p className="truncate font-display text-base leading-none tabular-nums" style={{ color: metric.color }}>{headerValueText}</p>
+              <p className="truncate font-display text-base leading-none tabular-nums" style={{ color: metric.color }}>
+                {headerValueText}
+              </p>
             ) : null}
           </div>
         </div>
@@ -462,7 +464,6 @@ export function MiniTrendGrid({
   const [isChartReady, setIsChartReady] = useState(false);
   const [visibleMetricCount, setVisibleMetricCount] = useState(0);
   const [hiddenMetricKeys, setHiddenMetricKeys] = useState<string[]>([]);
-  const [isAutoTwoColumn, setIsAutoTwoColumn] = useState(false);
   const [orderedMetrics, setOrderedMetrics] = useState(chart.metrics);
   const orderedMetricsRef = useRef(chart.metrics);
   const visibleMetricCountRef = useRef(0);
@@ -567,22 +568,6 @@ export function MiniTrendGrid({
     didNotifyRenderCompleteRef.current = true;
     onRenderCompleteRef.current?.();
   }, [chart.points.length, chart.view, isChartReady, visibleMetricCount, visibleMetricKey, visibleMetricTotal]);
-
-  useEffect(() => {
-    if (layout !== "auto") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia("(min-width: 900px)");
-    const syncAutoColumns = () => setIsAutoTwoColumn(mediaQuery.matches);
-
-    syncAutoColumns();
-    mediaQuery.addEventListener("change", syncAutoColumns);
-
-    return () => {
-      mediaQuery.removeEventListener("change", syncAutoColumns);
-    };
-  }, [layout]);
 
   useEffect(() => {
     let savedOrder: string[] = [];
@@ -720,7 +705,6 @@ export function MiniTrendGrid({
   const visibleMetrics = orderedMetrics.filter((metric) => !hiddenMetricKeys.includes(metric.key));
   const hiddenMetrics = orderedMetrics.filter((metric) => hiddenMetricKeys.includes(metric.key));
   const canHideVisibleMetric = visibleMetrics.length > 1;
-  const showHeaderValue = layout === "one" || (layout === "auto" && !isAutoTwoColumn);
 
   return (
     <div className="space-y-2">
@@ -748,7 +732,7 @@ export function MiniTrendGrid({
                     deltaTone={getMetricProgressDirection(metric.key, delta)}
                     editMode={editMode}
                     formattedDelta={formatDelta(metric, delta)}
-                    headerValueText={showHeaderValue ? formatMetricValue(metric, latestValue) : null}
+                    headerValueText={formatMetricValue(metric, latestValue)}
                     metric={metric}
                     onHide={hideMetric}
                     points={points}
