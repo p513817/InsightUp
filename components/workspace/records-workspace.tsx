@@ -616,9 +616,9 @@ export function RecordsWorkspace({
   return (
     <div className="space-y-3 sm:space-y-8">
       <section className="relative p-1 sm:p-2">
-        <div className="relative z-10 mx-auto max-w-5xl">
+        <div className="relative z-10">
           <StatsScrollbarRow
-            className="grid grid-cols-3 gap-1.5 lg:grid-cols-[1.05fr_0.95fr_1fr]"
+            className="grid grid-cols-3 gap-1.5"
           >
             <CompactInfoCard
               label={locale === "en" ? "Latest measurement" : "最近量測"}

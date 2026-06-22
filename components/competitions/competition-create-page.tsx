@@ -322,9 +322,9 @@ export function CompetitionCreatePage({
           </Badge>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="grid gap-3">
           <div className="grid gap-2">
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="grid gap-2">
               <label className="block min-w-0">
                 <span className="sr-only">{t("competitions.create.friendPicker")}</span>
                 <select
@@ -350,7 +350,7 @@ export function CompetitionCreatePage({
               </Button>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="grid gap-2">
               <label className="block min-w-0">
                 <span className="sr-only">{t("competitions.create.inviteById")}</span>
                 <Input

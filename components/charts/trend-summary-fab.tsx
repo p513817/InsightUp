@@ -213,7 +213,7 @@ export function TrendSummaryFab({
 
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent
-          className="flex !top-1/2 !bottom-auto !h-[66.67dvh] !max-h-[66.67dvh] max-w-4xl !-translate-y-1/2 flex-col p-0"
+          className="flex !top-1/2 !bottom-auto !h-[66.67dvh] !max-h-[66.67dvh] max-w-[30rem] !-translate-y-1/2 flex-col p-0"
           onInteractOutside={(event) => event.preventDefault()}
           showCloseButton={false}
         >

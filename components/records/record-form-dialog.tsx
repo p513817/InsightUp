@@ -699,7 +699,7 @@ export function RecordFormDialog({
                     <QuickActionInfo open={isQuickActionInfoOpen} onOpenChange={setIsQuickActionInfoOpen} />
                   </div>
 
-                  <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3 sm:grid-cols-2">
+                  <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3">
                     <div className="space-y-2">
                       <Button
                         className="h-14 w-full justify-start rounded-[1rem] px-4 text-left sm:h-16"
@@ -781,7 +781,7 @@ export function RecordFormDialog({
               <section className={sectionClassName}>
                 {renderSectionToggle("basic", isEnglish ? "Basic settings" : "基本設定", isBasicComplete)}
                 {isSectionOpen("basic") ? (
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-3">
                     <FieldShell error={form.formState.errors.date?.message} label={isEnglish ? "Date" : "日期"} required>
                       <Controller
                         control={form.control}
@@ -866,7 +866,7 @@ export function RecordFormDialog({
               <section className={sectionClassName}>
                 {renderSectionToggle("primary", isEnglish ? "Primary values" : "主要數值", isPrimaryComplete)}
                 {isSectionOpen("primary") ? (
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-3">
                     <FieldShell error={form.formState.errors.weight?.message} label={isEnglish ? "Weight (kg)" : "體重 (kg)"} required>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="weight" placeholder="66.1" step={0.1} />
                     </FieldShell>
@@ -886,7 +886,7 @@ export function RecordFormDialog({
               <section className={sectionClassName}>
                 {renderSectionToggle("additional", isEnglish ? "Additional values" : "補充數值", isAdditionalComplete)}
                 {isSectionOpen("additional") ? (
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid gap-3">
                     <FieldShell error={form.formState.errors.height?.message} label={isEnglish ? "Height (cm)" : "身高 (cm)"}>
                       <NumberInputWithAdjust className={controlClassName} form={form} name="height" placeholder="170" step={0.1} />
                     </FieldShell>
@@ -922,7 +922,7 @@ export function RecordFormDialog({
               <section className={sectionClassName}>
                 {renderSectionToggle("segmental", isEnglish ? "Segment values" : "部位數值", isSegmentalComplete)}
                 {isSectionOpen("segmental") ? (
-                  <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                  <div className="grid gap-2.5">
                     {SEGMENT_PARTS.map((part) => (
                       <div className="grid gap-2.5" key={part.key}>
                         <h4 className="text-sm font-semibold text-foreground">{segmentPartLabels[part.key]}</h4>
@@ -1027,7 +1027,7 @@ export function RecordFormDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className={`!h-auto max-w-4xl p-0 sm:!top-1/2 sm:!bottom-auto sm:!h-[min(88vh,52rem)] sm:!max-h-[90vh] sm:!-translate-y-1/2 ${dialogContentClassName}`}
+        className={`!h-auto max-w-[30rem] p-0 sm:!top-1/2 sm:!bottom-auto sm:!h-[min(88vh,52rem)] sm:!max-h-[90vh] sm:!-translate-y-1/2 ${dialogContentClassName}`}
         onInteractOutside={(event) => event.preventDefault()}
         showCloseButton={false}
       >

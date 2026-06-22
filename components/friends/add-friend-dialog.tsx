@@ -39,7 +39,7 @@ export function AddFriendDialog({ open, onConfirm, onOpenChange }: AddFriendDial
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="h-[min(88vh,30rem)] max-w-4xl p-0 sm:h-[min(88vh,32rem)]" onInteractOutside={(event) => event.preventDefault()} showCloseButton={false}>
+      <DialogContent className="h-[min(88vh,30rem)] max-w-[30rem] p-0 sm:h-[min(88vh,32rem)]" onInteractOutside={(event) => event.preventDefault()} showCloseButton={false}>
         <DialogHeader className="px-5 py-4 sm:px-6">
           <DialogTitle>{t("friends.add")}</DialogTitle>
           <DialogDescription>{t("friends.myFriendCodeHint")}</DialogDescription>

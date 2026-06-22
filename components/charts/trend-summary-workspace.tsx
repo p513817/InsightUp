@@ -139,9 +139,9 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-4 pb-24 sm:pb-28">
+    <div className="w-full space-y-4 pb-24 sm:pb-28">
       <section className="relative p-1 sm:p-2">
-        <div className="relative z-10 mx-auto max-w-4xl space-y-3">
+        <div className="relative z-10 space-y-3">
           <StatsScrollbarRow className="grid grid-cols-3 gap-1.5">
             <CompactInfoCard
               label={t("summary.usage.date")}

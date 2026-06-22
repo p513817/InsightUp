@@ -374,8 +374,8 @@ export function RecordManager({
       {records.length ? (
         filteredRecords.length ? (
           <>
-            <div className="surface-table-shell hidden overflow-hidden rounded-[1.5rem] lg:block">
-              <div className="overflow-x-auto">
+            <div className="surface-table-shell hidden overflow-hidden rounded-[1.5rem]">
+              <div>
                 <table className="min-w-full border-collapse text-left">
                   <thead className="surface-table-head text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -427,7 +427,7 @@ export function RecordManager({
               </div>
             </div>
 
-            <div className="grid gap-2 lg:hidden">
+            <div className="grid gap-2">
               {pageRows.map((row) => {
                 const record = row.original;
                 const isBusy = busyRecordId === record.id;

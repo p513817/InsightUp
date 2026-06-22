@@ -170,7 +170,7 @@ function CompetitionSection({
         <p className="text-xs text-muted-foreground">{countLabel}</p>
       </div>
 
-      <div className="grid min-w-0 gap-2.5 md:grid-cols-2">
+      <div className="grid min-w-0 gap-2.5">
         {competitions.map((competition) => {
           const currentMember = getCompetitionMemberByUserId(competition, userId);
           const isInvited = currentMember?.status === "invited";

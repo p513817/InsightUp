@@ -33,6 +33,7 @@ function transformToCss(transform: ReturnType<typeof useSortable>["transform"]) 
 }
 
 function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
+  const t = useTranslations();
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
     id: item.key,
     transition: {
@@ -44,7 +45,7 @@ function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
 
   return (
     <Card
-      className={`grid min-h-14 grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] items-center gap-1.5 rounded-[0.9rem] px-2.5 py-2 sm:gap-2 sm:px-3 ${
+      className={`gap-2 rounded-[0.9rem] px-2.5 py-2.5 ${
         item.isSecondary ? "bg-card/78" : "bg-card/94"
       } ${isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_18px_34px_rgba(16,35,63,0.16)]" : ""}`}
       ref={setNodeRef}
@@ -66,15 +67,25 @@ function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
         </button>
         <p className="min-w-0 truncate text-sm font-semibold text-foreground sm:text-base">{item.label}</p>
       </div>
-      <p className="truncate rounded-[0.7rem] bg-muted/35 px-2 py-2 text-right font-display text-sm text-foreground sm:text-base">{item.myText}</p>
-      <p className="truncate rounded-[0.7rem] bg-primary/7 px-2 py-2 text-right font-display text-sm text-foreground sm:text-base">{item.friendText}</p>
-      <p className={`truncate rounded-[0.7rem] px-2 py-2 text-right font-display text-xs sm:text-base ${getMetricDeltaToneClass(item.key, diffDelta)}`}>{item.diffText}</p>
+      <div className="grid min-w-0 grid-cols-3 gap-1.5">
+        <div className="min-w-0 rounded-[0.7rem] bg-muted/35 px-2 py-2">
+          <p className="truncate text-[10px] font-semibold leading-none text-muted-foreground">{t("friends.me")}</p>
+          <p className="mt-1 truncate font-display text-sm text-foreground">{item.myText}</p>
+        </div>
+        <div className="min-w-0 rounded-[0.7rem] bg-primary/7 px-2 py-2">
+          <p className="truncate text-[10px] font-semibold leading-none text-muted-foreground">{t("friends.friend")}</p>
+          <p className="mt-1 truncate font-display text-sm text-foreground">{item.friendText}</p>
+        </div>
+        <div className="min-w-0 rounded-[0.7rem] bg-background/70 px-2 py-2">
+          <p className="truncate text-[10px] font-semibold leading-none text-muted-foreground">{t("friends.diff")}</p>
+          <p className={`mt-1 truncate font-display text-sm ${getMetricDeltaToneClass(item.key, diffDelta)}`}>{item.diffText}</p>
+        </div>
+      </div>
     </Card>
   );
 }
 
 export function FriendCompareGrid({ items, storageKey }: FriendCompareGridProps) {
-  const t = useTranslations();
   const [orderedKeys, setOrderedKeys] = useState(() => items.map((item) => item.key));
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 2 } }),
@@ -124,12 +135,6 @@ export function FriendCompareGrid({ items, storageKey }: FriendCompareGridProps)
 
   return (
     <section className="space-y-2">
-      <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] items-center gap-1.5 px-2.5 text-[11px] font-semibold text-muted-foreground sm:gap-2 sm:px-3">
-        <span className="pl-11">{t("friends.item")}</span>
-        <span className="px-2 text-right">{t("friends.me")}</span>
-        <span className="px-2 text-right">{t("friends.friend")}</span>
-        <span className="px-2 text-right">{t("friends.diff")}</span>
-      </div>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
         <SortableContext items={orderedItems.map((item) => item.key)} strategy={verticalListSortingStrategy}>
           <div className="grid gap-2">

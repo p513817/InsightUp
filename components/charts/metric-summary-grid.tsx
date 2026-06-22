@@ -21,7 +21,7 @@ export function MetricSummaryGrid({ chart }: MetricSummaryGridProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3">
       {chart.metrics.map((metric) => {
         const latestValue = getNumericValue(latest?.[metric.key]);
         const previousValue = getNumericValue(previous?.[metric.key]);

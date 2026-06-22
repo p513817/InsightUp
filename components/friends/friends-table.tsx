@@ -200,7 +200,7 @@ export function FriendsTable({ busyFriendId, friends, onAdd, onRemove }: Friends
   }
 
   return (
-    <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-2.5">
       {friends.map((friend) => {
         const isBusy = busyFriendId === friend.friendUserId;
         return <FriendCard friend={friend} isBusy={isBusy} key={friend.friendUserId} onRemove={onRemove} />;

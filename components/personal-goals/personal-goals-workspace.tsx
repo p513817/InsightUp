@@ -265,7 +265,7 @@ function GoalSection({
         <p className="text-xs text-muted-foreground">{countLabel}</p>
       </div>
       {groups.length > 0 ? (
-        <div className="grid min-w-0 gap-2.5 md:grid-cols-2">
+        <div className="grid min-w-0 gap-2.5">
           {groups.map((group) => renderGoalCard(group, variant))}
         </div>
       ) : (
@@ -358,7 +358,7 @@ function GoalSection({
       ) : null}
 
       <Dialog onOpenChange={(open) => !open && setSelectedGroup(null)} open={Boolean(selectedGroup)}>
-        <DialogContent className="max-h-[88vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto p-0" showCloseButton={false}>
+        <DialogContent className="max-h-[88vh] w-[calc(100vw-1.5rem)] max-w-[30rem] overflow-y-auto p-0" showCloseButton={false}>
           {selectedGroup ? (
             <>
               <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">

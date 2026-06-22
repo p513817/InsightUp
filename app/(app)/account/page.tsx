@@ -59,13 +59,13 @@ export default async function AccountPage() {
   const planDisplayName = await getCurrentPlanDisplayName(supabase, user.id);
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="w-full">
       <section className="relative overflow-hidden rounded-[1.5rem] border border-border/55 bg-card/72 px-4 py-4 shadow-[0_14px_36px_rgba(16,35,63,0.06)] sm:rounded-[1.75rem] sm:px-5 sm:py-5">
         <div className="brand-motion-line brand-motion-line-left" />
         <div className="brand-motion-line brand-motion-line-right" />
 
         <div className="relative z-10 space-y-4">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(17rem,0.8fr)] lg:items-stretch">
+          <div className="grid gap-4">
             <div className="surface-glass-card rounded-[1.15rem] p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 items-start gap-3">
@@ -99,7 +99,7 @@ export default async function AccountPage() {
             </CompactInfoCard>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[minmax(0,0.62fr)_minmax(0,1.38fr)]">
+          <div className="grid gap-3">
             <CompactInfoCard
               className="min-w-0 px-4 py-4 sm:px-5"
               label={t("account.joinedAt")}

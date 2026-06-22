@@ -298,7 +298,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                 aria-label={t("competitions.detail.view")}
                 key={member.id}
               >
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_6rem_auto] items-center gap-3 sm:grid-cols-[auto_minmax(0,1fr)_7rem_auto]">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <MemberAvatar member={member} />
@@ -325,7 +325,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                     </p>
                   </div>
 
-                  <div className="flex min-w-0 items-center justify-end">
+                  <div className="col-span-3 min-w-0">
                     <GoalProgressBar className="h-8 w-full" hasGoals={hasGoals} value={member.progressPercent} />
                   </div>
 
@@ -342,7 +342,7 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
       <BottomActionDock items={actionDockItems} />
 
       <Dialog onOpenChange={(open) => !open && setSelectedMember(null)} open={Boolean(selectedMember)}>
-        <DialogContent className="max-h-[88vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto p-0" showCloseButton={false}>
+        <DialogContent className="max-h-[88vh] w-[calc(100vw-1.5rem)] max-w-[30rem] overflow-y-auto p-0" showCloseButton={false}>
           {selectedMember ? (
             <>
               <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
