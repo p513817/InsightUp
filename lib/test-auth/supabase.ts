@@ -541,8 +541,16 @@ async function seedBob(admin: AdminClient) {
   }
 }
 
-async function seedCompetitor(admin: AdminClient) {
-  const records: SeedRecord[] = [
+async function seedPeerRecords(admin: AdminClient, personaKey: E2EPersonaKey, records: SeedRecord[]) {
+  const persona = E2E_PERSONAS[personaKey];
+
+  for (const record of records) {
+    await seedRecord(admin, persona, record);
+  }
+}
+
+async function seedRichPeers(admin: AdminClient) {
+  await seedPeerRecords(admin, "competitor", [
     {
       bmr: 1540,
       date: "2026-02-01",
@@ -591,32 +599,138 @@ async function seedCompetitor(admin: AdminClient) {
       visceralFatLevel: 7,
       weight: 68.1,
     },
-  ];
+  ]);
 
-  for (const record of records) {
-    await seedRecord(admin, E2E_PERSONAS.competitor, record);
-  }
+  await seedPeerRecords(admin, "luna", [
+    {
+      bmr: 1340,
+      date: "2026-04-05",
+      fat: 11.2,
+      fatPercent: 18.5,
+      muscle: 28.4,
+      notes: "E2E Luna friend baseline",
+      recommendedCalories: 1860,
+      score: 79,
+      visceralFatLevel: 5,
+      weight: 60.4,
+    },
+    {
+      bmr: 1352,
+      date: "2026-06-06",
+      fat: 10.6,
+      fatPercent: 17.5,
+      muscle: 29.0,
+      notes: "E2E Luna current friend record",
+      recommendedCalories: 1880,
+      score: 82,
+      visceralFatLevel: 5,
+      weight: 60.0,
+    },
+  ]);
+
+  await seedPeerRecords(admin, "kai", [
+    {
+      bmr: 1605,
+      date: "2026-04-12",
+      fat: 16.4,
+      fatPercent: 22.0,
+      muscle: 32.2,
+      notes: "E2E Kai friend baseline",
+      recommendedCalories: 2320,
+      score: 77,
+      visceralFatLevel: 7,
+      weight: 74.4,
+    },
+    {
+      bmr: 1610,
+      date: "2026-06-08",
+      fat: 15.8,
+      fatPercent: 21.2,
+      muscle: 32.8,
+      notes: "E2E Kai current friend record",
+      recommendedCalories: 2340,
+      score: 79,
+      visceralFatLevel: 6,
+      weight: 74.0,
+    },
+  ]);
+
+  await seedPeerRecords(admin, "sofia", [
+    {
+      bmr: 1284,
+      date: "2026-05-03",
+      fat: 13.8,
+      fatPercent: 24.4,
+      muscle: 24.6,
+      notes: "E2E Sofia friend baseline",
+      recommendedCalories: 1760,
+      score: 74,
+      visceralFatLevel: 6,
+      weight: 56.5,
+    },
+    {
+      bmr: 1302,
+      date: "2026-06-11",
+      fat: 12.7,
+      fatPercent: 22.8,
+      muscle: 25.3,
+      notes: "E2E Sofia current friend record",
+      recommendedCalories: 1790,
+      score: 80,
+      visceralFatLevel: 5,
+      weight: 55.8,
+    },
+  ]);
 }
 
-async function seedFriendship(admin: AdminClient) {
-  const { error } = await admin.from("user_friendships").insert({
-    friend_user_id: E2E_PERSONAS.bob.userId,
-    user_id: E2E_PERSONAS.alice.userId,
-  });
+async function seedFriendships(admin: AdminClient, friendKeys: E2EPersonaKey[]) {
+  const { error } = await admin.from("user_friendships").insert(
+    friendKeys.map((friendKey) => ({
+      friend_user_id: E2E_PERSONAS[friendKey].userId,
+      user_id: E2E_PERSONAS.alice.userId,
+    })),
+  );
 
   if (error) {
     throw error;
   }
 }
 
-async function seedCompetition(admin: AdminClient) {
+type CompetitionMemberSeed = {
+  invitedBy?: E2EPersonaKey;
+  joinedAt?: string;
+  role: "owner" | "participant";
+  status: "invited" | "accepted" | "declined" | "removed";
+  user: E2EPersonaKey;
+};
+
+type CompetitionGoalSeed = {
+  member: E2EPersonaKey;
+  metricKey: string;
+  startValue: number;
+  targetValue: number;
+  title: string;
+  unit: string;
+};
+
+async function seedCompetitionWithMembers(
+  admin: AdminClient,
+  input: {
+    goals: CompetitionGoalSeed[];
+    members: CompetitionMemberSeed[];
+    name: string;
+    owner: E2EPersonaKey;
+    status: "active" | "completed" | "cancelled";
+    targetDate: string;
+  },
+) {
   const { data: competition, error: competitionError } = await admin
     .from("competitions")
     .insert({
-      name: "E2E Summer Cut",
-      owner_id: E2E_PERSONAS.alice.userId,
-      status: "active",
-      target_date: "2026-07-31",
+      name: input.name,
+      owner_id: E2E_PERSONAS[input.owner].userId,
+      status: input.status,
+      target_date: input.targetDate,
     })
     .select("id")
     .single<{ id: string }>();
@@ -627,52 +741,125 @@ async function seedCompetition(admin: AdminClient) {
 
   const { data: members, error: membersError } = await admin
     .from("competition_members")
-    .insert([
-      {
-        competition_id: competition.id,
-        display_name: E2E_PERSONAS.alice.displayName,
-        friend_code: E2E_PERSONAS.alice.friendCode,
-        joined_at: "2026-06-01T00:00:00Z",
-        role: "owner",
-        status: "accepted",
-        user_id: E2E_PERSONAS.alice.userId,
-      },
-      {
-        competition_id: competition.id,
-        display_name: E2E_PERSONAS.competitor.displayName,
-        friend_code: E2E_PERSONAS.competitor.friendCode,
-        invited_by_user_id: E2E_PERSONAS.alice.userId,
-        role: "participant",
-        status: "invited",
-        user_id: E2E_PERSONAS.competitor.userId,
-      },
-    ])
+    .insert(
+      input.members.map((member) => {
+        const persona = E2E_PERSONAS[member.user];
+        return {
+          avatar_url: persona.avatarUrl,
+          competition_id: competition.id,
+          display_name: persona.displayName,
+          friend_code: persona.friendCode,
+          invited_by_user_id: member.invitedBy ? E2E_PERSONAS[member.invitedBy].userId : null,
+          joined_at: member.joinedAt ?? null,
+          role: member.role,
+          status: member.status,
+          user_id: persona.userId,
+        };
+      }),
+    )
     .select("id,user_id");
 
   if (membersError) {
     throw membersError;
   }
 
-  const aliceMember = members?.find((member) => member.user_id === E2E_PERSONAS.alice.userId);
+  const memberIds = new Map(members?.map((member) => [member.user_id, member.id]) ?? []);
+  const goalRows = input.goals
+    .map((goal) => {
+      const persona = E2E_PERSONAS[goal.member];
+      const memberId = memberIds.get(persona.userId);
+      if (!memberId) {
+        return null;
+      }
 
-  if (aliceMember) {
-    const { error: goalError } = await admin.from("user_personal_goals").insert({
-      competition_id: competition.id,
-      competition_member_id: aliceMember.id,
-      metric_key: "fatPercent",
-      start_value: 27.3,
-      target_date: "2026-07-31",
-      target_date_locked: true,
-      target_value: 23,
-      title: "E2E competition fat goal",
-      unit: "%",
-      user_id: E2E_PERSONAS.alice.userId,
-    });
+      return {
+        competition_id: competition.id,
+        competition_member_id: memberId,
+        metric_key: goal.metricKey,
+        start_value: goal.startValue,
+        target_date: input.targetDate,
+        target_date_locked: true,
+        target_value: goal.targetValue,
+        title: goal.title,
+        unit: goal.unit,
+        user_id: persona.userId,
+      };
+    })
+    .filter((goal): goal is NonNullable<typeof goal> => Boolean(goal));
 
-    if (goalError) {
-      throw goalError;
-    }
+  if (goalRows.length === 0) {
+    return;
   }
+
+  const { error: goalError } = await admin.from("user_personal_goals").insert(goalRows);
+
+  if (goalError) {
+    throw goalError;
+  }
+}
+
+async function seedCompetitions(admin: AdminClient) {
+  await seedCompetitionWithMembers(admin, {
+    goals: [
+      { member: "alice", metricKey: "fatPercent", startValue: 27.3, targetValue: 23, title: "E2E summer fat goal", unit: "%" },
+      { member: "bob", metricKey: "muscle", startValue: 33.1, targetValue: 34.8, title: "E2E summer strength goal", unit: "kg" },
+      { member: "luna", metricKey: "weight", startValue: 60.4, targetValue: 59.2, title: "E2E summer lean goal", unit: "kg" },
+    ],
+    members: [
+      { joinedAt: "2026-06-01T00:00:00Z", role: "owner", status: "accepted", user: "alice" },
+      { invitedBy: "alice", joinedAt: "2026-06-02T00:00:00Z", role: "participant", status: "accepted", user: "bob" },
+      { invitedBy: "alice", joinedAt: "2026-06-03T00:00:00Z", role: "participant", status: "accepted", user: "luna" },
+      { invitedBy: "alice", role: "participant", status: "invited", user: "competitor" },
+    ],
+    name: "E2E Summer Cut",
+    owner: "alice",
+    status: "active",
+    targetDate: "2026-07-31",
+  });
+
+  await seedCompetitionWithMembers(admin, {
+    goals: [
+      { member: "alice", metricKey: "muscle", startValue: 26.2, targetValue: 28.4, title: "E2E strength block", unit: "kg" },
+      { member: "kai", metricKey: "score", startValue: 77, targetValue: 82, title: "E2E score climb", unit: "pts" },
+      { member: "sofia", metricKey: "fat", startValue: 13.8, targetValue: 12.5, title: "E2E fat mass drop", unit: "kg" },
+    ],
+    members: [
+      { joinedAt: "2026-06-07T00:00:00Z", role: "owner", status: "accepted", user: "alice" },
+      { invitedBy: "alice", joinedAt: "2026-06-08T00:00:00Z", role: "participant", status: "accepted", user: "kai" },
+      { invitedBy: "alice", joinedAt: "2026-06-09T00:00:00Z", role: "participant", status: "accepted", user: "sofia" },
+    ],
+    name: "E2E Strength Sprint",
+    owner: "alice",
+    status: "active",
+    targetDate: "2026-08-15",
+  });
+
+  await seedCompetitionWithMembers(admin, {
+    goals: [
+      { member: "alice", metricKey: "weight", startValue: 66.6, targetValue: 64.5, title: "E2E May finish", unit: "kg" },
+      { member: "bob", metricKey: "score", startValue: 80, targetValue: 84, title: "E2E May score", unit: "pts" },
+    ],
+    members: [
+      { joinedAt: "2026-04-20T00:00:00Z", role: "owner", status: "accepted", user: "alice" },
+      { invitedBy: "alice", joinedAt: "2026-04-21T00:00:00Z", role: "participant", status: "accepted", user: "bob" },
+    ],
+    name: "E2E May Finish-Line",
+    owner: "alice",
+    status: "completed",
+    targetDate: "2026-05-31",
+  });
+
+  await seedCompetitionWithMembers(admin, {
+    goals: [{ member: "sofia", metricKey: "fatPercent", startValue: 24.4, targetValue: 21.8, title: "E2E friend invite goal", unit: "%" }],
+    members: [
+      { joinedAt: "2026-06-12T00:00:00Z", role: "owner", status: "accepted", user: "sofia" },
+      { invitedBy: "sofia", role: "participant", status: "invited", user: "alice" },
+    ],
+    name: "E2E Friend Invite",
+    owner: "sofia",
+    status: "active",
+    targetDate: "2026-08-31",
+  });
 }
 
 export async function ensureE2EPersonas() {
@@ -713,13 +900,17 @@ export async function resetE2EScenario(scenario: E2EScenarioKey) {
     await seedBob(admin);
   }
 
-  if (scenario === "dashboard-rich" || scenario === "friends-ready") {
-    await seedFriendship(admin);
+  if (scenario === "dashboard-rich") {
+    await seedRichPeers(admin);
+    await seedFriendships(admin, ["bob", "competitor", "luna", "kai", "sofia"]);
+  }
+
+  if (scenario === "friends-ready") {
+    await seedFriendships(admin, ["bob"]);
   }
 
   if (scenario === "dashboard-rich") {
-    await seedCompetitor(admin);
-    await seedCompetition(admin);
+    await seedCompetitions(admin);
   }
 }
 

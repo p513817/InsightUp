@@ -37,11 +37,38 @@ export const E2E_PERSONAS = {
     planCode: "free",
     userId: "10000000-0000-4000-8000-000000000004",
   },
+  luna: {
+    avatarUrl:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='48' fill='%235980B8'/%3E%3Ccircle cx='48' cy='38' r='17' fill='%23F7FBFF'/%3E%3Cpath d='M20 84c5-18 18-28 28-28s23 10 28 28' fill='%23F7FBFF'/%3E%3Ctext x='48' y='91' text-anchor='middle' font-family='Arial' font-size='12' font-weight='700' fill='%23FFFFFF'%3ELL%3C/text%3E%3C/svg%3E",
+    displayName: "Luna Lee",
+    email: "e2e-luna@insightup.test",
+    friendCode: "E2ELUNA01A",
+    planCode: "free",
+    userId: "10000000-0000-4000-8000-000000000005",
+  },
+  kai: {
+    avatarUrl:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='48' fill='%237D5FB2'/%3E%3Ccircle cx='48' cy='38' r='17' fill='%23FAF7FF'/%3E%3Cpath d='M20 84c5-18 18-28 28-28s23 10 28 28' fill='%23FAF7FF'/%3E%3Ctext x='48' y='91' text-anchor='middle' font-family='Arial' font-size='12' font-weight='700' fill='%23FFFFFF'%3EKC%3C/text%3E%3C/svg%3E",
+    displayName: "Kai Chen",
+    email: "e2e-kai@insightup.test",
+    friendCode: "E2EKAI001A",
+    planCode: "free",
+    userId: "10000000-0000-4000-8000-000000000006",
+  },
+  sofia: {
+    avatarUrl:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='48' fill='%23C66A44'/%3E%3Ccircle cx='48' cy='38' r='17' fill='%23FFF7F2'/%3E%3Cpath d='M20 84c5-18 18-28 28-28s23 10 28 28' fill='%23FFF7F2'/%3E%3Ctext x='48' y='91' text-anchor='middle' font-family='Arial' font-size='12' font-weight='700' fill='%23FFFFFF'%3ESH%3C/text%3E%3C/svg%3E",
+    displayName: "Sofia Hsu",
+    email: "e2e-sofia@insightup.test",
+    friendCode: "E2ESOFIA1A",
+    planCode: "free",
+    userId: "10000000-0000-4000-8000-000000000007",
+  },
 } as const;
 
 export const E2E_SCENARIOS = {
   "dashboard-rich": {
-    description: "Alice has records, goals, friends, a competition, and a cached trend summary.",
+    description: "Alice has records, goals, several friends, several competitions, and a cached trend summary.",
   },
   "friends-ready": {
     description: "Alice and Bob are already linked so friends and compare pages can be inspected immediately.",
@@ -59,7 +86,7 @@ export type E2EScenarioKey = keyof typeof E2E_SCENARIOS;
 
 export const E2E_TEST_CASES = {
   "dashboard-rich-alice": {
-    description: "Full dashboard, records, goals, friends, competition, and cached AI summary.",
+    description: "Full dashboard, records, goals, friends, competitions, and cached AI summary.",
     destination: "/dashboard",
     persona: "alice",
     scenario: "dashboard-rich",

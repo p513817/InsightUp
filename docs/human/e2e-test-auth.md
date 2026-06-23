@@ -58,6 +58,7 @@ http://localhost:5500/test-auth
 - `bob` / Ryan Lin：好友與比較用使用者，使用 `e2e_pro` 方案，有 6 筆偏增肌取向的紀錄。
 - `empty` / No Data User：只有 profile 與 subscription，沒有紀錄，用來看空狀態。
 - `competitor` / Nora Wu：競賽參與者，有 4 筆競賽對照用紀錄。
+- `luna`、`kai`、`sofia`：rich dashboard 裡額外的好友與競賽成員。
 
 每個 persona 都會 seed 固定大頭貼，寫入 Auth metadata 與 `user_profiles.avatar_url`。
 
@@ -67,7 +68,7 @@ http://localhost:5500/test-auth
 
 目前固定 scenario：
 
-- `dashboard-rich`：Alice 有 13 筆紀錄、目標、Bob 好友、競賽、競賽對手資料與快取 AI 摘要。
+- `dashboard-rich`：Alice 有 13 筆紀錄、多個目標、多位好友、多個競賽、競賽對手資料與快取 AI 摘要。
 - `friends-ready`：Alice 和 Bob 已經是好友。
 - `friend-add-flow`：Alice 和 Bob 都存在，但尚未加好友，可測新增好友。
 - `empty-state`：Empty persona 只有 profile 與 subscription。

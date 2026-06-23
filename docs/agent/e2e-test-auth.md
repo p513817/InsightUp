@@ -45,6 +45,7 @@ Defined in `lib/test-auth/personas.ts`:
 - `bob` / Ryan Lin: friend/comparison target, E2E Pro plan, 6 records with a stronger muscle/pro-plan profile.
 - `empty` / No Data User: profile-only user for empty-state screens, 0 records.
 - `competitor` / Nora Wu: competition participant for competition flows, 4 records.
+- `luna`, `kai`, `sofia`: additional rich-dashboard friends and competition members.
 
 Each persona has a fixed SVG data-url avatar stored in Auth metadata and `user_profiles.avatar_url`.
 
@@ -54,7 +55,7 @@ All test emails must end in `@insightup.test`.
 
 Defined in `lib/test-auth/personas.ts`:
 
-- `dashboard-rich`: Alice has 13 records, goals, Bob as friend, a competition, competitor data, and cached trend summary.
+- `dashboard-rich`: Alice has 13 records, multiple goals, several friends, several competitions, competitor data, and cached trend summary.
 - `friends-ready`: Alice and Bob are already linked.
 - `friend-add-flow`: Alice and Bob exist but are not linked; use Bob's friend code to test adding friends.
 - `empty-state`: Empty persona has profile/subscription only.
