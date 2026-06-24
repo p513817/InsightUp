@@ -5,6 +5,7 @@ import { AlertTriangle, ClipboardList, Lightbulb, LoaderCircle, Sparkles, Trendi
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CompactInfoCard } from "@/components/ui/compact-info-card";
+import { FloatingActionBar } from "@/components/ui/floating-action-bar";
 import { FAB_BASE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -237,8 +238,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
         </div>
       )}
 
-      <div className="pointer-events-none fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-[30rem] justify-end">
+      <FloatingActionBar innerClassName="justify-end">
           <Button
             aria-label={hasSummary ? t("summary.loading.openWithSummary") : t("summary.loading.open")}
             className={`pointer-events-auto relative ${FAB_BASE_CLASS} ${FAB_PRIMARY_TONE_CLASS} sm:size-[3.75rem] ${
@@ -251,8 +251,7 @@ export function TrendSummaryWorkspace({ initialSummary = null }: TrendSummaryWor
           >
             {generating ? <LoaderCircle className="size-7 animate-spin" /> : <Sparkles className="size-7" />}
           </Button>
-        </div>
-      </div>
+      </FloatingActionBar>
 
       <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
         <DialogContent className="max-w-md" showCloseButton={false}>

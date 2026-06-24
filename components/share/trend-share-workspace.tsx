@@ -65,6 +65,8 @@ const CID_SCALE_PADDING = 10;
 const CID_SCALE_STEP = 10;
 const CID_SCALE_MIN_SPAN = 60;
 const CID_STANDARD_BMI = 22;
+const ROUND_ICON_PRESS_CLASS =
+  "transition-[background-color,color,box-shadow,transform,filter] duration-150 active:scale-[0.92] active:rotate-6 active:brightness-95";
 
 function getNumericValue(value: string | number | null | undefined) {
   if (value == null || value === "") {
@@ -510,7 +512,7 @@ function ColorSwatchPicker({
             <button
               aria-label={`${swatchAriaLabelPrefix} ${swatch}`}
               className={cn(
-                "size-5 shrink-0 cursor-pointer rounded-full border border-slate-200/90 transition-[box-shadow,border-color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                `size-5 shrink-0 cursor-pointer rounded-full border border-slate-200/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
                 isWhiteColor(swatch) && "bg-white",
                 checked ? "border-slate-500 shadow-[0_0_0_3px_rgba(148,163,184,0.16)]" : "hover:border-slate-300 hover:shadow-sm",
               )}
@@ -1669,7 +1671,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
               <div className="flex shrink-0 items-center gap-1.5">
                 <button
                 aria-label={t("shareTrend.resetColors")}
-                className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={`inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`}
                 onClick={resetMetricColors}
                 type="button"
               >
@@ -1791,7 +1793,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={isPreviewExpanded ? t("shareTrend.exitExpandedPreview") : t("shareTrend.expandPreview")}
             aria-pressed={isPreviewExpanded}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               isPreviewExpanded && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={handlePreviewExpandToggle}
@@ -1803,7 +1805,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("shareTrend.style")}
             aria-pressed={activeControl === "style"}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "style" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("style")}
@@ -1815,7 +1817,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("dashboardTrendUi.layout")}
             aria-pressed={activeControl === "layout"}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "layout" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("layout")}
@@ -1827,7 +1829,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("shareTrend.background")}
             aria-pressed={activeControl === "background"}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "background" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("background")}
@@ -1839,7 +1841,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("shareTrend.titlePanel")}
             aria-pressed={activeControl === "title"}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "title" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("title")}
@@ -1851,7 +1853,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("shareTrend.chartColors")}
             aria-pressed={activeControl === "colors"}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "colors" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("colors")}
@@ -1863,7 +1865,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("shareTrend.metricsPanel")}
             aria-pressed={activeControl === "metrics"}
             className={cn(
-              "grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10",
+              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "metrics" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("metrics")}

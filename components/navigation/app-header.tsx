@@ -38,7 +38,7 @@ const SIDEBAR_CLOSE_FEEDBACK_MS = 150;
 const SIDEBAR_PANEL_DURATION_CLASS = "duration-[240ms]";
 const SIDEBAR_PANEL_EASE_CLASS = "ease-[cubic-bezier(0.22,1,0.36,1)]";
 const SIDEBAR_ROUND_BUTTON_PRESS_CLASS =
-  "transition-[transform,background-color,box-shadow] duration-150 ease-out active:scale-[0.9] active:bg-primary/12 active:shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.12)]";
+  "transition-[transform,background-color,box-shadow] duration-150 ease-out active:scale-[0.9] active:rotate-6 active:bg-primary/12 active:shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.12)]";
 
 const sidebarNavClassName = (active: boolean, pending = false) =>
   cn(

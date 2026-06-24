@@ -114,7 +114,6 @@ export function RecordManager({
   const [searchQuery, setSearchQuery] = useState("");
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
-  const [isAddButtonFeedbackVisible, setIsAddButtonFeedbackVisible] = useState(false);
   const [activeEditRecordId, setActiveEditRecordId] = useState<string | null>(null);
   const editFeedback = useActionFeedback();
 
@@ -146,20 +145,6 @@ export function RecordManager({
   }, [searchQuery]);
 
   useEffect(() => {
-    if (!isAddButtonFeedbackVisible) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setIsAddButtonFeedbackVisible(false);
-    }, 240);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [isAddButtonFeedbackVisible]);
-
-  useEffect(() => {
     editFeedback.finishPending();
     setActiveEditRecordId(null);
   }, [editFeedback.finishPending, pathname]);
@@ -169,10 +154,6 @@ export function RecordManager({
   }
 
   function handleAddClick() {
-    setIsAddButtonFeedbackVisible(false);
-    requestAnimationFrame(() => {
-      setIsAddButtonFeedbackVisible(true);
-    });
     onAdd();
   }
 
@@ -485,11 +466,7 @@ export function RecordManager({
       )}
       {records.length ? (
         <FloatingActionButton ariaLabel={t("records.manager.addRecord")} onClick={handleAddClick} title={t("records.manager.addRecord")}>
-            <span
-              aria-hidden
-              className={isAddButtonFeedbackVisible ? "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-100 scale-100 transition duration-200" : "pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgb(var(--brand-sky-50)/0.36)_0%,rgb(var(--brand-mint-300)/0.26)_32%,transparent_72%)] opacity-0 scale-[0.78] transition duration-200"}
-            />
-            <Plus className={isAddButtonFeedbackVisible ? "relative z-10 size-7 transition-transform duration-200 scale-110 rotate-90" : "relative z-10 size-7 transition-transform duration-200"} />
+            <Plus className="size-7" />
         </FloatingActionButton>
       ) : null}
     </div>

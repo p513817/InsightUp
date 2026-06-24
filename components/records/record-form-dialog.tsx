@@ -8,7 +8,13 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
+import {
+  FAB_BASE_CLASS,
+  FAB_OUTLINE_TONE_CLASS,
+  FAB_PRIMARY_TONE_CLASS,
+  FLOATING_ACTION_BAR_CLASS,
+  FLOATING_ACTION_BAR_INNER_CLASS,
+} from "@/components/ui/floating-action-styles";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -680,10 +686,10 @@ export function RecordFormDialog({
       ? "py-3 sm:py-4"
       : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4";
   const formFooterClassName = isPagePresentation
-    ? "pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7"
+    ? FLOATING_ACTION_BAR_CLASS
     : "shrink-0 border-t border-border/80 bg-card/96 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-6 sm:pt-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]";
   const formFooterInnerClassName = isPagePresentation
-    ? "mx-auto flex w-full max-w-[30rem] items-center justify-between gap-3"
+    ? FLOATING_ACTION_BAR_INNER_CLASS
     : "flex flex-wrap justify-end gap-2.5";
   const formContent = (
         <form className={formClassName} onSubmit={form.handleSubmit(handleSubmit)}>

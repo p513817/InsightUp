@@ -8,6 +8,7 @@ import { useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { FloatingActionBar } from "@/components/ui/floating-action-bar";
 import { FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import type { FriendSnapshot } from "@/lib/friends/types";
 import { getUserInitials } from "@/lib/presentation";
@@ -406,8 +407,7 @@ export function CompetitionCreatePage({
         </div>
       </section>
 
-      <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-[30rem] items-center justify-between gap-3">
+      <FloatingActionBar>
           <Button
             aria-label={t("common.cancel")}
             className={cn("pointer-events-auto relative", FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS)}
@@ -432,8 +432,7 @@ export function CompetitionCreatePage({
               <Check className="relative z-10 size-6" />
             )}
           </Button>
-        </div>
-      </div>
+      </FloatingActionBar>
     </form>
   );
 }

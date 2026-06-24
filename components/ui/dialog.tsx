@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       {showCloseButton ? (
-        <DialogClose className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent/18 hover:text-foreground">
+        <DialogClose className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition-[background-color,color,transform,filter] duration-150 hover:bg-accent/18 hover:text-foreground active:scale-[0.92] active:rotate-6 active:brightness-95">
           <X className="size-4" />
           <span className="sr-only">Close</span>
         </DialogClose>

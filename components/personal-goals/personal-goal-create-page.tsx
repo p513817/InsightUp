@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { FloatingActionBar } from "@/components/ui/floating-action-bar";
 import { Input } from "@/components/ui/input";
 import {
   FAB_BASE_CLASS,
@@ -576,8 +577,7 @@ export function PersonalGoalCreatePage({
         </div>
       </section>
 
-      <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 sm:inset-x-7 sm:bottom-7">
-        <div className="mx-auto flex w-full max-w-[30rem] items-center justify-between gap-3">
+      <FloatingActionBar>
         <Button
           aria-label={t("common.cancel")}
           className={cn("pointer-events-auto relative", FAB_BASE_CLASS, FAB_OUTLINE_TONE_CLASS)}
@@ -598,8 +598,7 @@ export function PersonalGoalCreatePage({
         >
           {isSaving ? <span className="relative z-10 size-6 animate-spin rounded-full border-2 border-white/50 border-t-white" /> : <Check className="relative z-10 size-6" />}
         </Button>
-        </div>
-      </div>
+      </FloatingActionBar>
     </div>
   );
 }

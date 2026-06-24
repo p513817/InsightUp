@@ -23,7 +23,7 @@ type BottomActionDockProps = {
 
 const dockItemClassName = (item: BottomActionDockItem) =>
   cn(
-    "flex size-12 shrink-0 items-center justify-center border text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
+    "flex size-12 shrink-0 items-center justify-center border text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.94] active:rotate-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
     item.disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer",
     item.active
       ? "border-border/45 bg-primary/8 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_6px_14px_rgba(16,35,63,0.06)]"
@@ -56,7 +56,7 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
   return (
     <div
       className={cn(
-        "scroll-reactive-dock pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.95rem)] z-30 flex justify-center px-3 sm:bottom-4",
+        "scroll-reactive-dock pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-30 flex justify-center px-3 sm:bottom-7",
         className,
       )}
     >

@@ -57,7 +57,7 @@ function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
       <div className="flex min-w-0 items-center gap-1.5">
         <button
           aria-label={item.label}
-          className="grid size-11 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-colors hover:bg-primary/7 hover:text-primary active:cursor-grabbing"
+          className="grid size-11 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/7 hover:text-primary active:scale-[0.94] active:rotate-3 active:cursor-grabbing"
           ref={setActivatorNodeRef}
           type="button"
           {...attributes}

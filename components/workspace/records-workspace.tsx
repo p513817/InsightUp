@@ -568,7 +568,7 @@ export function RecordsWorkspace({
         </ContentTransitionShell>
 
         <BottomActionDock
-          className={`bottom-[calc(env(safe-area-inset-bottom)+1.55rem)] transition-transform ease-out motion-reduce:transition-none sm:bottom-6 ${
+          className={`transition-transform ease-out motion-reduce:transition-none ${
             isDashboardChartRenderComplete
               ? "translate-y-0 opacity-100 duration-1000"
               : "translate-y-6 opacity-0 duration-200"

@@ -381,7 +381,6 @@ export function CompetitionsWorkspace({ competitions, userId }: CompetitionsWork
         <FloatingActionButton
           ariaLabel={t("competitions.fabLabel")}
           asChild
-          pressFeedbackClassName="transition-[transform,background-color,opacity,box-shadow] duration-200 active:scale-[0.92] active:rotate-45 active:brightness-95"
           title={t("competitions.fabLabel")}
         >
           <Link href="/competitions/new">

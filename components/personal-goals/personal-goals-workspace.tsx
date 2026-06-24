@@ -353,7 +353,6 @@ function GoalSection({
         <FloatingActionButton
           ariaLabel={t("personalGoal.fabLabel")}
           onClick={openCreatePage}
-          pressFeedbackClassName="transition-[transform,background-color,opacity,box-shadow] duration-200 active:scale-[0.92] active:rotate-45 active:brightness-95"
           title={t("personalGoal.fabLabel")}
         >
           <Plus className="size-7" />

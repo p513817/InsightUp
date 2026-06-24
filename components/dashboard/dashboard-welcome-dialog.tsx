@@ -40,7 +40,7 @@ export function DashboardWelcomeDialog({ hasRecords = false, open = false }: Das
       <div className="relative w-full max-w-[25rem] overflow-hidden rounded-[1.5rem] border border-border/70 bg-card shadow-panel">
         <button
           aria-label={t("common.close")}
-          className="absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent/18 hover:text-foreground"
+          className="absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition-[background-color,color,transform,filter] duration-150 hover:bg-accent/18 hover:text-foreground active:scale-[0.92] active:rotate-6 active:brightness-95"
           onClick={() => {
             setIsDismissed(true);
             setIsOpen(false);
