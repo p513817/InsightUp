@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   type Column,
   flexRender,
@@ -17,6 +18,7 @@ import { Eye, EyeOff, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { RecordEmptyState } from "@/components/records/record-empty-state";
 import { useLocale } from "@/components/i18n-provider";
 import { useTranslations } from "@/components/i18n-provider";
+import { BusyCardShell, useActionFeedback } from "@/components/ui/action-feedback";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
@@ -63,21 +65,7 @@ function renderMobileColumn(column: MobileRecordColumn, record: InbodyRecord, is
 
 function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metricColumns, footerColumns }: MobileRecordCardProps) {
   return (
-    <div className="relative isolate overflow-hidden rounded-[1.15rem]">
-      {isBusy ? (
-        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.15rem]">
-          <span
-            className="absolute inset-0 rounded-[1.15rem]"
-            style={{
-              animation: "rotate-gradient 2s linear infinite",
-              background:
-                "repeating-conic-gradient(from var(--gradient-rotation), rgb(var(--brand-sky-50) / 0) 0deg, rgb(var(--brand-sky-50) / 0) 145deg, rgb(var(--brand-mint-500) / 0.4) 155deg, rgb(var(--brand-navy-700) / 1) 160deg, rgb(var(--brand-navy-700) / 1) 195deg, rgb(var(--brand-mint-500) / 0.4) 205deg, rgb(var(--brand-sky-50) / 0) 215deg, rgb(var(--brand-sky-50) / 0) 360deg)",
-            }}
-          />
-          <span className="absolute inset-[1.5px] rounded-[calc(1.15rem-1.5px)]" style={{ background: "rgb(var(--background))" }} />
-        </span>
-      ) : null}
-
+    <BusyCardShell busy={isBusy}>
       <Card className="relative z-10 gap-2 rounded-[1.05rem] border-border/55 bg-card/84 p-2.5 sm:p-3">
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -107,7 +95,7 @@ function MobileRecordCard({ record, isBusy, heroColumns, trailingColumns, metric
           </div>
         </div>
       </Card>
-    </div>
+    </BusyCardShell>
   );
 }
 
@@ -122,10 +110,13 @@ export function RecordManager({
 }: RecordManagerProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
   const [isAddButtonFeedbackVisible, setIsAddButtonFeedbackVisible] = useState(false);
+  const [activeEditRecordId, setActiveEditRecordId] = useState<string | null>(null);
+  const editFeedback = useActionFeedback();
 
   const sortedRecords = useMemo(
     () => [...records].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
@@ -168,6 +159,11 @@ export function RecordManager({
     };
   }, [isAddButtonFeedbackVisible]);
 
+  useEffect(() => {
+    editFeedback.finishPending();
+    setActiveEditRecordId(null);
+  }, [editFeedback.finishPending, pathname]);
+
   function clearSearch() {
     setSearchQuery("");
   }
@@ -179,6 +175,21 @@ export function RecordManager({
     });
     onAdd();
   }
+
+  const getRecordBusyState = useCallback((record: InbodyRecord) => {
+    return busyRecordId === record.id || (activeEditRecordId === record.id && (editFeedback.isPending || editFeedback.isPulseVisible));
+  }, [activeEditRecordId, busyRecordId, editFeedback.isPending, editFeedback.isPulseVisible]);
+
+  const handleEditClick = useCallback((record: InbodyRecord) => {
+    setActiveEditRecordId(record.id);
+    editFeedback.pulse();
+
+    if (mode === "records") {
+      editFeedback.startPending();
+    }
+
+    onEdit(record);
+  }, [editFeedback, mode, onEdit]);
 
   function getMobileColumns(slot: NonNullable<ColumnDef<InbodyRecord>["meta"]>["mobileSlot"]) {
     return table
@@ -279,7 +290,7 @@ export function RecordManager({
           mobileSlot: "footer",
           mobileRender: (record, isBusy) => (
             <div className="flex items-center gap-1.5">
-              <Button aria-label={t("records.manager.edit")} className="size-8" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+              <Button aria-label={t("records.manager.edit")} className="size-8" disabled={isBusy} onClick={() => handleEditClick(record)} size="icon" variant="outline">
                 <PencilLine className="size-3.5" />
               </Button>
               <Button aria-label={t("records.manager.delete")} className="size-8" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
@@ -290,11 +301,11 @@ export function RecordManager({
         },
         cell: ({ row }) => {
           const record = row.original;
-          const isBusy = busyRecordId === record.id;
+          const isBusy = getRecordBusyState(record);
 
           return (
             <div className="flex items-center justify-end gap-2">
-              <Button aria-label={t("records.manager.edit")} className="size-9" disabled={isBusy} onClick={() => onEdit(record)} size="icon" variant="outline">
+              <Button aria-label={t("records.manager.edit")} className="size-9" disabled={isBusy} onClick={() => handleEditClick(record)} size="icon" variant="outline">
                 <PencilLine className="size-4" />
               </Button>
               <Button aria-label={t("records.manager.delete")} className="size-9" disabled={isBusy} onClick={() => onDelete(record)} size="icon" variant="destructive">
@@ -305,7 +316,7 @@ export function RecordManager({
         },
       },
     ],
-    [busyRecordId, onDelete, onEdit, onToggleInclusion, t],
+    [busyRecordId, getRecordBusyState, handleEditClick, onDelete, onToggleInclusion, t],
   );
 
   const table = useReactTable({
@@ -430,7 +441,7 @@ export function RecordManager({
             <div className="grid gap-2">
               {pageRows.map((row) => {
                 const record = row.original;
-                const isBusy = busyRecordId === record.id;
+                const isBusy = getRecordBusyState(record);
 
                 return (
                   <MobileRecordCard

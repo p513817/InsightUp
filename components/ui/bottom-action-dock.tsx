@@ -23,7 +23,7 @@ type BottomActionDockProps = {
 
 const dockItemClassName = (item: BottomActionDockItem) =>
   cn(
-    "flex size-[3.25rem] shrink-0 items-center justify-center border text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
+    "flex size-12 shrink-0 items-center justify-center border text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
     item.disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer",
     item.active
       ? "border-border/45 bg-primary/8 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_6px_14px_rgba(16,35,63,0.06)]"
@@ -60,7 +60,7 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
         className,
       )}
     >
-      <div className="bottom-action-dock-surface pointer-events-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[2rem] px-2 py-2.5">
+      <div className="bottom-action-dock-surface pointer-events-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center gap-1.5 rounded-[1.75rem] px-1.5 py-2">
         {items.map((item, index) => {
             const content = (
                 <span className="grid size-6 shrink-0 place-items-center [&_svg]:size-6" aria-hidden="true">

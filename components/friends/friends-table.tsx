@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Copy, GitCompareArrows, LoaderCircle, Trash2, UserRoundSearch } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { BusyCardShell, useActionFeedback } from "@/components/ui/action-feedback";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
 import type { FriendSnapshot } from "@/lib/friends/types";
 import { getMetricDeltaToneClass } from "@/lib/inbody/progress";
 import { formatCompactDate, formatDecimal, getUserInitials } from "@/lib/presentation";
+import { startRouteTransitionFeedback } from "@/lib/route-transition-feedback";
+import { cn } from "@/lib/utils";
 
 interface FriendsTableProps {
   busyFriendId: string | null;
@@ -79,6 +84,12 @@ async function copyText(text: string) {
 function FriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBusy: boolean; onRemove: (friend: FriendSnapshot) => void }) {
   const t = useTranslations();
   const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const copyFeedback = useActionFeedback();
+  const navigationFeedback = useActionFeedback();
+  const removeFeedback = useActionFeedback();
+  const isActionDisabled = copyFeedback.isPending || navigationFeedback.isPending || isBusy;
   const metricItems = [
     {
       delta: formatDelta(friend.latestWeightDelta),
@@ -101,88 +112,135 @@ function FriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBu
   ];
 
   async function handleCopyFriendCode() {
-    try {
-      await copyText(friend.friendCode);
-      toast.success(t("friends.copyCode"), {
-        description: t("friends.copyCodeBody"),
-      });
-    } catch {
-      toast.error(t("friends.copyCodeFailed"));
-    }
+    await copyFeedback.run(async () => {
+      try {
+        await copyText(friend.friendCode);
+        toast.success(t("friends.copyCode"), {
+          description: t("friends.copyCodeBody"),
+        });
+      } catch {
+        toast.error(t("friends.copyCodeFailed"));
+      }
+    });
   }
 
+  function handleNavigate(href: string) {
+    navigationFeedback.pulse();
+    navigationFeedback.startPending();
+    startRouteTransitionFeedback();
+    router.push(href);
+  }
+
+  function handleRemoveClick() {
+    removeFeedback.pulse();
+    onRemove(friend);
+  }
+
+  useEffect(() => {
+    navigationFeedback.finishPending();
+  }, [navigationFeedback.finishPending, pathname]);
+
+  const isCardBusy = isBusy || copyFeedback.isPending || navigationFeedback.isPending || navigationFeedback.isPulseVisible;
+  const isCardPulseVisible = copyFeedback.isPulseVisible || navigationFeedback.isPulseVisible || removeFeedback.isPulseVisible;
+
   return (
-    <Card className="group relative cursor-pointer gap-2 overflow-hidden rounded-[1rem] border-border/60 bg-card/94 p-2.5 shadow-[0_10px_22px_rgba(16,35,63,0.06)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)] sm:p-3">
-      <Link
-        aria-label={`${t("friends.view")} ${friend.displayName}`}
-        className="absolute inset-0 z-0 rounded-[1rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        href={`/friends/${friend.friendUserId}`}
-      />
+    <BusyCardShell busy={isCardBusy}>
+      <Card
+        className={cn(
+          "group relative z-10 cursor-pointer gap-2 overflow-hidden rounded-[1rem] border-border/60 bg-card/94 p-2.5 shadow-[0_10px_22px_rgba(16,35,63,0.06)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)] sm:p-3",
+          isCardPulseVisible ? "scale-[0.995] border-accent/50 shadow-[0_16px_34px_rgba(16,35,63,0.1)]" : "",
+        )}
+      >
+        <Link
+          aria-label={`${t("friends.view")} ${friend.displayName}`}
+          className="absolute inset-0 z-0 rounded-[1rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          href={`/friends/${friend.friendUserId}`}
+          onClick={(event) => {
+            event.preventDefault();
+            handleNavigate(`/friends/${friend.friendUserId}`);
+          }}
+        />
 
-      <div className="pointer-events-none relative z-10 flex min-w-0 items-center gap-2.5">
-        <FriendAvatar friend={friend} />
+        <div className="pointer-events-none relative z-10 flex min-w-0 items-center gap-2.5">
+          <FriendAvatar friend={friend} />
 
-        <div className="min-w-0 flex-1 self-stretch py-0.5">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <p className="min-w-0 truncate font-display text-[1.02rem] leading-tight text-foreground transition-colors group-hover:text-primary">{friend.displayName}</p>
-          </div>
+          <div className="min-w-0 flex-1 self-stretch py-0.5">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <p className="min-w-0 truncate font-display text-[1.02rem] leading-tight text-foreground transition-colors group-hover:text-primary">{friend.displayName}</p>
+            </div>
 
-          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs">
-            <span className="max-w-[7.5rem] truncate font-semibold text-[rgb(var(--primary-strong))]">
-              {friend.latestRecordedAt ? formatCompactDate(friend.latestRecordedAt, locale) : t("friends.noSnapshot")}
-            </span>
-          </div>
-        </div>
-
-        <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
-          <Button asChild aria-label={`${t("friends.view")} ${friend.displayName}`} className="size-8" size="icon" title={t("friends.view")} variant="outline">
-            <Link href={`/friends/${friend.friendUserId}`}>
-              <UserRoundSearch className="size-3.5" />
-            </Link>
-          </Button>
-          <Button asChild aria-label={`${t("friends.compare")} ${friend.displayName}`} className="size-8" size="icon" title={t("friends.compare")} variant="outline">
-            <Link href={`/friends/${friend.friendUserId}/compare`}>
-              <GitCompareArrows className="size-3.5" />
-            </Link>
-          </Button>
-          <Button
-            aria-label={`${t("common.copy")} ${friend.displayName} ${t("friends.friendCode")}`}
-            className="size-8"
-            onClick={handleCopyFriendCode}
-            size="icon"
-            title={t("common.copy")}
-            type="button"
-            variant="outline"
-          >
-            <Copy className="size-3.5" />
-          </Button>
-          <Button
-            aria-label={`${t("friends.remove")} ${friend.displayName}`}
-            className="size-8"
-            disabled={isBusy}
-            onClick={() => onRemove(friend)}
-            size="icon"
-            title={t("friends.remove")}
-            type="button"
-            variant="destructive"
-          >
-            {isBusy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-          </Button>
-        </div>
-      </div>
-
-      <div className="pointer-events-none relative z-10 grid grid-cols-3 divide-x divide-border/60 rounded-[0.8rem] border border-border/60 bg-surface/55 transition-colors group-hover:border-accent/35">
-        {metricItems.map((item) => (
-          <div className="min-w-0 px-2 py-1.5" key={item.label}>
-            <p className="truncate text-[10px] font-semibold uppercase leading-none text-muted-foreground">{item.label}</p>
-            <div className="mt-1 flex min-w-0 items-center gap-1">
-              <p className="min-w-0 truncate font-display text-[0.95rem] leading-none text-foreground">{item.value}</p>
-              <span className={`shrink-0 rounded-full px-1 py-0.5 text-[10px] font-semibold leading-none ${item.tone}`}>{item.delta}</span>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs">
+              <span className="max-w-[7.5rem] truncate font-semibold text-[rgb(var(--primary-strong))]">
+                {friend.latestRecordedAt ? formatCompactDate(friend.latestRecordedAt, locale) : t("friends.noSnapshot")}
+              </span>
             </div>
           </div>
-        ))}
-      </div>
-    </Card>
+
+          <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+            <Button
+              aria-label={`${t("friends.view")} ${friend.displayName}`}
+              className="size-8"
+              disabled={isActionDisabled}
+              onClick={() => handleNavigate(`/friends/${friend.friendUserId}`)}
+              size="icon"
+              title={t("friends.view")}
+              type="button"
+              variant="outline"
+            >
+              <UserRoundSearch className="size-3.5" />
+            </Button>
+            <Button
+              aria-label={`${t("friends.compare")} ${friend.displayName}`}
+              className="size-8"
+              disabled={isActionDisabled}
+              onClick={() => handleNavigate(`/friends/${friend.friendUserId}/compare`)}
+              size="icon"
+              title={t("friends.compare")}
+              type="button"
+              variant="outline"
+            >
+              <GitCompareArrows className="size-3.5" />
+            </Button>
+            <Button
+              aria-label={`${t("common.copy")} ${friend.displayName} ${t("friends.friendCode")}`}
+              className="size-8"
+              disabled={isActionDisabled}
+              onClick={handleCopyFriendCode}
+              size="icon"
+              title={t("common.copy")}
+              type="button"
+              variant="outline"
+            >
+              {copyFeedback.isPending ? <LoaderCircle className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+            </Button>
+            <Button
+              aria-label={`${t("friends.remove")} ${friend.displayName}`}
+              className="size-8"
+              disabled={isActionDisabled}
+              onClick={handleRemoveClick}
+              size="icon"
+              title={t("friends.remove")}
+              type="button"
+              variant="destructive"
+            >
+              {isBusy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+            </Button>
+          </div>
+        </div>
+
+        <div className="pointer-events-none relative z-10 grid grid-cols-3 divide-x divide-border/60 rounded-[0.8rem] border border-border/60 bg-surface/55 transition-colors group-hover:border-accent/35">
+          {metricItems.map((item) => (
+            <div className="min-w-0 px-2 py-1.5" key={item.label}>
+              <p className="truncate text-[10px] font-semibold uppercase leading-none text-muted-foreground">{item.label}</p>
+              <div className="mt-1 flex min-w-0 items-center gap-1">
+                <p className="min-w-0 truncate font-display text-[0.95rem] leading-none text-foreground">{item.value}</p>
+                <span className={`shrink-0 rounded-full px-1 py-0.5 text-[10px] font-semibold leading-none ${item.tone}`}>{item.delta}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </BusyCardShell>
   );
 }
 

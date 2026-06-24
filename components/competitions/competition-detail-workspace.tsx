@@ -15,6 +15,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CompetitionProgress } from "@/lib/competitions";
 import { attachCurrentUserMember, getCompetitionLeaderBoard } from "@/lib/competitions";
 import { formatCompactDate } from "@/lib/presentation";
+import { startRouteTransitionFeedback } from "@/lib/route-transition-feedback";
 import { cn } from "@/lib/utils";
 
 interface CompetitionDetailWorkspaceProps {
@@ -396,7 +397,10 @@ export function CompetitionDetailWorkspace({ competition, userId }: CompetitionD
                   <div className="flex justify-end pt-1">
                     <Button
                       className="min-h-11 w-full sm:w-auto"
-                      onClick={() => router.push(selectedMember.goalCount > 0 ? "/personal-goal" : `/competitions/${competition.id}/goal/new`)}
+                      onClick={() => {
+                        startRouteTransitionFeedback();
+                        router.push(selectedMember.goalCount > 0 ? "/personal-goal" : `/competitions/${competition.id}/goal/new`);
+                      }}
                       type="button"
                       variant="outline"
                     >

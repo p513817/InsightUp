@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const LOGO_ANIMATION_PLAYED_KEY = "insightup.logoAnimationPlayed";
-const LOGO_ANIMATION_SRC = "/insightup-logo-anim-192.webm";
+const LOGO_ANIMATION_SRC = "/insightup-logo-anim-384.webm";
 const LOGO_STATIC_SRC = "/insightup-logo-rmbg-192.png";
-const LOGO_PLAYBACK_RATE = 1.5;
+const LOGO_PLAYBACK_RATE = 2;
 let logoAnimationPlayedInRuntime = false;
 
 interface LogoAnimatedProps {
@@ -101,6 +101,15 @@ export function LogoAnimated({ className, playOnce = false, size = 56, playSigna
     setDone(true);
   }
 
+  function markAnimationPlayed() {
+    if (!playOnce) {
+      return;
+    }
+
+    logoAnimationPlayedInRuntime = true;
+    window.sessionStorage.setItem(LOGO_ANIMATION_PLAYED_KEY, "true");
+  }
+
   return (
     <span className={cn("relative inline-flex overflow-hidden", className)}>
       <Image
@@ -128,7 +137,7 @@ export function LogoAnimated({ className, playOnce = false, size = 56, playSigna
           }}
           onEnded={(event) => {
             event.currentTarget.pause();
-            markAnimationDone();
+            markAnimationPlayed();
           }}
           onError={markAnimationDone}
         >

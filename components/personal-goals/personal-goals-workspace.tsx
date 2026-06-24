@@ -14,6 +14,7 @@ import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import type { PersonalGoal } from "@/lib/personal-goals";
 import type { InbodyRecord } from "@/lib/inbody/types";
 import { formatCompactDate } from "@/lib/presentation";
+import { startRouteTransitionFeedback } from "@/lib/route-transition-feedback";
 import { cn } from "@/lib/utils";
 
 interface PersonalGoalsWorkspaceProps {
@@ -149,11 +150,13 @@ export function PersonalGoalsWorkspace({ goals, latestRecord, records }: Persona
   const completedGroups = goalGroups.filter((group) => group.isExpired);
 
   function openCreatePage() {
+    startRouteTransitionFeedback();
     router.push("/personal-goal/new");
   }
 
   function editGroup(group: PersonalGoalGroup) {
     const params = new URLSearchParams({ ids: group.goals.map((goal) => goal.id).join(",") });
+    startRouteTransitionFeedback();
     router.push(`/personal-goal/edit?${params.toString()}`);
   }
 

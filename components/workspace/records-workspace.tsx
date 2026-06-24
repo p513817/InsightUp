@@ -12,12 +12,13 @@ import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { RecordManager } from "@/components/records/record-manager";
 import { CompactInfoCard } from "@/components/ui/compact-info-card";
 import { BottomActionDock } from "@/components/ui/bottom-action-dock";
-import { PageLoading } from "@/components/ui/page-loading";
+import { ContentTransitionShell } from "@/components/ui/content-transition-shell";
 import { StatsScrollbarRow } from "@/components/ui/stats-scrollbar-row";
 import { buildChartPayload } from "@/lib/inbody/records";
 import { type RecordFormValues } from "@/lib/inbody/schema";
 import { CHART_VIEWS, type ChartPayload, type ChartViewKey, type InbodyRecord, type SegmentPartKey } from "@/lib/inbody/types";
 import { formatCompactDate, formatLongDate } from "@/lib/presentation";
+import { startRouteTransitionFeedback } from "@/lib/route-transition-feedback";
 
 interface RecordsWorkspaceProps {
   initialDashboardMetricOrder?: string[];
@@ -214,7 +215,7 @@ export function RecordsWorkspace({
   const includedCount = records.filter((record) => record.isIncludedInCharts).length;
   const excludedCount = records.length - includedCount;
   const chartRequestVersionRef = useRef(0);
-  const shouldShowDashboardLoading = mode === "dashboard" && records.length > 0 && !isDashboardChartRenderStarted;
+  const shouldShowDashboardLoading = mode === "dashboard" && records.length > 0 && !isDashboardChartRenderComplete;
   const shouldShowWelcomeDialog = showWelcomeDialog && isDashboardChartRenderComplete;
 
   useEffect(() => {
@@ -472,6 +473,7 @@ export function RecordsWorkspace({
 
   function openCreateDialog() {
     if (mode === "records") {
+      startRouteTransitionFeedback();
       router.push("/records/new");
       return;
     }
@@ -479,11 +481,13 @@ export function RecordsWorkspace({
     const params = new URLSearchParams();
     const returnTo = searchParams.toString() ? `/dashboard?${searchParams.toString()}` : "/dashboard";
     params.set("returnTo", returnTo);
+    startRouteTransitionFeedback();
     router.push(`/records/new?${params.toString()}`);
   }
 
   function openEditDialog(record: InbodyRecord) {
     if (mode === "records") {
+      startRouteTransitionFeedback();
       router.push(`/records/${record.id}/edit`);
       return;
     }
@@ -511,64 +515,60 @@ export function RecordsWorkspace({
     return (
       <>
       <div className="relative space-y-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:pb-[calc(6rem+env(safe-area-inset-bottom))]">
-        {shouldShowDashboardLoading ? (
-          <div className="absolute inset-x-0 top-0 z-10 rounded-[1.75rem] bg-background/92 backdrop-blur-sm">
-            <PageLoading />
-          </div>
-        ) : null}
-
-        <section className={`space-y-4 transition-opacity duration-150 ${shouldShowDashboardLoading ? "pointer-events-none opacity-0" : "opacity-100"}`}>
-          {trendMode === "overall" ? (
-            overallChart ? (
-              <MiniTrendGrid
-                chart={overallChart}
-                editMode={trendEditMode}
-                initialMetricOrder={initialDashboardMetricOrder}
-                layout={trendLayout}
-                onRenderStart={handleDashboardChartRenderStart}
-                onRenderComplete={handleOverallChartRenderComplete}
-                showTrendLine={showTrendLine}
-              />
+        <ContentTransitionShell active={shouldShowDashboardLoading} complete={isDashboardChartRenderComplete} mode="event-or-controlled">
+          <section className="space-y-4">
+            {trendMode === "overall" ? (
+              overallChart ? (
+                <MiniTrendGrid
+                  chart={overallChart}
+                  editMode={trendEditMode}
+                  initialMetricOrder={initialDashboardMetricOrder}
+                  layout={trendLayout}
+                  onRenderStart={handleDashboardChartRenderStart}
+                  onRenderComplete={handleOverallChartRenderComplete}
+                  showTrendLine={showTrendLine}
+                />
+              ) : (
+                <div className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />
+              )
             ) : (
-              <div className="surface-state-panel min-h-[52vh] rounded-[1.75rem]" />
-            )
-          ) : (
-            <div className="space-y-3.5">
-              {segmentalCharts.map((segment, index) => (
-                <section className="space-y-2.5" key={segment.key}>
-                  {segment.chart ? (
-                    <>
-                      <div className="flex items-center gap-2 px-1">
-                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
-                          <SegmentIcon view={segment.key} />
-                        </span>
-                        <h3 className="font-display text-[1.02rem] leading-tight text-foreground">{segment.label}</h3>
+              <div className="space-y-3.5">
+                {segmentalCharts.map((segment) => (
+                  <section className="space-y-2.5" key={segment.key}>
+                    {segment.chart ? (
+                      <>
+                        <div className="flex items-center gap-2 px-1">
+                          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/8 text-primary">
+                            <SegmentIcon view={segment.key} />
+                          </span>
+                          <h3 className="font-display text-[1.02rem] leading-tight text-foreground">{segment.label}</h3>
+                        </div>
+                        <MiniTrendGrid
+                          chart={segment.chart}
+                          editMode={trendEditMode}
+                          layout={trendLayout}
+                          onRenderStart={handleDashboardChartRenderStart}
+                          onRenderComplete={() => handleSegmentChartRenderComplete(segment.key)}
+                          showTrendLine={showTrendLine}
+                        />
+                      </>
+                    ) : (
+                      <div className="surface-state-panel flex min-h-[16rem] items-center justify-center rounded-[1.5rem] p-4">
+                        <div className="grid w-full gap-3">
+                          <div className="surface-soft-card h-7 w-32 animate-pulse rounded-full" />
+                          <div className="surface-soft-card h-44 animate-pulse rounded-[1.25rem]" />
+                        </div>
                       </div>
-                      <MiniTrendGrid
-                        chart={segment.chart}
-                        editMode={trendEditMode}
-                        layout={trendLayout}
-                        onRenderStart={handleDashboardChartRenderStart}
-                        onRenderComplete={() => handleSegmentChartRenderComplete(segment.key)}
-                        showTrendLine={showTrendLine}
-                      />
-                    </>
-                  ) : (
-                    <div className="surface-state-panel flex min-h-[16rem] items-center justify-center rounded-[1.5rem] p-4">
-                      <div className="grid w-full gap-3">
-                        <div className="surface-soft-card h-7 w-32 animate-pulse rounded-full" />
-                        <div className="surface-soft-card h-44 animate-pulse rounded-[1.25rem]" />
-                      </div>
-                    </div>
-                  )}
-                </section>
-              ))}
-            </div>
-          )}
-        </section>
+                    )}
+                  </section>
+                ))}
+              </div>
+            )}
+          </section>
+        </ContentTransitionShell>
 
         <BottomActionDock
-          className={`bottom-[calc(env(safe-area-inset-bottom)+1.55rem)] transition-[opacity,transform] ease-out motion-reduce:transition-none sm:bottom-6 ${
+          className={`bottom-[calc(env(safe-area-inset-bottom)+1.55rem)] transition-transform ease-out motion-reduce:transition-none sm:bottom-6 ${
             isDashboardChartRenderComplete
               ? "translate-y-0 opacity-100 duration-1000"
               : "translate-y-6 opacity-0 duration-200"

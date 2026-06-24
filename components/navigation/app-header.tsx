@@ -7,8 +7,9 @@ import { Activity, Files, GitCompareArrows, LayoutDashboard, Menu, Sparkles, Tar
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
-import { ROUND_ACTION_FEEDBACK_CLASS } from "@/components/ui/floating-action-styles";
+import { SegmentedSwitch } from "@/components/ui/segmented-switch";
 import { useTranslations } from "@/components/i18n-provider";
+import { startContentTransitionFeedback, startRouteTransitionFeedback } from "@/lib/route-transition-feedback";
 import { cn } from "@/lib/utils";
 import type { AppUserSummary } from "@/lib/presentation";
 
@@ -32,18 +33,20 @@ type NavItem = {
 
 const SIDEBAR_NAV_FEEDBACK_MS = 150;
 const SIDEBAR_NAV_TRANSITION_MS = 150;
-const SIDEBAR_OPEN_FEEDBACK_MS = 150;
+const SIDEBAR_OPEN_FEEDBACK_MS = 40;
 const SIDEBAR_CLOSE_FEEDBACK_MS = 150;
-const SIDEBAR_PANEL_DURATION_CLASS = "duration-[320ms]";
+const SIDEBAR_PANEL_DURATION_CLASS = "duration-[240ms]";
 const SIDEBAR_PANEL_EASE_CLASS = "ease-[cubic-bezier(0.22,1,0.36,1)]";
+const SIDEBAR_ROUND_BUTTON_PRESS_CLASS =
+  "transition-[transform,background-color,box-shadow] duration-150 ease-out active:scale-[0.9] active:bg-primary/12 active:shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.12)]";
 
 const sidebarNavClassName = (active: boolean, pending = false) =>
   cn(
-    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out active:scale-[0.97] active:translate-x-[1px]",
+    "group flex items-center gap-2.5 rounded-[1.1rem] border px-3 py-3 transition-[background-color,border-color,box-shadow,transform,filter] duration-150 ease-out active:scale-[0.982] active:brightness-[0.98]",
     active
-      ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)] active:bg-accent/22"
-      : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62 active:border-border/70 active:bg-white/78",
-    pending ? "scale-[0.985] border-border/70 bg-white/78" : "",
+      ? "border-accent/30 bg-accent/14 text-foreground shadow-[0_8px_18px_rgba(43,194,172,0.1)] active:border-accent/42 active:bg-accent/24"
+      : "border-transparent bg-transparent text-foreground hover:border-border/60 hover:bg-white/62 active:border-border/70 active:bg-white/82",
+    pending ? "scale-[0.982] border-accent/32 bg-accent/12 shadow-[0_8px_18px_rgba(43,194,172,0.08)] brightness-[0.98]" : "",
   );
 
 function SidebarNavContent({ active, description, icon, label }: Pick<NavItem, "active" | "description" | "icon" | "label">) {
@@ -52,7 +55,9 @@ function SidebarNavContent({ active, description, icon, label }: Pick<NavItem, "
       <span
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-full transition",
-          active ? "bg-white/78 text-accent-strong shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.2)]" : "bg-white/62 text-muted-foreground group-hover:bg-white group-hover:text-primary",
+          active
+            ? "bg-white/78 text-accent-strong shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.2)] group-active:scale-[0.94]"
+            : "bg-white/62 text-muted-foreground group-hover:bg-white group-hover:text-primary group-active:scale-[0.94] group-active:bg-white/90",
         )}
       >
         {icon}
@@ -165,6 +170,11 @@ export function AppHeader({ user }: AppHeaderProps) {
   ];
 
   function setDashboardTrendMode(nextMode: "overall" | "segmental") {
+    if (nextMode === dashboardTrendMode) {
+      return;
+    }
+
+    startRouteTransitionFeedback();
     const params = new URLSearchParams(searchParams.toString());
     params.set("trend", nextMode);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -175,7 +185,12 @@ export function AppHeader({ user }: AppHeaderProps) {
       return;
     }
 
+    if (nextMode === friendViewMode) {
+      return;
+    }
+
     const nextPathname = nextMode === "compare" ? `/friends/${friendUserId}/compare` : `/friends/${friendUserId}`;
+    startRouteTransitionFeedback();
     router.replace(nextPathname, { scroll: false });
   }
 
@@ -203,7 +218,15 @@ export function AppHeader({ user }: AppHeaderProps) {
       return;
     }
 
+    if (href === pathname) {
+      setIsSidebarOpen(false);
+      return;
+    }
+
     setPendingNavHref(href);
+    startRouteTransitionFeedback();
+    startContentTransitionFeedback();
+
     window.setTimeout(() => {
       setIsSidebarOpen(false);
 
@@ -347,8 +370,8 @@ export function AppHeader({ user }: AppHeaderProps) {
             <button
               aria-label={t("navigation.menu")}
               className={cn(
-                `grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${ROUND_ACTION_FEEDBACK_CLASS}`,
-                isSidebarOpenPending ? "bg-primary/10 scale-[0.92] rotate-90" : "",
+                `grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-primary hover:bg-primary/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${SIDEBAR_ROUND_BUTTON_PRESS_CLASS}`,
+                isSidebarOpenPending ? "scale-[0.9] rotate-45 bg-primary/12 shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.12)]" : "",
               )}
               onClick={handleSidebarOpen}
               type="button"
@@ -358,86 +381,43 @@ export function AppHeader({ user }: AppHeaderProps) {
           </div>
 
           {isDashboard ? (
-            <div
-              aria-label={t("navigation.dashboard.label")}
-              className="surface-pill absolute left-1/2 grid h-[2.625rem] max-w-[min(32rem,52vw)] -translate-x-1/2 grid-cols-2 gap-1 overflow-hidden rounded-full bg-card/78 p-[0.3125rem] shadow-none"
-              role="tablist"
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none absolute bottom-[0.3125rem] left-[0.3125rem] top-[0.3125rem] z-0 w-[calc((100%-0.875rem)/2)] rounded-full bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] shadow-[0_8px_16px_rgba(23,52,93,0.14)] transition-[transform,box-shadow] duration-[520ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
-                  dashboardTrendMode === "segmental" ? "translate-x-[calc(100%+0.25rem)]" : "translate-x-0",
-                )}
-              />
-              <button
-                aria-selected={dashboardTrendMode === "overall"}
-                className={cn(
-                  "relative z-10 inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-[color,transform] duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] [&_svg]:transition-transform [&_svg]:duration-[320ms]",
-                  dashboardTrendMode === "overall"
-                    ? "text-primary-foreground [&_svg]:scale-110"
-                    : "text-muted-foreground hover:text-foreground [&_svg]:scale-95",
-                )}
-                onClick={() => setDashboardTrendMode("overall")}
-                role="tab"
-                type="button"
-              >
-                <Activity className="size-4" />
-                <span className="truncate">{t("dashboardTrendUi.overall")}</span>
-              </button>
-              <button
-                aria-selected={dashboardTrendMode === "segmental"}
-                className={cn(
-                  "relative z-10 inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-[color,transform] duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] [&_svg]:transition-transform [&_svg]:duration-[320ms]",
-                  dashboardTrendMode === "segmental"
-                    ? "text-primary-foreground [&_svg]:scale-110"
-                    : "text-muted-foreground hover:text-foreground [&_svg]:scale-95",
-                )}
-                onClick={() => setDashboardTrendMode("segmental")}
-                role="tab"
-                type="button"
-              >
-                <UserRound className="size-4" />
-                <span className="truncate">{t("dashboardTrendUi.segmental")}</span>
-              </button>
-            </div>
+            <SegmentedSwitch
+              ariaLabel={t("navigation.dashboard.label")}
+              className="max-w-[min(32rem,52vw)]"
+              items={[
+                {
+                  icon: <Activity className="size-4" />,
+                  label: t("dashboardTrendUi.overall"),
+                  value: "overall",
+                },
+                {
+                  icon: <UserRound className="size-4" />,
+                  label: t("dashboardTrendUi.segmental"),
+                  value: "segmental",
+                },
+              ]}
+              onValueChange={(nextValue) => setDashboardTrendMode(nextValue === "segmental" ? "segmental" : "overall")}
+              value={dashboardTrendMode}
+            />
           ) : isFriendDetail ? (
-            <div
-              aria-label={t("navigation.friends.label")}
-              className="surface-pill absolute left-1/2 grid h-[2.625rem] max-w-[min(32rem,56vw)] -translate-x-1/2 grid-cols-2 gap-1 rounded-full bg-card/78 p-[0.3125rem] shadow-none"
-              role="tablist"
-            >
-              <button
-                aria-selected={friendViewMode === "trend"}
-                className={cn(
-                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
-                  friendViewMode === "trend"
-                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
-                )}
-                onClick={() => setFriendViewMode("trend")}
-                role="tab"
-                type="button"
-              >
-                <Activity className="size-4" />
-                <span className="truncate">{t("friends.friendTrendTab")}</span>
-              </button>
-              <button
-                aria-selected={friendViewMode === "compare"}
-                className={cn(
-                  "inline-flex h-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition",
-                  friendViewMode === "compare"
-                    ? "bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]"
-                    : "text-muted-foreground hover:bg-primary/7 hover:text-foreground",
-                )}
-                onClick={() => setFriendViewMode("compare")}
-                role="tab"
-                type="button"
-              >
-                <GitCompareArrows className="size-4" />
-                <span className="truncate">{t("friends.compareTab")}</span>
-              </button>
-            </div>
+            <SegmentedSwitch
+              ariaLabel={t("navigation.friends.label")}
+              className="max-w-[min(32rem,56vw)]"
+              items={[
+                {
+                  icon: <Activity className="size-4" />,
+                  label: t("friends.friendTrendTab"),
+                  value: "trend",
+                },
+                {
+                  icon: <GitCompareArrows className="size-4" />,
+                  label: t("friends.compareTab"),
+                  value: "compare",
+                },
+              ]}
+              onValueChange={(nextValue) => setFriendViewMode(nextValue === "compare" ? "compare" : "trend")}
+              value={friendViewMode}
+            />
           ) : (
             <p className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[44vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center font-display text-xl leading-none text-foreground shadow-none sm:text-2xl">
               InsightUp
@@ -453,11 +433,11 @@ export function AppHeader({ user }: AppHeaderProps) {
       <div
         aria-hidden={!isSidebarOpen}
         className={cn(
-          "fixed inset-0 z-50 cursor-pointer bg-[rgb(var(--overlay)/0.2)] backdrop-blur-[1.5px] transition-[opacity,backdrop-filter,background-color] motion-reduce:transition-none",
+          "fixed inset-0 z-50 cursor-pointer bg-[rgb(var(--overlay)/0.16)] backdrop-blur-[0.75px] transition-[opacity,backdrop-filter,background-color] motion-reduce:transition-none",
           SIDEBAR_PANEL_DURATION_CLASS,
           SIDEBAR_PANEL_EASE_CLASS,
           isSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0 backdrop-blur-0",
-          "active:bg-[rgb(var(--overlay)/0.26)]",
+          "active:bg-[rgb(var(--overlay)/0.22)]",
         )}
         onClick={() => setIsSidebarOpen(false)}
       />
@@ -489,10 +469,10 @@ export function AppHeader({ user }: AppHeaderProps) {
           <Button
             aria-label={t("navigation.closeMenu")}
             className={cn(
-              "size-10 px-0 transition-[transform,background-color] duration-200",
+              `size-10 px-0 ${SIDEBAR_ROUND_BUTTON_PRESS_CLASS}`,
               isSidebarClosePending
-                ? "scale-[0.92] rotate-90 bg-primary/12"
-                : "active:scale-[0.92] active:rotate-90 active:bg-primary/12",
+                ? "scale-[0.9] rotate-45 bg-primary/12 shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.12)]"
+                : "active:rotate-45",
             )}
             onClick={handleSidebarClose}
             size="icon"

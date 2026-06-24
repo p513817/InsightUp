@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BellRing, Plus, Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
+import { BusyCardShell, useActionFeedback } from "@/components/ui/action-feedback";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CompactInfoCard } from "@/components/ui/compact-info-card";
@@ -14,6 +16,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CompetitionProgress } from "@/lib/competitions";
 import { getCompetitionMemberByUserId } from "@/lib/competitions";
 import { formatCompactDate } from "@/lib/presentation";
+import { startRouteTransitionFeedback } from "@/lib/route-transition-feedback";
 import { cn } from "@/lib/utils";
 
 interface CompetitionsWorkspaceProps {
@@ -149,6 +152,21 @@ function CompetitionSection({
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
+  const navigationFeedback = useActionFeedback();
+  const [activeNavigationId, setActiveNavigationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    navigationFeedback.finishPending();
+    setActiveNavigationId(null);
+  }, [navigationFeedback.finishPending, pathname]);
+
+  function handleCardNavigate(competitionId: string) {
+    setActiveNavigationId(competitionId);
+    navigationFeedback.pulse();
+    navigationFeedback.startPending();
+    startRouteTransitionFeedback();
+  }
 
   async function handleResponse(competitionId: string, status: "accepted" | "declined") {
     try {
@@ -272,16 +290,24 @@ function CompetitionSection({
           }
 
           return (
-            <Link
-              className={cn(
-                "surface-soft-card group relative min-w-0 overflow-hidden rounded-[1.15rem] p-3 transition-[transform,box-shadow,border-color,opacity] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]",
-                isEnded ? "bg-muted/35 opacity-75 saturate-50 hover:opacity-90" : "",
-              )}
-              href={`/competitions/${competition.id}`}
+            <BusyCardShell
+              busy={activeNavigationId === competition.id && (navigationFeedback.isPending || navigationFeedback.isPulseVisible)}
               key={competition.id}
             >
-              {cardInner}
-            </Link>
+              <Link
+                className={cn(
+                  "surface-soft-card group relative z-10 block min-w-0 overflow-hidden rounded-[1.15rem] p-3 transition-[transform,box-shadow,border-color,opacity] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]",
+                  isEnded ? "bg-muted/35 opacity-75 saturate-50 hover:opacity-90" : "",
+                  activeNavigationId === competition.id && navigationFeedback.isPulseVisible
+                    ? "scale-[0.995] border-accent/50 shadow-[0_16px_34px_rgba(16,35,63,0.1)]"
+                    : "",
+                )}
+                href={`/competitions/${competition.id}`}
+                onClick={() => handleCardNavigate(competition.id)}
+              >
+                {cardInner}
+              </Link>
+            </BusyCardShell>
           );
         })}
       </div>

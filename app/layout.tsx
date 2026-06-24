@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { I18nProvider } from "@/components/i18n-provider";
+import { RouteTransitionIndicator } from "@/components/ui/route-transition-indicator";
 import { getLocaleDirection } from "@/lib/i18n";
 import { getServerTranslations } from "@/lib/i18n/server";
 
@@ -36,6 +38,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         suppressHydrationWarning
       >
         <I18nProvider key={locale} locale={locale} messages={messages}>
+          <Suspense fallback={null}>
+            <RouteTransitionIndicator />
+          </Suspense>
           {children}
           <Toaster position="top-right" richColors />
         </I18nProvider>

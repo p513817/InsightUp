@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/navigation/app-header";
+import { ContentTransitionShell } from "@/components/ui/content-transition-shell";
 import { ensureCurrentUserProfileExists } from "@/lib/friends/service";
 import { summarizeUser } from "@/lib/presentation";
+import { CONTENT_TRANSITION_START_EVENT } from "@/lib/route-transition-feedback";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function ProtectedLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -25,7 +27,16 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
           minHeight: "calc(100vh - var(--app-header-offset, 0px))",
         }}
       >
-        {children}
+        <ContentTransitionShell
+          eventName={CONTENT_TRANSITION_START_EVENT}
+          loadingContentClassName="pointer-events-none opacity-0"
+          minVisibleMs={650}
+          mode="event"
+          overlayMode="fixed"
+          waitForPathnameChange
+        >
+          {children}
+        </ContentTransitionShell>
       </main>
     </div>
   );
