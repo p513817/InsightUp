@@ -17,6 +17,7 @@ export type FriendCompareMetricItem = {
   label: string;
   myText: string;
   myValue: number | null;
+  unit: string;
 };
 
 interface FriendCompareGridProps {
@@ -45,7 +46,7 @@ function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
 
   return (
     <Card
-      className={`gap-2 rounded-[0.9rem] px-2.5 py-2.5 ${
+      className={`gap-1.5 rounded-[1rem] border-border/60 px-2.5 py-2 shadow-[0_10px_22px_rgba(16,35,63,0.05)] ${
         item.isSecondary ? "bg-card/78" : "bg-card/94"
       } ${isDragging ? "z-20 cursor-grabbing border-accent/65 opacity-95 shadow-[0_18px_34px_rgba(16,35,63,0.16)]" : ""}`}
       ref={setNodeRef}
@@ -54,31 +55,32 @@ function SortableCompareCard({ item }: { item: FriendCompareMetricItem }) {
         transition: isDragging ? "none" : transition,
       }}
     >
-      <div className="flex min-w-0 items-center gap-1.5">
+      <div className="grid min-w-0 grid-cols-[2rem_minmax(4rem,1fr)_minmax(3.25rem,0.72fr)_minmax(3.25rem,0.72fr)_minmax(3.25rem,0.72fr)] items-center gap-1.5">
         <button
           aria-label={item.label}
-          className="grid size-11 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/7 hover:text-primary active:scale-[0.94] active:rotate-3 active:cursor-grabbing"
+          className="grid size-8 shrink-0 touch-none cursor-grab place-items-center rounded-full text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/7 hover:text-primary active:scale-[0.94] active:rotate-3 active:cursor-grabbing"
           ref={setActivatorNodeRef}
           type="button"
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="size-4" />
+          <GripVertical className="size-3.5" />
         </button>
-        <p className="min-w-0 truncate text-sm font-semibold text-foreground sm:text-base">{item.label}</p>
-      </div>
-      <div className="grid min-w-0 grid-cols-3 gap-1.5">
-        <div className="min-w-0 rounded-[0.7rem] bg-muted/35 px-2 py-2">
-          <p className="truncate text-[10px] font-semibold leading-none text-muted-foreground">{t("friends.me")}</p>
-          <p className="mt-1 truncate font-display text-sm text-foreground">{item.myText}</p>
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-semibold uppercase leading-none text-muted-foreground">{item.unit || "-"}</p>
+          <p className="mt-1 truncate font-display text-[0.98rem] leading-tight text-foreground">{item.label}</p>
         </div>
-        <div className="min-w-0 rounded-[0.7rem] bg-primary/7 px-2 py-2">
-          <p className="truncate text-[10px] font-semibold leading-none text-muted-foreground">{t("friends.friend")}</p>
-          <p className="mt-1 truncate font-display text-sm text-foreground">{item.friendText}</p>
+        <div className="min-w-0 border-l border-border/55 px-1.5 py-1">
+          <p className="truncate text-[10px] font-semibold uppercase leading-none text-muted-foreground">{t("friends.me")}</p>
+          <p className="mt-1 truncate font-display text-[0.9rem] leading-none text-foreground">{item.myText}</p>
         </div>
-        <div className="min-w-0 rounded-[0.7rem] bg-background/70 px-2 py-2">
-          <p className="truncate text-[10px] font-semibold leading-none text-muted-foreground">{t("friends.diff")}</p>
-          <p className={`mt-1 truncate font-display text-sm ${getMetricDeltaToneClass(item.key, diffDelta)}`}>{item.diffText}</p>
+        <div className="min-w-0 border-l border-border/55 px-1.5 py-1">
+          <p className="truncate text-[10px] font-semibold uppercase leading-none text-muted-foreground">{t("friends.friend")}</p>
+          <p className="mt-1 truncate font-display text-[0.9rem] leading-none text-foreground">{item.friendText}</p>
+        </div>
+        <div className="min-w-0 border-l border-border/55 px-1.5 py-1">
+          <p className="truncate text-[10px] font-semibold uppercase leading-none text-muted-foreground">{t("friends.diff")}</p>
+          <p className={`mt-1 truncate font-display text-[0.9rem] leading-none ${getMetricDeltaToneClass(item.key, diffDelta)}`}>{item.diffText}</p>
         </div>
       </div>
     </Card>

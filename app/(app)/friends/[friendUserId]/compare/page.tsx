@@ -5,7 +5,7 @@ import { listFriendRecords, listFriendSnapshots } from "@/lib/friends/service";
 import { buildChartPayload, getLatestIncludedRecord, listRecords } from "@/lib/inbody/records";
 import type { ChartMetric, InbodyRecord } from "@/lib/inbody/types";
 import { getServerTranslations } from "@/lib/i18n/server";
-import { formatDecimal, formatLongDate, formatMetricValue, getUserInitials, summarizeUser } from "@/lib/presentation";
+import { formatDecimal, formatLongDate, getUserInitials, summarizeUser } from "@/lib/presentation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type FriendComparePageProps = {
@@ -18,13 +18,13 @@ function getRecordMetricValue(record: InbodyRecord | null, key: string) {
   return record ? ((record as unknown as Record<string, number | null>)[key] ?? null) : null;
 }
 
-function formatDifference(metric: ChartMetric, myValue: number | null, friendValue: number | null) {
+function formatDifference(myValue: number | null, friendValue: number | null) {
   if (myValue == null || friendValue == null) {
     return "-";
   }
 
   const diff = friendValue - myValue;
-  return `${diff > 0 ? "+" : ""}${formatMetricValue(metric, diff)}`;
+  return `${diff > 0 ? "+" : ""}${formatDecimal(diff)}`;
 }
 
 export default async function FriendComparePage({ params }: FriendComparePageProps) {
@@ -55,7 +55,7 @@ export default async function FriendComparePage({ params }: FriendComparePagePro
     const friendValue = getRecordMetricValue(friendLatest, metric.key);
 
     return {
-      diffText: formatDifference(metric, myValue, friendValue),
+      diffText: formatDifference(myValue, friendValue),
       friendText: formatDecimal(friendValue),
       friendValue,
       isSecondary: !["weight", "muscle", "fatPercent"].includes(metric.key),
@@ -63,6 +63,7 @@ export default async function FriendComparePage({ params }: FriendComparePagePro
       label: metric.label,
       myText: formatDecimal(myValue),
       myValue,
+      unit: metric.unit,
     };
   });
 
