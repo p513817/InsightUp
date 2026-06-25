@@ -40,7 +40,7 @@ It uses:
 - `corepack enable`
 - `corepack prepare pnpm@10.6.5 --activate`
 - `pnpm install`
-- `pnpm dev`
+- `pnpm dev` (always starts local development on port `5500`)
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`
@@ -57,6 +57,7 @@ Required env vars:
 - `GEMINI_API_KEY`
 
 OAuth redirect behavior must remain env-driven. Do not hardcode localhost or production domains in application code.
+Local development must use `http://localhost:5500` for `NEXT_PUBLIC_SITE_URL` and the dev server port because Google OAuth redirect URLs are configured for that origin. Do not start this project on port `3000` for normal local auth testing.
 
 ## Auth Invariants
 

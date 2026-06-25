@@ -44,13 +44,13 @@ The product rule that matters most: a record can exist in history without being 
    - `GEMINI_API_KEY`
 6. Apply Supabase migrations in filename order from `infra/supabase/migrations/`.
 7. Run `pnpm install`.
-8. Run `pnpm dev`.
+8. Run `pnpm dev`. The local app is served on `http://localhost:5500`.
 
 Do not hardcode localhost or production URLs. OAuth redirect behavior must stay driven by `NEXT_PUBLIC_SITE_URL` and the current request origin.
 
 ## Common Commands
 
-- `pnpm dev`
+- `pnpm dev` (starts Next.js on port `5500`)
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`

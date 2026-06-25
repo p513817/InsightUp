@@ -17,19 +17,19 @@ InsightUp 使用 Supabase Auth 的 Google OAuth。重點是：callback URL 必�
 `.env.local` 建議：
 
 ```env
-NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:5500
 ```
 
 如果你用 `localhost` 開啟，就使用：
 
 ```env
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:5500
 ```
 
 如果你啟動在不同 port，例如：
 
 ```bash
-pnpm dev --port 5500
+pnpm dev
 ```
 
 就要確認 Supabase Allowed Redirect URLs 有：
@@ -56,9 +56,7 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.example
 
 建議至少加入：
 
-- `http://127.0.0.1:3000/auth/callback`
-- `http://localhost:3000/auth/callback`
-- `http://localhost:5500/auth/callback`，如果本機常用 5500
+- `http://localhost:5500/auth/callback`
 - `https://your-app.vercel.app/auth/callback`
 - `https://your-domain.example/auth/callback`，如果有正式網域
 

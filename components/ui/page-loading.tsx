@@ -4,14 +4,27 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "@/components/i18n-provider";
 
 interface PageLoadingProps {
+  center?: "content" | "viewport";
   className?: string;
 }
 
-export function PageLoading({ className }: PageLoadingProps) {
+export function PageLoading({ center = "content", className }: PageLoadingProps) {
   const t = useTranslations();
+  const label = t("loading.label");
+  const isViewportCentered = center === "viewport";
 
   return (
-    <div className={cn("flex min-h-[60vh] flex-col items-center justify-center gap-8", className)}>
+    <div
+      aria-label={label}
+      aria-live="polite"
+      className={cn(
+        "flex flex-col items-center justify-center gap-8",
+        isViewportCentered ? "fixed inset-0 z-30 min-h-dvh px-4" : "min-h-[60vh]",
+        isViewportCentered ? "bg-background/92 backdrop-blur-sm" : "",
+        className,
+      )}
+      role="status"
+    >
       <div className="relative h-20 w-20">
         <span
           className="absolute inset-0 animate-ping rounded-full opacity-20"
@@ -50,7 +63,7 @@ export function PageLoading({ className }: PageLoadingProps) {
       </div>
 
       <p className="flex gap-[2px] text-xs font-semibold tracking-[0.3em] uppercase" style={{ color: "rgb(var(--brand-slate-500))" }}>
-        {t("loading.label").split("").map((char, i) => (
+        {label.split("").map((char, i) => (
           <span key={i} className="animate-pulse" style={{ animationDelay: `${i * 0.18}s`, animationDuration: "1.4s" }}>
             {char}
           </span>

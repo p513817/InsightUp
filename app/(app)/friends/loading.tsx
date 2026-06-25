@@ -1,5 +1,5 @@
-import { WorkspaceLoadingSkeleton } from "@/components/ui/workspace-loading-skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 export default function Loading() {
-  return <WorkspaceLoadingSkeleton variant="list" />;
+  return <PageLoading center="viewport" />;
 }

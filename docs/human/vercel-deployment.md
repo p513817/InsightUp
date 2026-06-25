@@ -34,12 +34,11 @@ NEXT_PUBLIC_SITE_URL=https://insightup.example.com
 
 Supabase Auth 的 Allowed Redirect URLs 至少需要包含：
 
-- `http://127.0.0.1:3000/auth/callback`
-- `http://localhost:3000/auth/callback`
+- `http://localhost:5500/auth/callback`
 - `https://your-app.vercel.app/auth/callback`
 - 正式自訂網域的 `/auth/callback`
 
-如果你在本機使用其他 port，例如 `5500`，也要加入對應 callback：
+本機開發固定使用 port `5500`，也要加入對應 callback：
 
 - `http://localhost:5500/auth/callback`
 

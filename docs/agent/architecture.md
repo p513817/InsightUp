@@ -150,6 +150,7 @@ Metric direction rules live in `lib/inbody/progress.ts`:
 
 - Production target is Vercel.
 - Required env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`, `GEMINI_API_KEY`.
+- Local development uses `http://localhost:5500` for `NEXT_PUBLIC_SITE_URL` and `pnpm dev`; Google OAuth redirect configuration depends on that origin.
 - OAuth redirect URLs must include local and production `/auth/callback` URLs in Supabase.
 - Keep route handlers compatible with Vercel serverless execution.
 

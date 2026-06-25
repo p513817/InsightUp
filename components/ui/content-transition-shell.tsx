@@ -34,13 +34,12 @@ export function ContentTransitionShell({
   minVisibleMs = DEFAULT_MIN_VISIBLE_MS,
   mode = "event",
   overlayClassName,
-  overlayMode = "absolute",
+  overlayMode = "fixed",
   waitForPathnameChange = false,
 }: ContentTransitionShellProps) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
-  const [fixedOverlayTop, setFixedOverlayTop] = useState<number | null>(null);
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const loadingStartedAtRef = useRef(0);
@@ -63,10 +62,6 @@ export function ContentTransitionShell({
 
     clearFinishTimer();
     setLockedHeight(containerRef.current?.getBoundingClientRect().height ?? null);
-    const headerOffset = Number.parseFloat(
-      window.getComputedStyle(document.documentElement).getPropertyValue("--app-header-offset"),
-    );
-    setFixedOverlayTop(Number.isFinite(headerOffset) ? headerOffset + 16 : 16);
     loadingStartedAtRef.current = window.performance.now();
     loadingPathnameRef.current = window.location.pathname;
     setIsFinishing(false);
@@ -112,7 +107,6 @@ export function ContentTransitionShell({
     finishTimerRef.current = window.setTimeout(() => {
       setIsLoading(false);
       setIsFinishing(false);
-      setFixedOverlayTop(null);
       setLockedHeight(null);
       loadingPathnameRef.current = null;
       finishTimerRef.current = null;
@@ -123,7 +117,7 @@ export function ContentTransitionShell({
     <div className={cn("relative", className)} ref={containerRef} style={lockedHeight != null ? { minHeight: lockedHeight } : undefined}>
       <div
         className={cn(
-          "transition-opacity duration-150 motion-reduce:transition-none",
+          "transition-[opacity,transform,filter] duration-200 motion-reduce:transition-none",
           isLoading && !isFinishing ? loadingContentClassName : "opacity-100",
           contentClassName,
         )}
@@ -135,14 +129,16 @@ export function ContentTransitionShell({
         <div
           className={cn(
             overlayMode === "fixed"
-              ? "fixed left-1/2 top-4 z-30 min-h-[52vh] w-[min(30rem,calc(100vw-2rem))] -translate-x-1/2 rounded-[1.75rem] bg-background/92 backdrop-blur-sm transition-opacity duration-180 motion-reduce:transition-none"
+              ? "pointer-events-none fixed inset-0 z-30 transition-opacity duration-200 motion-reduce:transition-none"
               : "absolute inset-x-0 top-0 z-20 min-h-[52vh] rounded-[1.75rem] bg-background/92 backdrop-blur-sm transition-opacity duration-180 motion-reduce:transition-none",
             isFinishing ? "opacity-0" : "opacity-100",
             overlayClassName,
           )}
-          style={overlayMode === "fixed" && fixedOverlayTop != null ? { top: fixedOverlayTop } : undefined}
         >
-          <PageLoading className="min-h-[52vh]" />
+          <PageLoading
+            center={overlayMode === "fixed" ? "viewport" : "content"}
+            className={overlayMode === "fixed" ? "" : "min-h-[52vh]"}
+          />
         </div>
       ) : null}
     </div>

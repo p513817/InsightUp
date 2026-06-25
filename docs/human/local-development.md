@@ -17,14 +17,14 @@
 4. 填入：
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000`
+   - `NEXT_PUBLIC_SITE_URL=http://localhost:5500`
    - `GEMINI_API_KEY`
 5. 在 Supabase 依照檔名順序套用 `infra/supabase/migrations/` 內的 SQL。
 6. 執行 `pnpm install`。
 7. 執行 `pnpm dev`。
-8. 用瀏覽器開啟 `http://127.0.0.1:3000`。
+8. 用瀏覽器開啟 `http://localhost:5500`。
 
-如果你改用其他 port，例如 `pnpm dev --port 5500`，請同步確認 OAuth 使用的 host 與 Supabase Allowed Redirect URLs 有包含對應 callback。
+本專案本機開發固定使用 port `5500`。Google OAuth redirect URLs 依此 origin 設定；不要用 `3000` 啟動一般本機登入測試。
 
 ## Supabase SQL 順序
 
