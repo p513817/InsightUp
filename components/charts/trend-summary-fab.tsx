@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { AlertTriangle, ChevronDown, ClipboardList, Lightbulb, LoaderCircle, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ export function TrendSummaryFab({
 
   const hasSummary = Boolean(summary || structuredSummary);
 
-  function applySummaryResponse(data: TrendSummaryResponse) {
+  const applySummaryResponse = useCallback((data: TrendSummaryResponse) => {
     setSummary(data.summary);
     setStructuredSummary(data.structuredSummary ?? null);
     setRequestDate(data.requestDate);
@@ -96,9 +96,9 @@ export function TrendSummaryFab({
           : t("summary.source.cache"),
     );
     setModelLabel(data.modelName || null);
-  }
+  }, [t]);
 
-  async function fetchLatestSummary(quiet = false) {
+  const fetchLatestSummary = useCallback(async (quiet = false) => {
     setLoadingSummary(!quiet);
     setRefreshingSummary(quiet);
     setSummaryError(null);
@@ -125,7 +125,7 @@ export function TrendSummaryFab({
       setLoadingSummary(false);
       setRefreshingSummary(false);
     }
-  }
+  }, [applySummaryResponse, t]);
 
   async function regenerateSummary() {
     if (generating || !canGenerate) {
@@ -164,7 +164,7 @@ export function TrendSummaryFab({
 
   useEffect(() => {
     void fetchLatestSummary();
-  }, []);
+  }, [fetchLatestSummary]);
 
   useEffect(() => {
     if (confirmOpen) {

@@ -484,7 +484,7 @@ export function RecordFormDialog({
     return () => {
       cancelled = true;
     };
-  }, [initialRecord, open]);
+  }, [initialRecord, isEnglish, open]);
 
   async function handleSubmit(values: RecordFormValues) {
     setIsSubmitting(true);

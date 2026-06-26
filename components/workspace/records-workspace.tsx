@@ -96,6 +96,7 @@ function SegmentIcon({ view, className = "size-5" }: { view: SegmentPartKey; cla
   const shouldMirror = view === "rightArm" || view === "leftLeg";
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       alt=""
       aria-hidden="true"
@@ -324,7 +325,7 @@ export function RecordsWorkspace({
 
       setIsDashboardChartRenderComplete(true);
     }
-  }, [mode, overallChart?.metrics.length, trendMode]);
+  }, [mode, overallChart?.metrics, trendMode]);
 
   const handleSegmentChartRenderComplete = useCallback((segmentKey: SegmentPartKey) => {
     if (mode !== "dashboard" || trendMode !== "segmental") {

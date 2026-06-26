@@ -115,7 +115,13 @@ export function RecordManager({
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
   const [activeEditRecordId, setActiveEditRecordId] = useState<string | null>(null);
-  const editFeedback = useActionFeedback();
+  const {
+    finishPending: finishEditPending,
+    isPending: isEditPending,
+    isPulseVisible: isEditPulseVisible,
+    pulse: pulseEdit,
+    startPending: startEditPending,
+  } = useActionFeedback();
 
   const sortedRecords = useMemo(
     () => [...records].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
@@ -145,9 +151,9 @@ export function RecordManager({
   }, [searchQuery]);
 
   useEffect(() => {
-    editFeedback.finishPending();
+    finishEditPending();
     setActiveEditRecordId(null);
-  }, [editFeedback.finishPending, pathname]);
+  }, [finishEditPending, pathname]);
 
   function clearSearch() {
     setSearchQuery("");
@@ -158,19 +164,19 @@ export function RecordManager({
   }
 
   const getRecordBusyState = useCallback((record: InbodyRecord) => {
-    return busyRecordId === record.id || (activeEditRecordId === record.id && (editFeedback.isPending || editFeedback.isPulseVisible));
-  }, [activeEditRecordId, busyRecordId, editFeedback.isPending, editFeedback.isPulseVisible]);
+    return busyRecordId === record.id || (activeEditRecordId === record.id && (isEditPending || isEditPulseVisible));
+  }, [activeEditRecordId, busyRecordId, isEditPending, isEditPulseVisible]);
 
   const handleEditClick = useCallback((record: InbodyRecord) => {
     setActiveEditRecordId(record.id);
-    editFeedback.pulse();
+    pulseEdit();
 
     if (mode === "records") {
-      editFeedback.startPending();
+      startEditPending();
     }
 
     onEdit(record);
-  }, [editFeedback, mode, onEdit]);
+  }, [mode, onEdit, pulseEdit, startEditPending]);
 
   function getMobileColumns(slot: NonNullable<ColumnDef<InbodyRecord>["meta"]>["mobileSlot"]) {
     return table

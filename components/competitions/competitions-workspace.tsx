@@ -153,18 +153,24 @@ function CompetitionSection({
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const navigationFeedback = useActionFeedback();
+  const {
+    finishPending: finishNavigationPending,
+    isPending: isNavigationPending,
+    isPulseVisible: isNavigationPulseVisible,
+    pulse: pulseNavigation,
+    startPending: startNavigationPending,
+  } = useActionFeedback();
   const [activeNavigationId, setActiveNavigationId] = useState<string | null>(null);
 
   useEffect(() => {
-    navigationFeedback.finishPending();
+    finishNavigationPending();
     setActiveNavigationId(null);
-  }, [navigationFeedback.finishPending, pathname]);
+  }, [finishNavigationPending, pathname]);
 
   function handleCardNavigate(competitionId: string) {
     setActiveNavigationId(competitionId);
-    navigationFeedback.pulse();
-    navigationFeedback.startPending();
+    pulseNavigation();
+    startNavigationPending();
     startRouteTransitionFeedback();
   }
 
@@ -291,14 +297,14 @@ function CompetitionSection({
 
           return (
             <BusyCardShell
-              busy={activeNavigationId === competition.id && (navigationFeedback.isPending || navigationFeedback.isPulseVisible)}
+              busy={activeNavigationId === competition.id && (isNavigationPending || isNavigationPulseVisible)}
               key={competition.id}
             >
               <Link
                 className={cn(
                   "surface-soft-card group relative z-10 block min-w-0 overflow-hidden rounded-[1.15rem] p-3 transition-[transform,box-shadow,border-color,opacity] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(16,35,63,0.09)]",
                   isEnded ? "bg-muted/35 opacity-75 saturate-50 hover:opacity-90" : "",
-                  activeNavigationId === competition.id && navigationFeedback.isPulseVisible
+                  activeNavigationId === competition.id && isNavigationPulseVisible
                     ? "scale-[0.995] border-accent/50 shadow-[0_16px_34px_rgba(16,35,63,0.1)]"
                     : "",
                 )}

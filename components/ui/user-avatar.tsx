@@ -33,6 +33,7 @@ export function UserAvatar({
   return (
     <div className={className} title={title}>
       {shouldShowImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           alt={name}
           className={cn("size-full object-cover", imageClassName)}
