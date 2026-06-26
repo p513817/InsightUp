@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { FriendCompareGrid, type FriendCompareMetricItem } from "@/components/friends/friend-compare-grid";
+import type { FriendCompareMetricItem } from "@/components/friends/friend-compare-grid";
+import { FriendCompareWorkspace } from "@/components/friends/friend-compare-workspace";
 import { Card } from "@/components/ui/card";
 import { listFriendRecords, listFriendSnapshots } from "@/lib/friends/service";
 import { buildChartPayload, getLatestIncludedRecord, listRecords } from "@/lib/inbody/records";
@@ -103,7 +104,7 @@ export default async function FriendComparePage({ params }: FriendComparePagePro
         </div>
       </Card>
 
-      <FriendCompareGrid items={compareItems} storageKey={`insightup.friend-compare.metric-order.${friendUserId}`} />
+      <FriendCompareWorkspace friendUserId={friendUserId} items={compareItems} />
     </div>
   );
 }

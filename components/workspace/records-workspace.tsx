@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Columns2, Eye, EyeOff, RectangleHorizontal, Share2, TrendingUp } from "lucide-react";
+import { Columns2, Eye, EyeOff, RectangleHorizontal, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
@@ -597,13 +597,6 @@ export function RecordsWorkspace({
               label: t("dashboardTrendUi.trendLine"),
               onClick: toggleTrendLine,
               title: t("dashboardTrendUi.trendLine"),
-            },
-            {
-              ariaLabel: t("dashboardTrendUi.shareShort"),
-              href: "/share",
-              icon: <Share2 className="size-4" />,
-              label: t("dashboardTrendUi.shareShort"),
-              title: t("dashboardTrendUi.shareShort"),
             },
           ]}
         />

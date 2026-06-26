@@ -31,8 +31,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         className="grain-overlay"
         style={
           {
-            "--font-display": "Georgia, serif",
-            "--font-body": "system-ui",
+            "--font-display": '"Microsoft JhengHei", "Microsoft JhengHei UI", "PingFang TC", "Noto Sans TC", system-ui',
+            "--font-body": '"Microsoft JhengHei", "Microsoft JhengHei UI", "PingFang TC", "Noto Sans TC", system-ui',
           } as CSSProperties
         }
         suppressHydrationWarning

@@ -22,6 +22,7 @@ interface MiniTrendGridProps {
   onRenderStart?: () => void;
   onRenderComplete?: () => void;
   showTrendLine?: boolean;
+  storageScope?: string;
 }
 
 const METRIC_ORDER_STORAGE_KEY = "insightup.dashboard.metric-order";
@@ -46,11 +47,19 @@ const LAYOUT_GRID_CLASS_MAP: Record<TrendGridLayout, string> = {
   two: "grid grid-cols-2 gap-2",
 };
 
-function getMetricOrderStorageKey(view: ChartPayload["view"]) {
+function getMetricOrderStorageKey(view: ChartPayload["view"], storageScope?: string) {
+  if (storageScope) {
+    return `${METRIC_ORDER_STORAGE_KEY}.${storageScope}.${view}`;
+  }
+
   return view === "overall" ? METRIC_ORDER_STORAGE_KEY : `${METRIC_ORDER_STORAGE_KEY}.${view}`;
 }
 
-function getHiddenMetricsStorageKey(view: ChartPayload["view"]) {
+function getHiddenMetricsStorageKey(view: ChartPayload["view"], storageScope?: string) {
+  if (storageScope) {
+    return `${HIDDEN_METRICS_STORAGE_KEY}.${storageScope}.${view}`;
+  }
+
   return view === "overall" ? HIDDEN_METRICS_STORAGE_KEY : `${HIDDEN_METRICS_STORAGE_KEY}.${view}`;
 }
 
@@ -458,6 +467,7 @@ export function MiniTrendGrid({
   onRenderStart,
   onRenderComplete,
   showTrendLine = false,
+  storageScope,
 }: MiniTrendGridProps) {
   const locale = useLocale();
   const [isChartReady, setIsChartReady] = useState(false);
@@ -478,6 +488,8 @@ export function MiniTrendGrid({
   );
   const visibleMetricKey = visibleMetricKeys.join(",");
   const visibleMetricTotal = visibleMetricKeys.length;
+  const metricOrderStorageKey = useMemo(() => getMetricOrderStorageKey(chart.view, storageScope), [chart.view, storageScope]);
+  const hiddenMetricsStorageKey = useMemo(() => getHiddenMetricsStorageKey(chart.view, storageScope), [chart.view, storageScope]);
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -570,7 +582,7 @@ export function MiniTrendGrid({
 
   useEffect(() => {
     let savedOrder: string[] = [];
-    const savedOrderRaw = window.localStorage.getItem(getMetricOrderStorageKey(chart.view));
+    const savedOrderRaw = window.localStorage.getItem(metricOrderStorageKey);
 
     if (savedOrderRaw) {
       try {
@@ -588,11 +600,11 @@ export function MiniTrendGrid({
       setOrderedMetrics(nextMetrics);
     }
 
-    window.localStorage.setItem(getMetricOrderStorageKey(chart.view), JSON.stringify(nextMetrics.map((metric) => metric.key)));
-  }, [chart.metrics, chart.view, initialMetricOrder]);
+    window.localStorage.setItem(metricOrderStorageKey, JSON.stringify(nextMetrics.map((metric) => metric.key)));
+  }, [chart.metrics, chart.view, initialMetricOrder, metricOrderStorageKey]);
 
   useEffect(() => {
-    const hiddenMetricsRaw = window.localStorage.getItem(getHiddenMetricsStorageKey(chart.view));
+    const hiddenMetricsRaw = window.localStorage.getItem(hiddenMetricsStorageKey);
 
     if (!hiddenMetricsRaw) {
       setHiddenMetricKeys([]);
@@ -606,7 +618,7 @@ export function MiniTrendGrid({
     } catch {
       setHiddenMetricKeys([]);
     }
-  }, [chart.metrics, chart.view]);
+  }, [chart.metrics, hiddenMetricsStorageKey]);
 
   useEffect(() => {
     return () => {
@@ -621,9 +633,9 @@ export function MiniTrendGrid({
     setOrderedMetrics(nextMetrics);
 
     const nextMetricOrder = nextMetrics.map((metric) => metric.key);
-    window.localStorage.setItem(getMetricOrderStorageKey(chart.view), JSON.stringify(nextMetricOrder));
+    window.localStorage.setItem(metricOrderStorageKey, JSON.stringify(nextMetricOrder));
 
-    if (chart.view !== "overall") {
+    if (storageScope || chart.view !== "overall") {
       return;
     }
 
@@ -661,7 +673,7 @@ export function MiniTrendGrid({
 
   function applyHiddenMetricKeys(nextHiddenMetricKeys: string[]) {
     setHiddenMetricKeys(nextHiddenMetricKeys);
-    window.localStorage.setItem(getHiddenMetricsStorageKey(chart.view), JSON.stringify(nextHiddenMetricKeys));
+    window.localStorage.setItem(hiddenMetricsStorageKey, JSON.stringify(nextHiddenMetricKeys));
   }
 
   function hideMetric(metricKey: string) {

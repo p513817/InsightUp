@@ -16,9 +16,21 @@ export type BottomActionDockItem = {
   variant?: "default" | "danger";
 };
 
+export type BottomActionDockModeToggle = {
+  active: boolean;
+  activeAriaLabel?: string;
+  activeIcon: ReactNode;
+  activeLabel: string;
+  inactiveAriaLabel?: string;
+  inactiveIcon: ReactNode;
+  inactiveLabel: string;
+  onToggle: () => void;
+};
+
 type BottomActionDockProps = {
   items: BottomActionDockItem[];
   className?: string;
+  modeToggle?: BottomActionDockModeToggle;
 };
 
 const dockItemClassName = (item: BottomActionDockItem) =>
@@ -48,8 +60,23 @@ function getDockItemEdgeClassName(index: number, count: number) {
   return "rounded-[0.9rem]";
 }
 
-export function BottomActionDock({ items, className }: BottomActionDockProps) {
-  if (items.length === 0) {
+function getModeToggleItem(modeToggle: BottomActionDockModeToggle): BottomActionDockItem {
+  const label = modeToggle.active ? modeToggle.activeLabel : modeToggle.inactiveLabel;
+
+  return {
+    active: modeToggle.active,
+    ariaLabel: modeToggle.active ? (modeToggle.activeAriaLabel ?? label) : (modeToggle.inactiveAriaLabel ?? label),
+    icon: modeToggle.active ? modeToggle.activeIcon : modeToggle.inactiveIcon,
+    label,
+    onClick: modeToggle.onToggle,
+    title: label,
+  };
+}
+
+export function BottomActionDock({ items, className, modeToggle }: BottomActionDockProps) {
+  const dockItems = modeToggle ? [getModeToggleItem(modeToggle), ...items] : items;
+
+  if (dockItems.length === 0) {
     return null;
   }
 
@@ -61,7 +88,7 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
       )}
     >
       <div className="bottom-action-dock-surface pointer-events-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center gap-1.5 rounded-[1.75rem] px-1.5 py-2">
-        {items.map((item, index) => {
+        {dockItems.map((item, index) => {
             const content = (
                 <span className="grid size-6 shrink-0 place-items-center [&_svg]:size-6" aria-hidden="true">
                   {item.icon}
@@ -69,7 +96,7 @@ export function BottomActionDock({ items, className }: BottomActionDockProps) {
             );
             const itemClassName = cn(
               dockItemClassName(item),
-              getDockItemEdgeClassName(index, items.length),
+              getDockItemEdgeClassName(index, dockItems.length),
             );
 
             if (item.href && !item.disabled) {

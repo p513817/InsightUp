@@ -107,11 +107,13 @@ export function AppHeader({ user }: AppHeaderProps) {
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isDashboard = pathname === "/dashboard";
-  const isRecords = pathname.startsWith("/records") || pathname === "/profile";
+  const isRecords = pathname.startsWith("/records");
   const isFriends = pathname.startsWith("/friends");
   const isCompetitions = pathname.startsWith("/competitions");
   const isPersonalGoal = pathname.startsWith("/personal-goal");
   const isSummary = pathname === "/summary";
+  const isAccount = pathname === "/account" || pathname === "/profile";
+  const isShare = pathname === "/share";
   const dashboardTrendMode = searchParams.get("trend") === "segmental" ? "segmental" : "overall";
   const friendDetailMatch = pathname.match(/^\/friends\/([^/]+)(?:\/compare)?$/);
   const friendUserId = friendDetailMatch?.[1] ?? null;
@@ -168,6 +170,11 @@ export function AppHeader({ user }: AppHeaderProps) {
       active: isSummary,
     },
   ];
+  const activePageLabel =
+    navItems.find((item) => item.active)?.label
+    ?? (isAccount ? t("account.title") : null)
+    ?? (isShare ? t("shareTrend.title") : null)
+    ?? "InsightUp";
 
   function setDashboardTrendMode(nextMode: "overall" | "segmental") {
     if (nextMode === dashboardTrendMode) {
@@ -176,16 +183,19 @@ export function AppHeader({ user }: AppHeaderProps) {
 
     startRouteTransitionFeedback();
     const params = new URLSearchParams(searchParams.toString());
-    params.set("trend", nextMode);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+    if (nextMode === "segmental") {
+      params.set("trend", "segmental");
+    } else {
+      params.delete("trend");
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   }
 
   function setFriendViewMode(nextMode: "trend" | "compare") {
-    if (!friendUserId) {
-      return;
-    }
-
-    if (nextMode === friendViewMode) {
+    if (!friendUserId || nextMode === friendViewMode) {
       return;
     }
 
@@ -361,11 +371,11 @@ export function AppHeader({ user }: AppHeaderProps) {
   return (
     <>
       <header
-        className="sticky top-0 z-40 border-b border-border/55 bg-background/94 shadow-[0_8px_22px_rgba(16,35,63,0.08)] backdrop-blur-sm transition-transform duration-[420ms] will-change-transform motion-reduce:transition-none"
+        className="sticky top-0 z-40 border-b border-border/55 bg-background/94 shadow-[0_6px_18px_rgba(16,35,63,0.07)] backdrop-blur-sm transition-transform duration-[420ms] will-change-transform motion-reduce:transition-none"
         ref={headerRef}
         style={headerStyle}
       >
-        <div className="relative mx-auto flex h-[4.25rem] w-full max-w-[30rem] items-center justify-between gap-3 px-4 sm:px-5">
+        <div className="relative mx-auto flex h-[3.75rem] w-full max-w-[30rem] items-center justify-between gap-3 px-4 sm:px-5">
           <div className="surface-pill flex h-[2.625rem] min-w-0 items-center rounded-full bg-card/78 p-[0.3125rem] shadow-none">
             <button
               aria-label={t("navigation.menu")}
@@ -406,7 +416,7 @@ export function AppHeader({ user }: AppHeaderProps) {
               items={[
                 {
                   icon: <Activity className="size-4" />,
-                  label: t("friends.friendTrendTab"),
+                  label: t("friends.overviewTab"),
                   value: "trend",
                 },
                 {
@@ -419,8 +429,10 @@ export function AppHeader({ user }: AppHeaderProps) {
               value={friendViewMode}
             />
           ) : (
-            <p className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[44vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center font-display text-xl leading-none text-foreground shadow-none sm:text-2xl">
-              InsightUp
+            <p
+              className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[52vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center text-[1.08rem] font-semibold leading-none text-foreground shadow-none sm:max-w-[58vw] sm:text-xl"
+            >
+              <span className="truncate">{activePageLabel}</span>
             </p>
           )}
 
@@ -453,7 +465,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       >
         <div
           className={cn(
-            "flex items-center justify-between gap-3 border-b border-border/36 px-4 py-3.5 transition-[opacity,transform] motion-reduce:transition-none",
+            "flex h-[3.75rem] items-center justify-between gap-3 border-b border-border/36 px-4 transition-[opacity,transform] motion-reduce:transition-none",
             SIDEBAR_PANEL_DURATION_CLASS,
             SIDEBAR_PANEL_EASE_CLASS,
             isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0",
@@ -462,8 +474,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           <div className="flex min-w-0 items-center gap-3">
             <LogoAnimated className="size-9 rounded-full" playSignal={sidebarLogoPlaySignal} size={40} />
             <div className="min-w-0">
-              <p className="truncate font-display text-lg text-foreground">InsightUp</p>
-              <p className="text-xs text-muted-foreground">{t("navigation.brandTagline")}</p>
+              <p className="truncate font-display text-lg leading-none text-foreground">InsightUp</p>
             </div>
           </div>
           <Button
