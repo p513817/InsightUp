@@ -75,7 +75,6 @@ Human-facing docs:
 - Vercel deployment: `docs/human/vercel-deployment.md`
 - Product usage guide: `docs/human/usage-guide.md`
 - Visual theme: `docs/human/visual-theme.md`
-- Landing/product positioning: `docs/human/landing.md`
 
 ## Repository Map
 
