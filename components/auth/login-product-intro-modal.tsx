@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTranslations } from "@/components/i18n-provider";
@@ -26,6 +27,31 @@ export function LoginProductIntroModal({ triggerClassName }: LoginProductIntroMo
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-7">
           <div className="space-y-6 pr-1">
+            <section className="surface-subtle-gradient overflow-hidden rounded-[1.5rem] border border-border/70">
+              <div className="grid gap-5 p-4 sm:p-5 md:grid-cols-[0.9fr_1.1fr] md:items-center md:p-6">
+                <div className="space-y-3">
+                  <h3 className="font-display text-2xl font-semibold leading-tight text-foreground sm:text-3xl">{t("auth.intro.sections.problemTitle")}</h3>
+                  <p className="text-sm leading-7 text-muted-foreground">{t("auth.intro.sections.problemBody")}</p>
+                  <div className="grid gap-2 pt-1">
+                    <p className="rounded-full border border-border/70 bg-card/88 px-4 py-2 text-sm font-semibold text-foreground">{t("auth.intro.sections.problemPoint1")}</p>
+                    <p className="rounded-full border border-border/70 bg-card/88 px-4 py-2 text-sm font-semibold text-foreground">{t("auth.intro.sections.problemPoint2")}</p>
+                    <p className="rounded-full border border-border/70 bg-card/88 px-4 py-2 text-sm font-semibold text-foreground">{t("auth.intro.sections.problemPoint3")}</p>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-card/90 shadow-[0_14px_34px_rgba(16,35,63,0.08)]">
+                  <Image
+                    src="/landing-user-problem.png"
+                    alt={t("auth.intro.sections.problemImageAlt")}
+                    width={810}
+                    height={456}
+                    className="h-auto w-full"
+                    sizes="(min-width: 768px) 480px, calc(100vw - 72px)"
+                  />
+                </div>
+              </div>
+            </section>
+
             <section className="grid gap-3 md:grid-cols-3">
               <div className="surface-subtle-gradient rounded-[1.35rem] border border-border/70 p-4">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Insight</p>
