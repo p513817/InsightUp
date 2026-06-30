@@ -6,6 +6,7 @@ import {
   listPersonalGoals,
   personalGoalBatchCreateSchema,
   personalGoalCreateSchema,
+  stripCompetitionGoalFields,
 } from "@/lib/personal-goals";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -42,7 +43,12 @@ export async function POST(request: Request) {
   const latestRecord = await getLatestRecord(supabase, user.id);
 
   if (batchParsed.success) {
-    const goals = await createPersonalGoals(supabase, user.id, batchParsed.data.goals, latestRecord);
+    const goals = await createPersonalGoals(
+      supabase,
+      user.id,
+      batchParsed.data.goals.map((goal) => stripCompetitionGoalFields(goal)),
+      latestRecord,
+    );
     return NextResponse.json({ goals }, { status: 201 });
   }
 
@@ -52,6 +58,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: batchParsed.error.issues[0]?.message || parsed.error.issues[0]?.message || "Invalid payload" }, { status: 400 });
   }
 
-  const goal = await createPersonalGoal(supabase, user.id, parsed.data, latestRecord);
+  const goal = await createPersonalGoal(supabase, user.id, stripCompetitionGoalFields(parsed.data), latestRecord);
   return NextResponse.json({ goal }, { status: 201 });
 }

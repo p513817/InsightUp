@@ -1,13 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { sanitizeNextPath } from "@/lib/auth/redirects";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-function sanitizeNextPath(nextValue: string | null) {
-  if (!nextValue || !nextValue.startsWith("/")) {
-    return "/dashboard";
-  }
-
-  return nextValue;
-}
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);

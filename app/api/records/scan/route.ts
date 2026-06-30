@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_GEMINI_ROTATION_MODELS, LlmProviderError, generateText } from "@/lib/llms";
 import { consumeDailyFeatureUsage, getDailyFeatureUsage, resolveMyFeatureEntitlement } from "@/lib/llms/usage";
+import { MAX_UPLOAD_SIZE_BYTES, isOversizedScanUpload } from "@/lib/inbody/scan-upload";
 import { buildRecordScanPrompt, parseRecordScanResult } from "@/lib/inbody/scan";
 import { getTodayTaipeiDate } from "@/lib/inbody/trend-summary";
 import { getServerTranslations } from "@/lib/i18n/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const FEATURE_KEY = "inbody_scan";
-const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 
 async function getAuthenticatedContext() {
@@ -102,6 +102,10 @@ export async function POST(request: Request) {
         },
         { status: 429 },
       );
+    }
+
+    if (isOversizedScanUpload(request.headers.get("content-length"))) {
+      return NextResponse.json({ message: t("api.scan.fileTooLarge") }, { status: 413 });
     }
 
     const formData = await request.formData();

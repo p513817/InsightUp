@@ -30,6 +30,15 @@ export const personalGoalBatchCreateSchema = z.object({
 
 export type PersonalGoalCreateValues = z.infer<typeof personalGoalCreateSchema>;
 
+export function stripCompetitionGoalFields<T extends PersonalGoalCreateValues>(input: T): T {
+  return {
+    ...input,
+    competitionId: null,
+    competitionMemberId: null,
+    targetDateLocked: false,
+  };
+}
+
 export const personalGoalUpdateSchema = z.object({
   title: z.string().trim().max(80).nullable().optional(),
   startRecordId: z.string().uuid().nullable().optional(),

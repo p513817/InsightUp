@@ -46,6 +46,7 @@ describe("test auth guard", () => {
   it("requires the exact shared secret header", () => {
     expect(isValidTestAuthSecret("abc", "abc")).toBe(true);
     expect(isValidTestAuthSecret("abc", "def")).toBe(false);
+    expect(isValidTestAuthSecret("abc", "abcd")).toBe(false);
     expect(isValidTestAuthSecret(null, "abc")).toBe(false);
   });
 });
