@@ -142,18 +142,18 @@ export function AppHeader({ user }: AppHeaderProps) {
       active: isRecords,
     },
     {
-      href: "/personal-goal",
-      label: t("navigation.personal_goal.label"),
-      description: t("navigation.personal_goal.description"),
-      icon: <Target className="size-4" />,
-      active: isPersonalGoal,
-    },
-    {
       href: "/summary",
       label: t("navigation.summary.label"),
       description: t("navigation.summary.description"),
       icon: <Sparkles className="size-4" />,
       active: isSummary,
+    },
+    {
+      href: "/personal-goal",
+      label: t("navigation.personal_goal.label"),
+      description: t("navigation.personal_goal.description"),
+      icon: <Target className="size-4" />,
+      active: isPersonalGoal,
     },
     {
       href: "/friends",
