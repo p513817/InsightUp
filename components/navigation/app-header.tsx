@@ -142,20 +142,6 @@ export function AppHeader({ user }: AppHeaderProps) {
       active: isRecords,
     },
     {
-      href: "/friends",
-      label: t("navigation.friends.label"),
-      description: t("navigation.friends.description"),
-      icon: <UsersRound className="size-4" />,
-      active: isFriends,
-    },
-    {
-      href: "/competitions",
-      label: t("navigation.competitions.label"),
-      description: t("navigation.competitions.description"),
-      icon: <Trophy className="size-4" />,
-      active: isCompetitions,
-    },
-    {
       href: "/personal-goal",
       label: t("navigation.personal_goal.label"),
       description: t("navigation.personal_goal.description"),
@@ -168,6 +154,20 @@ export function AppHeader({ user }: AppHeaderProps) {
       description: t("navigation.summary.description"),
       icon: <Sparkles className="size-4" />,
       active: isSummary,
+    },
+    {
+      href: "/friends",
+      label: t("navigation.friends.label"),
+      description: t("navigation.friends.description"),
+      icon: <UsersRound className="size-4" />,
+      active: isFriends,
+    },
+    {
+      href: "/competitions",
+      label: t("navigation.competitions.label"),
+      description: t("navigation.competitions.description"),
+      icon: <Trophy className="size-4" />,
+      active: isCompetitions,
     },
   ];
   const activePageLabel =

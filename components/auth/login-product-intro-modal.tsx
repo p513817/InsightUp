@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTranslations } from "@/components/i18n-provider";
@@ -28,27 +29,54 @@ export function LoginProductIntroModal({ triggerClassName }: LoginProductIntroMo
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-7">
           <div className="space-y-6 pr-1">
             <section className="surface-subtle-gradient overflow-hidden rounded-[1.5rem] border border-border/70">
-              <div className="grid gap-5 p-4 sm:p-5 md:grid-cols-[0.9fr_1.1fr] md:items-center md:p-6">
+              <div className="grid gap-5 p-4 sm:p-5 md:p-6">
                 <div className="space-y-3">
                   <h3 className="font-display text-2xl font-semibold leading-tight text-foreground sm:text-3xl">{t("auth.intro.sections.problemTitle")}</h3>
                   <p className="text-sm leading-7 text-muted-foreground">{t("auth.intro.sections.problemBody")}</p>
-                  <div className="grid gap-2 pt-1">
+                  <div className="grid gap-2 pt-1 md:grid-cols-3">
                     <p className="rounded-full border border-border/70 bg-card/88 px-4 py-2 text-sm font-semibold text-foreground">{t("auth.intro.sections.problemPoint1")}</p>
                     <p className="rounded-full border border-border/70 bg-card/88 px-4 py-2 text-sm font-semibold text-foreground">{t("auth.intro.sections.problemPoint2")}</p>
                     <p className="rounded-full border border-border/70 bg-card/88 px-4 py-2 text-sm font-semibold text-foreground">{t("auth.intro.sections.problemPoint3")}</p>
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-card/90 shadow-[0_14px_34px_rgba(16,35,63,0.08)]">
-                  <Image
-                    src="/landing-user-problem.png"
-                    alt={t("auth.intro.sections.problemImageAlt")}
-                    width={810}
-                    height={456}
-                    className="h-auto w-full"
-                    sizes="(min-width: 768px) 480px, calc(100vw - 72px)"
-                  />
-                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      className="group relative min-h-11 overflow-hidden rounded-[1.25rem] border border-border/70 bg-card/90 text-left shadow-[0_14px_34px_rgba(16,35,63,0.08)] transition-[border-color,box-shadow,transform,filter] duration-200 hover:border-primary/30 hover:shadow-[0_18px_42px_rgba(16,35,63,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 active:scale-[0.99] active:brightness-95"
+                      type="button"
+                    >
+                      <Image
+                        src="/landing-user-problem.png"
+                        alt={t("auth.intro.sections.problemImageAlt")}
+                        width={810}
+                        height={456}
+                        className="h-auto w-full"
+                        sizes="(min-width: 1024px) 768px, calc(100vw - 72px)"
+                      />
+                      <span className="absolute bottom-3 right-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-card/92 px-4 text-xs font-semibold text-foreground shadow-[0_10px_22px_rgba(16,35,63,0.12)] backdrop-blur transition-colors group-hover:border-primary/30 group-hover:text-primary">
+                        <Maximize2 className="size-4" />
+                        {t("auth.intro.sections.problemImageZoom")}
+                      </span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[calc(100vw-1rem)] max-w-6xl rounded-[1.5rem] p-0 sm:w-[calc(100vw-2rem)] sm:rounded-[2rem]">
+                    <DialogHeader className="border-b border-border/70 px-5 py-4 sm:px-6">
+                      <DialogTitle className="pr-10 text-xl sm:text-2xl">{t("auth.intro.sections.problemImageZoomTitle")}</DialogTitle>
+                      <DialogDescription>{t("auth.intro.sections.problemImageZoomDescription")}</DialogDescription>
+                    </DialogHeader>
+                    <div className="overflow-auto bg-surface-alt/70 p-3 sm:p-5">
+                      <Image
+                        src="/landing-user-problem.png"
+                        alt={t("auth.intro.sections.problemImageAlt")}
+                        width={1620}
+                        height={912}
+                        className="mx-auto h-auto w-full max-w-none rounded-[1rem] border border-border/70 bg-card shadow-[0_18px_44px_rgba(16,35,63,0.14)]"
+                        sizes="calc(100vw - 48px)"
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </section>
 
