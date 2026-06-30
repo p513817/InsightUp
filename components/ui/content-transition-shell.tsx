@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { PageLoading } from "@/components/ui/page-loading";
 import { ROUTE_TRANSITION_START_EVENT } from "@/lib/route-transition-feedback";
@@ -46,16 +46,16 @@ export function ContentTransitionShell({
   const loadingPathnameRef = useRef<string | null>(null);
   const finishTimerRef = useRef<number | null>(null);
 
-  function clearFinishTimer() {
+  const clearFinishTimer = useCallback(() => {
     if (finishTimerRef.current == null) {
       return;
     }
 
     window.clearTimeout(finishTimerRef.current);
     finishTimerRef.current = null;
-  }
+  }, []);
 
-  function startLoading() {
+  const startLoading = useCallback(() => {
     if (isLoading && !isFinishing) {
       return;
     }
@@ -66,7 +66,7 @@ export function ContentTransitionShell({
     loadingPathnameRef.current = window.location.pathname;
     setIsFinishing(false);
     setIsLoading(true);
-  }
+  }, [clearFinishTimer, isFinishing, isLoading]);
 
   useEffect(() => {
     if (mode === "controlled") {
@@ -79,7 +79,7 @@ export function ContentTransitionShell({
       clearFinishTimer();
       window.removeEventListener(eventName, startLoading);
     };
-  }, [eventName, mode]);
+  }, [clearFinishTimer, eventName, mode, startLoading]);
 
   useEffect(() => {
     if (mode === "event") {
@@ -89,7 +89,7 @@ export function ContentTransitionShell({
     if (active) {
       startLoading();
     }
-  }, [active, mode]);
+  }, [active, mode, startLoading]);
 
   useEffect(() => {
     if (!isLoading || !complete) {

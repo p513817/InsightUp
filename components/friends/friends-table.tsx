@@ -87,9 +87,15 @@ function FriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBu
   const router = useRouter();
   const pathname = usePathname();
   const copyFeedback = useActionFeedback();
-  const navigationFeedback = useActionFeedback();
+  const {
+    finishPending: finishNavigationPending,
+    isPending: isNavigationPending,
+    isPulseVisible: isNavigationPulseVisible,
+    pulse: pulseNavigation,
+    startPending: startNavigationPending,
+  } = useActionFeedback();
   const removeFeedback = useActionFeedback();
-  const isActionDisabled = copyFeedback.isPending || navigationFeedback.isPending || isBusy;
+  const isActionDisabled = copyFeedback.isPending || isNavigationPending || isBusy;
   const metricItems = [
     {
       delta: formatDelta(friend.latestWeightDelta),
@@ -125,8 +131,8 @@ function FriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBu
   }
 
   function handleNavigate(href: string) {
-    navigationFeedback.pulse();
-    navigationFeedback.startPending();
+    pulseNavigation();
+    startNavigationPending();
     startRouteTransitionFeedback();
     router.push(href);
   }
@@ -137,11 +143,11 @@ function FriendCard({ friend, isBusy, onRemove }: { friend: FriendSnapshot; isBu
   }
 
   useEffect(() => {
-    navigationFeedback.finishPending();
-  }, [navigationFeedback.finishPending, pathname]);
+    finishNavigationPending();
+  }, [finishNavigationPending, pathname]);
 
-  const isCardBusy = isBusy || copyFeedback.isPending || navigationFeedback.isPending || navigationFeedback.isPulseVisible;
-  const isCardPulseVisible = copyFeedback.isPulseVisible || navigationFeedback.isPulseVisible || removeFeedback.isPulseVisible;
+  const isCardBusy = isBusy || copyFeedback.isPending || isNavigationPending || isNavigationPulseVisible;
+  const isCardPulseVisible = copyFeedback.isPulseVisible || isNavigationPulseVisible || removeFeedback.isPulseVisible;
 
   return (
     <BusyCardShell busy={isCardBusy}>
