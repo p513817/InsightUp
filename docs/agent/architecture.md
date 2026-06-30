@@ -15,6 +15,7 @@ The app intentionally remains a single deployable unit. Route handlers under `ap
 `app/` contains:
 
 - public landing page at `app/page.tsx`
+- product intro modal and landing illustration wiring through `components/auth/login-product-intro-modal.tsx` and `public/landing-user-problem.png`
 - protected app shell under `app/(app)/`
 - dashboard, records, personal goals, friends, competitions, share, summary, profile, and account pages
 - route handlers under `app/api/*`

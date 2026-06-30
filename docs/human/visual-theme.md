@@ -130,6 +130,9 @@ Dashboard 需要多個 metric 同時存在，因此圖表色不能只靠 logo �
 
 目前主題不只換顏色，也同時定義了幾個造型方向：
 
+- `Noto Sans TC`
+  全站透過 Next font 載入 Noto Sans TC，並作為 display 與 body 字體的第一順位；後備字體才使用系統繁中字體。
+
 - `霧面玻璃卡片`
   用半透明白與柔和陰影，讓內容像浮在背景上。
 
