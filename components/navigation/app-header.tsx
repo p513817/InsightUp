@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Activity, Files, GitCompareArrows, LayoutDashboard, Menu, Sparkles, Target, Trophy, UsersRound, UserRound, X } from "lucide-react";
+import { Activity, Files, GitCompareArrows, LayoutDashboard, Menu, Share2, Sparkles, Target, Trophy, UsersRound, UserRound, X } from "lucide-react";
 import { LogoAnimated } from "@/components/auth/logo-animated";
 import { AccountMenu } from "@/components/navigation/account-menu";
 import { Button } from "@/components/ui/button";
@@ -170,11 +170,9 @@ export function AppHeader({ user }: AppHeaderProps) {
       active: isCompetitions,
     },
   ];
-  const activePageLabel =
-    navItems.find((item) => item.active)?.label
-    ?? (isAccount ? t("account.title") : null)
-    ?? (isShare ? t("shareTrend.title") : null)
-    ?? "InsightUp";
+  const activeNavItem = navItems.find((item) => item.active);
+  const activePageLabel = activeNavItem?.label ?? (isAccount ? t("account.title") : null) ?? (isShare ? t("shareTrend.title") : null) ?? "InsightUp";
+  const activePageIcon = activeNavItem?.icon ?? (isAccount ? <UserRound className="size-4" /> : null) ?? (isShare ? <Share2 className="size-4" /> : null);
 
   function setDashboardTrendMode(nextMode: "overall" | "segmental") {
     if (nextMode === dashboardTrendMode) {
@@ -430,9 +428,12 @@ export function AppHeader({ user }: AppHeaderProps) {
             />
           ) : (
             <p
-              className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[52vw] -translate-x-1/2 items-center rounded-full bg-card/78 px-4 text-center text-[1.08rem] font-semibold leading-none text-foreground shadow-none sm:max-w-[58vw] sm:text-xl"
+              className="surface-pill pointer-events-none absolute left-1/2 flex h-[2.625rem] max-w-[52vw] -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-card/78 p-[0.3125rem] text-center shadow-none sm:max-w-[58vw]"
             >
-              <span className="truncate">{activePageLabel}</span>
+              <span className="flex h-full min-w-0 items-center justify-center gap-1.5 rounded-full bg-[linear-gradient(135deg,rgb(var(--primary))_0%,rgb(var(--primary-strong))_100%)] px-4 text-sm font-semibold leading-none text-primary-foreground shadow-[0_8px_16px_rgba(23,52,93,0.14)]">
+                {activePageIcon}
+                <span className="truncate">{activePageLabel}</span>
+              </span>
             </p>
           )}
 

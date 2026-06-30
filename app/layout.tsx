@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Noto_Sans_TC } from "next/font/google";
 import { Suspense } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -14,6 +15,13 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const notoSansTc = Noto_Sans_TC({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-noto-sans-tc",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslations();
   return {
@@ -28,11 +36,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html data-scroll-behavior="smooth" dir={getLocaleDirection(locale)} lang={locale} suppressHydrationWarning>
       <body
-        className="grain-overlay"
+        className={`${notoSansTc.variable} grain-overlay`}
         style={
           {
-            "--font-display": '"Microsoft JhengHei", "Microsoft JhengHei UI", "PingFang TC", "Noto Sans TC", system-ui',
-            "--font-body": '"Microsoft JhengHei", "Microsoft JhengHei UI", "PingFang TC", "Noto Sans TC", system-ui',
+            "--font-display": 'var(--font-noto-sans-tc), "Noto Sans TC", "Microsoft JhengHei", "Microsoft JhengHei UI", "PingFang TC", system-ui',
+            "--font-body": 'var(--font-noto-sans-tc), "Noto Sans TC", "Microsoft JhengHei", "Microsoft JhengHei UI", "PingFang TC", system-ui',
           } as CSSProperties
         }
         suppressHydrationWarning
