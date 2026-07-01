@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "node:crypto";
+
 export const E2E_TEST_AUTH_SECRET_HEADER = "x-e2e-test-auth-secret";
 
 export const E2E_PERSONAS = {
@@ -177,7 +179,18 @@ export function hasTestAuthServiceRole(serviceRoleKey: string | undefined) {
 }
 
 export function isValidTestAuthSecret(inputSecret: string | null, expectedSecret: string | undefined) {
-  return Boolean(expectedSecret && inputSecret && inputSecret === expectedSecret);
+  if (!expectedSecret || !inputSecret) {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(expectedSecret, "utf8");
+  const inputBuffer = Buffer.from(inputSecret, "utf8");
+
+  if (expectedBuffer.length !== inputBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(inputBuffer, expectedBuffer);
 }
 
 export function getE2EPersonaPassword(env: Pick<TestAuthEnvironment, "secret"> & { password?: string }) {
