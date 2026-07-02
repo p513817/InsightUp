@@ -43,6 +43,7 @@ The app intentionally remains a single deployable unit. Route handlers under `ap
 - `lib/personal-goals.ts`: goal schemas, progress calculation, CRUD helpers, and record selection rules
 - `lib/competitions.ts`: competition schemas, RPC wrappers, row grouping, leaderboard sorting, and current-user member attachment
 - `lib/dashboard-preferences.ts`: persisted chart layout and metric preference helpers
+- `lib/auth/redirects.ts`: auth redirect target sanitization shared by the OAuth callback
 - `lib/supabase/*`: browser singleton, server client, and middleware cookie refresh
 - `lib/i18n*`: locale selection and translation helpers
 
@@ -51,9 +52,10 @@ The app intentionally remains a single deployable unit. Route handlers under `ap
 1. The public page triggers Supabase Google OAuth.
 2. Redirects target `/auth/callback`, using `NEXT_PUBLIC_SITE_URL` or the current request origin.
 3. The callback route exchanges the code for a Supabase session.
-4. Middleware refreshes session cookies.
-5. Protected pages and route handlers read the user with the server Supabase client.
-6. Unauthenticated users are redirected to the visible login surface or receive `401` JSON from APIs.
+4. Callback `next` targets are restricted to same-origin paths; protocol-relative targets fall back to `/dashboard`.
+5. Middleware refreshes session cookies.
+6. Protected pages and route handlers read the user with the server Supabase client.
+7. Unauthenticated users are redirected to the visible login surface or receive `401` JSON from APIs.
 
 ## API Surface
 
@@ -143,7 +145,7 @@ Metric direction rules live in `lib/inbody/progress.ts`:
 ### AI Scan
 
 - `GET /api/records/scan` returns entitlement and usage state.
-- `POST /api/records/scan` accepts JPG, PNG, WebP, or PDF up to 10 MB.
+- `POST /api/records/scan` accepts JPG, PNG, WebP, or PDF files up to 10 MB and rejects oversized multipart requests before parsing when `content-length` proves they are too large.
 - Scan uses Gemini through the LLM abstraction.
 - The response is a draft record plus uncertainty metadata; saving the draft is a separate user-confirmed record creation flow.
 
