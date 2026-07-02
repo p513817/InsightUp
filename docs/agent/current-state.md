@@ -27,12 +27,12 @@ This is the fastest handoff file for future agents. Read this before scanning th
 - Dashboard charts: `app/api/chart-data/route.ts`, `components/charts/*`, `components/workspace/records-workspace.tsx`
 - Dashboard preferences: `app/api/preferences/dashboard/route.ts`, `lib/dashboard-preferences.ts`
 - AI trend summary: `app/api/trend-summary/route.ts`, `lib/inbody/trend-summary.ts`, `lib/inbody/trend-summary-service.ts`, `lib/llms/*`
-- AI scan: `app/api/records/scan/route.ts`, `lib/inbody/scan.ts`, `lib/llms/usage.ts`
+- AI scan: `app/api/records/scan/route.ts`, `lib/inbody/scan.ts`, `lib/inbody/scan-upload.ts`, `lib/llms/usage.ts`
 - Personal goals: `app/api/personal-goals/*`, `components/personal-goals/*`, `lib/personal-goals.ts`
 - Shared goal UI: `components/ui/goal-progress-bar.tsx`, `components/ui/goal-metric-progress-card.tsx`
 - Friends: `app/api/friends/*`, `components/friends/*`, `lib/friends/*`
 - Competitions: `app/api/competitions/*`, `components/competitions/*`, `lib/competitions.ts`
-- Auth/session: `lib/supabase/*`, `middleware.ts`, `app/auth/callback/route.ts`
+- Auth/session: `lib/supabase/*`, `lib/auth/redirects.ts`, `middleware.ts`, `app/auth/callback/route.ts`
 - E2E test auth/personas: `docs/agent/e2e-test-auth.md`, `app/test-auth/page.tsx`, `components/test-auth/*`, `app/api/test-auth/*`, `lib/test-auth/*`
 - i18n: `components/i18n-provider.tsx`, `lib/i18n.ts`, `lib/i18n/server.ts`, `messages/*.json`
 
@@ -47,7 +47,7 @@ Do not assume `infra/supabase/schema.sql` is a complete latest dump. It is usefu
 - AI summaries and entitlements: `20260506_00*_*.sql`
 - daily AI feature usage: `20260520_001_llm_daily_feature_usage.sql`
 - personal goals: `20260608_00*_*.sql`
-- competitions: `20260609_001_competitions.sql`, `20260610_00*_*.sql`
+- competitions: `20260609_001_competitions.sql`, `20260610_00*_*.sql`, `20260701_001_harden_competition_membership_oracle.sql`
 
 ## Current Tests
 
@@ -61,6 +61,7 @@ Focused Vitest files:
 - `tests/inbody-progress.test.ts`
 - `tests/competitions.test.ts`
 - `tests/test-auth.test.ts`
+- `tests/records-scan-route.test.ts`
 
 Default validation after meaningful code changes:
 

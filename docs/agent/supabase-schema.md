@@ -32,6 +32,7 @@ For a new or production database, apply SQL files in filename order from:
 - `20260610_002_fix_update_competition_with_members_ambiguity.sql`: update RPC ambiguity fix
 - `20260610_003_fix_competition_members_rls_recursion.sql`: competition member RLS recursion fix
 - `20260610_004_delete_competition_with_members.sql`: competition delete RPC
+- `20260701_001_harden_competition_membership_oracle.sql`: competition membership oracle requires the signed-in user to match `input_user_id` and defaults to invited/accepted statuses
 
 ## Core Tables
 
@@ -202,7 +203,7 @@ Competition UI sorts declined/removed members and members without goals below ac
 - `update_competition_with_members(input_competition_id uuid, input_name text, input_target_date date, input_invitee_user_ids uuid[])`
 - `delete_competition_with_members(input_competition_id uuid)`
 - `list_my_competitions_with_progress()`
-- `can_access_competition_membership(input_competition_id uuid)`
+- `can_access_competition_membership(input_competition_id uuid, input_user_id uuid, allowed_statuses text[] default array['invited', 'accepted'])`
 
 Use these RPCs instead of manually coordinating multi-table competition writes in route handlers.
 

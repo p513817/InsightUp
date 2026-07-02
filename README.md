@@ -101,6 +101,7 @@ Important RPCs:
 - `update_competition_with_members`
 - `delete_competition_with_members`
 - `list_my_competitions_with_progress`
+- `can_access_competition_membership`
 
 ## Development Invariants
 

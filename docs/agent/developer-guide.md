@@ -13,6 +13,7 @@ For the fastest current-state summary, read `docs/agent/current-state.md` first.
 - Keep reusable UI primitives in `components/ui/` visually consistent.
 - Apply the mobile interaction baseline from `AGENTS.md`: 44px minimum touch targets, 8px spacing between adjacent controls, safe-area-aware floating controls.
 - Do not reintroduce hardcoded OAuth redirect URLs.
+- Keep auth callback `next` targets same-origin path-only; protocol-relative URLs must not be accepted.
 - Do not reintroduce hardcoded entitlement bypasses. Feature limits must come from Supabase plan data.
 
 ## Working Model
@@ -31,12 +32,12 @@ For the fastest current-state summary, read `docs/agent/current-state.md` first.
 - Dashboard preferences: `app/api/preferences/dashboard/route.ts`, `lib/dashboard-preferences.ts`
 - Metric direction and delta tones: `lib/inbody/progress.ts`
 - AI trend summary: `app/api/trend-summary/route.ts`, `lib/inbody/trend-summary.ts`, `lib/inbody/trend-summary-service.ts`, `components/charts/trend-summary-fab.tsx`
-- AI scan: `app/api/records/scan/route.ts`, `lib/inbody/scan.ts`, `lib/llms/usage.ts`
+- AI scan: `app/api/records/scan/route.ts`, `lib/inbody/scan.ts`, `lib/inbody/scan-upload.ts`, `lib/llms/usage.ts`
 - Personal goals: `app/api/personal-goals/*`, `components/personal-goals/*`, `lib/personal-goals.ts`
 - Shared goal progress UI: `components/ui/goal-progress-bar.tsx`, `components/ui/goal-metric-progress-card.tsx`
 - Friends: `app/api/friends/*`, `components/friends/*`, `lib/friends/*`
 - Competitions: `app/api/competitions/*`, `components/competitions/*`, `lib/competitions.ts`
-- Auth/session: `lib/supabase/*`, `middleware.ts`
+- Auth/session: `lib/supabase/*`, `lib/auth/redirects.ts`, `middleware.ts`
 - E2E test auth and seed personas: `docs/agent/e2e-test-auth.md`, `app/test-auth/page.tsx`, `components/test-auth/*`, `app/api/test-auth/*`, `lib/test-auth/*`
 - Account plan display: `app/(app)/account/page.tsx`
 - Database changes: new ordered migration under `infra/supabase/migrations/`
@@ -70,6 +71,7 @@ Focused tests currently available:
 - `tests/inbody-progress.test.ts`
 - `tests/competitions.test.ts`
 - `tests/test-auth.test.ts`
+- `tests/records-scan-route.test.ts`
 
 ## Vercel Smoke Test
 
@@ -103,6 +105,7 @@ After deployment-related, auth, API, or database changes, verify:
 - Chart exclusion is a first-class product rule and must stay independent from deletion.
 - AI usage rules must stay database-driven.
 - AI scan should not directly save records without user review.
+- Generic personal goal creation must strip competition-owned fields; competition-linked goals should be created through competition goal flows.
 - Competition goal target dates are locked by database triggers and should also be blocked in the frontend.
 - Competition members with no goals or declined/removed status should sort below active members with goals.
 - Windows PowerShell may fail to execute `rg.exe` in this environment; use PowerShell `Get-ChildItem` and `Select-String` as fallback.
