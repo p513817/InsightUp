@@ -26,6 +26,7 @@ type TestCaseOption = {
 };
 
 type TestAuthPanelProps = {
+  allowSecretlessStart: boolean;
   hasServiceRole: boolean;
   testCases: TestCaseOption[];
 };
@@ -55,7 +56,26 @@ async function postTestAuth(path: string, secret: string, body: Record<string, s
   return payload;
 }
 
-export function TestAuthPanel({ hasServiceRole, testCases }: TestAuthPanelProps) {
+async function postLocalTestAuthStart(body: Record<string, string>) {
+  const response = await fetch("/api/test-auth/start", {
+    body: JSON.stringify(body),
+    credentials: "same-origin",
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as { message?: string; next?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message || `HTTP ${response.status}`);
+  }
+
+  return payload;
+}
+
+export function TestAuthPanel({ allowSecretlessStart, hasServiceRole, testCases }: TestAuthPanelProps) {
   const t = useTranslations();
   const [secret, setSecret] = useState("");
   const [testCaseKey, setTestCaseKey] = useState<E2ETestCaseKey>(testCases[0]?.key ?? "dashboard-rich-alice");
@@ -63,7 +83,7 @@ export function TestAuthPanel({ hasServiceRole, testCases }: TestAuthPanelProps)
 
   const selectedTestCase = testCases.find((option) => option.key === testCaseKey) ?? testCases[0];
   const isBusy = requestState.status === "loading";
-  const canSubmit = hasServiceRole && Boolean(secret) && Boolean(selectedTestCase) && !isBusy;
+  const canSubmit = hasServiceRole && (allowSecretlessStart || Boolean(secret)) && Boolean(selectedTestCase) && !isBusy;
 
   async function handleStartTestCase() {
     if (!selectedTestCase) {
@@ -73,12 +93,20 @@ export function TestAuthPanel({ hasServiceRole, testCases }: TestAuthPanelProps)
     setRequestState({ message: t("testAuth.status.resetting"), status: "loading" });
 
     try {
-      await postTestAuth("/api/test-auth/reset", secret, { scenario: selectedTestCase.scenario });
-      setRequestState({ message: t("testAuth.status.loggingIn"), status: "loading" });
-      const payload = await postTestAuth("/api/test-auth/login", secret, {
-        next: selectedTestCase.destination,
-        persona: selectedTestCase.persona.key,
-      });
+      const payload = allowSecretlessStart
+        ? await postLocalTestAuthStart({
+            next: selectedTestCase.destination,
+            persona: selectedTestCase.persona.key,
+            scenario: selectedTestCase.scenario,
+          })
+        : await (async () => {
+            await postTestAuth("/api/test-auth/reset", secret, { scenario: selectedTestCase.scenario });
+            setRequestState({ message: t("testAuth.status.loggingIn"), status: "loading" });
+            return postTestAuth("/api/test-auth/login", secret, {
+              next: selectedTestCase.destination,
+              persona: selectedTestCase.persona.key,
+            });
+          })();
       setRequestState({ message: t("testAuth.status.loginSuccess"), status: "success" });
       window.location.assign(payload.next || selectedTestCase.destination);
     } catch (error) {
@@ -113,16 +141,22 @@ export function TestAuthPanel({ hasServiceRole, testCases }: TestAuthPanelProps)
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
           <Card className="rounded-2xl p-5">
             <div className="space-y-5">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-foreground">{t("testAuth.secretLabel")}</span>
-                <Input
-                  autoComplete="off"
-                  onChange={(event) => setSecret(event.target.value)}
-                  placeholder={t("testAuth.secretPlaceholder")}
-                  type="password"
-                  value={secret}
-                />
-              </label>
+              {allowSecretlessStart ? (
+                <div className="rounded-2xl border border-accent/25 bg-accent/10 px-4 py-3 text-sm text-accent-foreground">
+                  {t("testAuth.localShortcut")}
+                </div>
+              ) : (
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-foreground">{t("testAuth.secretLabel")}</span>
+                  <Input
+                    autoComplete="off"
+                    onChange={(event) => setSecret(event.target.value)}
+                    placeholder={t("testAuth.secretPlaceholder")}
+                    type="password"
+                    value={secret}
+                  />
+                </label>
+              )}
 
               <div className="grid gap-2">
                 <span className="text-sm font-semibold text-foreground">{t("testAuth.caseLabel")}</span>

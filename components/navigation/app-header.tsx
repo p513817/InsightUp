@@ -149,6 +149,13 @@ export function AppHeader({ user }: AppHeaderProps) {
       active: isSummary,
     },
     {
+      href: "/share",
+      label: t("navigation.share.label"),
+      description: t("navigation.share.description"),
+      icon: <Share2 className="size-4" />,
+      active: isShare,
+    },
+    {
       href: "/personal-goal",
       label: t("navigation.personal_goal.label"),
       description: t("navigation.personal_goal.description"),
@@ -171,8 +178,8 @@ export function AppHeader({ user }: AppHeaderProps) {
     },
   ];
   const activeNavItem = navItems.find((item) => item.active);
-  const activePageLabel = activeNavItem?.label ?? (isAccount ? t("account.title") : null) ?? (isShare ? t("shareTrend.title") : null) ?? "InsightUp";
-  const activePageIcon = activeNavItem?.icon ?? (isAccount ? <UserRound className="size-4" /> : null) ?? (isShare ? <Share2 className="size-4" /> : null);
+  const activePageLabel = activeNavItem?.label ?? (isAccount ? t("account.title") : null) ?? "InsightUp";
+  const activePageIcon = activeNavItem?.icon ?? (isAccount ? <UserRound className="size-4" /> : null);
 
   function setDashboardTrendMode(nextMode: "overall" | "segmental") {
     if (nextMode === dashboardTrendMode) {
