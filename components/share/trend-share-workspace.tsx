@@ -1,14 +1,13 @@
 "use client";
 
-import { Check, Columns3, Download, Image as ImageIcon, ListChecks, Maximize2, Minimize2, Palette, RotateCcw, TrendingUp, Type, X } from "lucide-react";
+import { Check, Columns3, Download, ListChecks, Maximize2, Minimize2, Palette, RotateCcw, TrendingUp, Type } from "lucide-react";
 import { toPng } from "html-to-image";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Customized, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { DirectionalTrendOverlay } from "@/components/charts/directional-trend-line";
 import { useLocale, useTranslations } from "@/components/i18n-provider";
-import { Button } from "@/components/ui/button";
+import { FAB_BASE_CLASS, FAB_PRIMARY_TONE_CLASS } from "@/components/ui/floating-action-styles";
 import { buildChartPayload } from "@/lib/inbody/records";
 import type { ChartMetric, InbodyRecord } from "@/lib/inbody/types";
 import { formatChartDate } from "@/lib/presentation";
@@ -17,10 +16,11 @@ import { cn } from "@/lib/utils";
 type ShareStyle = "trend" | "current" | "cid";
 type ShareBackground = "light" | "dark" | "transparent" | "custom";
 type ShareLayout = "one" | "two";
+type ShareAspect = "auto" | "1-1" | "3-4" | "9-16";
 type SharePosition = "top" | "center" | "bottom";
 type TitleMode = "show" | "hide";
 type TitleAlign = "left" | "center" | "right";
-type ControlPanel = "style" | "background" | "title" | "layout" | "metrics" | "colors";
+type ControlPanel = "style" | "visual" | "title" | "layout" | "metrics";
 type TextColorTarget = "title" | "brand" | "date";
 
 type ShareMetric = {
@@ -483,6 +483,22 @@ function getTitleAlignClass(align: TitleAlign) {
 
 function buildTimelineDates(points: ShareMetric["points"]) {
   return points.map((point) => point.date).filter(Boolean);
+}
+
+function getShareAspectClass(aspect: ShareAspect) {
+  if (aspect === "auto") {
+    return "h-auto min-h-0 w-full";
+  }
+
+  if (aspect === "1-1") {
+    return "aspect-square h-auto w-full";
+  }
+
+  if (aspect === "3-4") {
+    return "aspect-[3/4] h-full w-auto";
+  }
+
+  return "aspect-[9/16] h-full w-auto";
 }
 
 interface ColorSwatchPickerProps {
@@ -1136,7 +1152,6 @@ function SharePreviewContent({
 }
 
 export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
-  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations();
   const metricLabels = useMemo(() => buildOverallMetricLabels(t), [t]);
@@ -1170,11 +1185,12 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [customBackgroundOpacity, setCustomBackgroundOpacity] = useState(100);
   const [sharePosition, setSharePosition] = useState<SharePosition>("bottom");
   const [shareLayout, setShareLayout] = useState<ShareLayout>("two");
+  const [shareAspect, setShareAspect] = useState<ShareAspect>("auto");
   const [titleMode, setTitleMode] = useState<TitleMode>("hide");
   const [titleAlign, setTitleAlign] = useState<TitleAlign>("left");
   const [textColors, setTextColors] = useState<Partial<Record<TextColorTarget, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [activeControl, setActiveControl] = useState<ControlPanel | null>("style");
+  const [activeControl, setActiveControl] = useState<ControlPanel>("style");
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const effectiveRecordLimit = recordLimit ?? maxRecordCount;
   const styleOptions = [
@@ -1196,6 +1212,12 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const columnOptions = [
     { value: "one" as const, label: t("shareTrend.oneColumn") },
     { value: "two" as const, label: t("shareTrend.twoColumns") },
+  ];
+  const aspectOptions = [
+    { value: "auto" as const, label: t("shareTrend.aspectAuto") },
+    { value: "1-1" as const, label: t("shareTrend.aspectSquare") },
+    { value: "3-4" as const, label: t("shareTrend.aspectPortrait") },
+    { value: "9-16" as const, label: t("shareTrend.aspectStory") },
   ];
   const titleModeOptions = [
     { value: "show" as const, label: t("shareTrend.show") },
@@ -1226,6 +1248,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const timelinePoints = selectedMetrics[0]?.points ?? [];
   const timelineDates = buildTimelineDates(timelinePoints);
   const effectiveShareColumns = shareStyle === "trend" || shareLayout !== "two" ? 1 : 2;
+  const effectiveSharePosition = shareAspect === "auto" ? "top" : sharePosition;
   const latestIncludedRecord = includedRecords.at(-1) ?? null;
   const cidMetrics = useMemo(() => buildCidMetricAnalysis(latestIncludedRecord, coloredShareMetrics), [coloredShareMetrics, latestIncludedRecord]);
   const cidBodyType = useMemo(() => resolveCidBodyType(cidMetrics), [cidMetrics]);
@@ -1362,18 +1385,11 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
   function handleControlToggle(panel: ControlPanel) {
     setIsPreviewExpanded(false);
-    setActiveControl((current) => (current === panel ? null : panel));
+    setActiveControl(panel);
   }
 
   function handlePreviewExpandToggle() {
-    setIsPreviewExpanded((current) => {
-      const next = !current;
-      if (next) {
-        setActiveControl(null);
-      }
-
-      return next;
-    });
+    setIsPreviewExpanded((current) => !current);
   }
 
   
@@ -1439,20 +1455,24 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   return (
     <div
       className={cn(
-        "relative -mx-6 grid h-[calc(100dvh-var(--app-header-offset,0px)-1rem)] w-[calc(100%+3rem)] max-w-none gap-3 overflow-hidden px-4 sm:px-6 lg:-mx-10 lg:w-[calc(100%+5rem)] lg:px-10",
-        isPreviewExpanded ? "grid-rows-[minmax(0,9fr)_minmax(0,0fr)_minmax(5rem,1fr)]" : "grid-rows-[minmax(0,7fr)_minmax(0,2fr)_minmax(5rem,1fr)]",
+        "relative mx-auto grid w-full max-w-[30rem] gap-3 overflow-hidden",
+        isPreviewExpanded
+          ? "fixed inset-0 z-[80] h-dvh max-w-none grid-rows-[minmax(0,1fr)_minmax(0,0fr)_minmax(4.75rem,auto)] bg-background px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)]"
+          : "h-[calc(100dvh-var(--app-header-offset,0px)-1rem)] grid-rows-[minmax(0,7fr)_minmax(0,2fr)_minmax(5rem,1fr)]",
       )}
     >
       <h1 className="sr-only">{t("shareTrend.title")}</h1>
 
       <div className="contents">
       <section
-        className="flex min-h-0 min-w-0 items-center justify-center overflow-auto pt-2"
+        className={cn("flex min-h-0 min-w-0 items-center justify-center overflow-auto", isPreviewExpanded ? "pt-0" : "pt-2")}
       >
+        <div className="relative flex h-full max-h-full w-full max-w-[30rem] min-w-0 items-center justify-center">
         <div
           ref={previewRef}
           className={cn(
-            "relative mx-auto aspect-[9/16] h-full max-h-full max-w-full min-w-0 overflow-hidden p-3 shadow-panel sm:p-4",
+            "relative mx-auto max-h-full max-w-full min-w-0 overflow-hidden p-3 shadow-panel sm:p-4",
+            getShareAspectClass(shareAspect),
             "lg:max-h-full",
             shareBackground !== "transparent" && "border",
             getPreviewBackgroundClass(shareBackground),
@@ -1472,7 +1492,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             dateColor={effectiveDateColor}
             effectiveShareColumns={effectiveShareColumns}
             selectedMetrics={selectedMetrics}
-            sharePosition={sharePosition}
+            sharePosition={effectiveSharePosition}
             shareStyle={shareStyle}
             timelineDates={timelineDates}
             timelinePoints={timelinePoints}
@@ -1484,6 +1504,23 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             brandLabel={t("shareTrend.brand")}
           />
         </div>
+        {isPreviewExpanded ? (
+        <div className="absolute right-2 top-2 z-20 flex items-center gap-2">
+          <button
+            aria-label={t("shareTrend.exitExpandedPreview")}
+            aria-pressed={isPreviewExpanded}
+            className={cn(
+              `grid size-11 cursor-pointer place-items-center rounded-full border border-border/75 bg-card/92 text-muted-foreground shadow-panel backdrop-blur hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
+              "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
+            )}
+            onClick={handlePreviewExpandToggle}
+            type="button"
+          >
+            <Minimize2 className="size-5" />
+          </button>
+        </div>
+        ) : null}
+        </div>
       </section>
 
       <aside className={cn("flex min-h-0 overflow-hidden rounded-[1.25rem] border border-border/75 bg-card/95 shadow-panel backdrop-blur", isPreviewExpanded && "invisible pointer-events-none")}>
@@ -1494,8 +1531,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
         </div>
       ) : null}
 
-      {activeControl ? (
-        <div className="min-h-full min-w-0 pr-2">
+      <div className="min-h-full min-w-0 pr-2">
         {activeControl === "style" ? (
           <div className="min-w-0">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.style")}</p>
@@ -1509,7 +1545,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
           </div>
         ) : null}
 
-        {activeControl === "background" ? (
+        {activeControl === "visual" ? (
           <div className="min-w-0">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.background")}</p>
             <PillScrollGroup>
@@ -1590,11 +1626,21 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
 
         {activeControl === "layout" ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+            <div className="min-w-0 sm:col-span-2">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.aspectRatio")}</p>
+              <PillScrollGroup>
+                {aspectOptions.map((option) => (
+                  <OptionPill active={shareAspect === option.value} key={option.value} onClick={() => setShareAspect(option.value)}>
+                    {option.label}
+                  </OptionPill>
+                ))}
+              </PillScrollGroup>
+            </div>
             <div className={cn("min-w-0", shareStyle === "trend" && "sm:col-span-2")}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.position")}</p>
               <PillScrollGroup>
               {positionOptions.map((option) => (
-                  <OptionPill active={sharePosition === option.value} key={option.value} onClick={() => setSharePosition(option.value)}>
+                  <OptionPill active={sharePosition === option.value} disabled={shareAspect === "auto"} key={option.value} onClick={() => setSharePosition(option.value)}>
                     {option.label}
                   </OptionPill>
               ))}
@@ -1640,8 +1686,8 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
           </div>
         ) : null}
 
-        {activeControl === "colors" ? (
-          <div className="min-w-0">
+        {activeControl === "visual" ? (
+          <div className="mt-4 min-w-0">
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.chartColors")}</p>
               <div className="inline-flex h-7 shrink-0 rounded-full border border-border/70 bg-background/72 p-0.5">
@@ -1777,35 +1823,37 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             </div>
           </div>
         ) : null}
-        </div>
-      ) : null}
+      </div>
 
       </div>
       </aside>
       </div>
 
-      <div className="pointer-events-none relative z-50 flex min-h-0 items-center justify-between pb-[env(safe-area-inset-bottom)]">
-        <Button aria-label={t("shareTrend.cancel")} className="pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" onClick={() => router.back()} size="icon" type="button" variant="outline">
-          <X className="size-5" />
-        </Button>
-        <div className="pointer-events-auto grid grid-cols-7 rounded-full border border-border/75 bg-card/95 p-1 shadow-panel backdrop-blur">
+      <div
+        className={cn(
+          "pointer-events-none z-50",
+          isPreviewExpanded
+            ? "absolute inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] mx-auto flex max-w-[30rem] justify-end"
+            : "relative grid min-h-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 pb-[env(safe-area-inset-bottom)]",
+        )}
+      >
+        {!isPreviewExpanded ? (
           <button
-            aria-label={isPreviewExpanded ? t("shareTrend.exitExpandedPreview") : t("shareTrend.expandPreview")}
-            aria-pressed={isPreviewExpanded}
-            className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
-              isPreviewExpanded && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
-            )}
-            onClick={handlePreviewExpandToggle}
+            aria-label={t("shareTrend.downloadImage")}
+            className={`pointer-events-auto grid size-11 cursor-pointer place-items-center justify-self-start rounded-full border border-border/75 bg-card/95 text-muted-foreground shadow-panel backdrop-blur hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45 ${ROUND_ICON_PRESS_CLASS}`}
+            disabled={(shareStyle !== "cid" && !selectedMetrics.length) || isSaving}
+            onClick={saveImage}
             type="button"
           >
-            {isPreviewExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <Download className="size-5" />
           </button>
+        ) : null}
+        <div className={cn("pointer-events-auto grid grid-cols-5 justify-self-center rounded-full border border-border/75 bg-card/95 p-1 shadow-panel backdrop-blur", isPreviewExpanded && "hidden")}>
           <button
             aria-label={t("shareTrend.style")}
             aria-pressed={activeControl === "style"}
             className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
+              `grid size-11 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "style" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("style")}
@@ -1817,7 +1865,7 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             aria-label={t("dashboardTrendUi.layout")}
             aria-pressed={activeControl === "layout"}
             className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
+              `grid size-11 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "layout" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("layout")}
@@ -1826,22 +1874,22 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <Columns3 className="size-4" />
           </button>
           <button
-            aria-label={t("shareTrend.background")}
-            aria-pressed={activeControl === "background"}
+            aria-label={`${t("shareTrend.background")} ${t("shareTrend.chartColors")}`}
+            aria-pressed={activeControl === "visual"}
             className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
-              activeControl === "background" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
+              `grid size-11 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
+              activeControl === "visual" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
-            onClick={() => handleControlToggle("background")}
+            onClick={() => handleControlToggle("visual")}
             type="button"
           >
-            <ImageIcon className="size-4" />
+            <Palette className="size-4" />
           </button>
           <button
             aria-label={t("shareTrend.titlePanel")}
             aria-pressed={activeControl === "title"}
             className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
+              `grid size-11 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "title" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("title")}
@@ -1850,22 +1898,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <Type className="size-4" />
           </button>
           <button
-            aria-label={t("shareTrend.chartColors")}
-            aria-pressed={activeControl === "colors"}
-            className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
-              activeControl === "colors" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
-            )}
-            onClick={() => handleControlToggle("colors")}
-            type="button"
-          >
-            <Palette className="size-4" />
-          </button>
-          <button
             aria-label={t("shareTrend.metricsPanel")}
             aria-pressed={activeControl === "metrics"}
             className={cn(
-              `grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-10 ${ROUND_ICON_PRESS_CLASS}`,
+              `grid size-11 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-primary/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`,
               activeControl === "metrics" && "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]",
             )}
             onClick={() => handleControlToggle("metrics")}
@@ -1874,9 +1910,31 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             <ListChecks className="size-4" />
           </button>
         </div>
-        <Button aria-label={t("shareTrend.downloadImage")} className="ai-generate-pulse pointer-events-auto size-12 rounded-full shadow-panel sm:size-12" disabled={(shareStyle !== "cid" && !selectedMetrics.length) || isSaving} onClick={saveImage} size="icon" type="button">
-          <Download className="size-5" />
-        </Button>
+        {isPreviewExpanded ? (
+          <button
+            aria-label={t("shareTrend.downloadImage")}
+            className={cn(
+              "ai-generate-pulse pointer-events-auto grid cursor-pointer place-items-center bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45",
+              FAB_BASE_CLASS,
+              FAB_PRIMARY_TONE_CLASS,
+            )}
+            disabled={(shareStyle !== "cid" && !selectedMetrics.length) || isSaving}
+            onClick={saveImage}
+            type="button"
+          >
+            <Download className="size-6 sm:size-7" />
+          </button>
+        ) : (
+          <button
+            aria-label={t("shareTrend.expandPreview")}
+            aria-pressed={false}
+            className={`pointer-events-auto grid size-11 cursor-pointer place-items-center justify-self-end rounded-full border border-border/75 bg-card/95 text-muted-foreground shadow-panel backdrop-blur hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${ROUND_ICON_PRESS_CLASS}`}
+            onClick={handlePreviewExpandToggle}
+            type="button"
+          >
+            <Maximize2 className="size-5" />
+          </button>
+        )}
       </div>
     </div>
   );

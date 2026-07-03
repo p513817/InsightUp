@@ -43,6 +43,7 @@
                      "title":  "測試使用者登入",
                      "description":  "選一個測試案例，系統會自動重置對應資料並用正確的測試視角登入，不需要走 Google OAuth 畫面。",
                      "missingServiceRole":  "目前缺少 SUPABASE_SERVICE_ROLE_KEY。請先填入 .env.local，並重啟 dev server 後再 reset 或登入。",
+                     "localShortcut":  "本機測試登入已設定完成。選擇測試案例即可重置資料並登入，不需要輸入共用密鑰。",
                      "secretLabel":  "測試登入密鑰",
                      "secretPlaceholder":  "貼上 E2E_TEST_AUTH_SECRET",
                      "scenarioLabel":  "Seed 情境",
@@ -145,6 +146,10 @@
                                        "label":  "AI 摘要",
                                        "description":  "查看近期趨勢分析"
                                    },
+                       "share":  {
+                                     "label":  "分享",
+                                     "description":  "建立可分享的趨勢圖片"
+                                 },
                        "competitions":  {
                                             "label":  "競賽",
                                             "description":  "邀請朋友一起參與同一個目標日期，並依各自的目標進度比較表現"
@@ -304,6 +309,11 @@
                        "alignment":  "對齊",
                        "position":  "位置",
                        "layout":  "版面",
+                       "aspectRatio":  "比例",
+                       "aspectAuto":  "動態",
+                       "aspectSquare":  "1:1",
+                       "aspectPortrait":  "3:4",
+                       "aspectStory":  "9:16",
                        "columns":  "欄位",
                        "records":  "紀錄",
                        "metricsPanel":  "數據",

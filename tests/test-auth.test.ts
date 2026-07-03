@@ -6,6 +6,7 @@ import {
   hasTestAuthServiceRole,
   isE2EPersonaKey,
   isE2EScenarioKey,
+  isLocalTestAuthShortcutAllowed,
   isProductionRuntime,
   isValidTestAuthSecret,
 } from "@/lib/test-auth/personas";
@@ -48,6 +49,35 @@ describe("test auth guard", () => {
     expect(isValidTestAuthSecret("abc", "def")).toBe(false);
     expect(isValidTestAuthSecret("abc", "abcd")).toBe(false);
     expect(isValidTestAuthSecret(null, "abc")).toBe(false);
+  });
+
+  it("allows the no-secret UI shortcut only in local development with complete env", () => {
+    expect(
+      isLocalTestAuthShortcutAllowed({
+        enabled: "true",
+        nodeEnv: "development",
+        secret: "secret",
+        serviceRoleKey: "service-role",
+      }),
+    ).toBe(true);
+
+    expect(
+      isLocalTestAuthShortcutAllowed({
+        enabled: "true",
+        nodeEnv: "development",
+        secret: "secret",
+      }),
+    ).toBe(false);
+
+    expect(
+      isLocalTestAuthShortcutAllowed({
+        enabled: "true",
+        nodeEnv: "production",
+        secret: "secret",
+        serviceRoleKey: "service-role",
+        vercelEnv: "preview",
+      }),
+    ).toBe(false);
   });
 });
 

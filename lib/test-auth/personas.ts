@@ -178,6 +178,14 @@ export function hasTestAuthServiceRole(serviceRoleKey: string | undefined) {
   return Boolean(serviceRoleKey);
 }
 
+export function isLocalTestAuthShortcutAllowed(env: TestAuthEnvironment & { serviceRoleKey?: string }) {
+  return (
+    env.nodeEnv === "development" &&
+    getTestAuthAvailability(env).allowed &&
+    hasTestAuthServiceRole(env.serviceRoleKey)
+  );
+}
+
 export function isValidTestAuthSecret(inputSecret: string | null, expectedSecret: string | undefined) {
   if (!expectedSecret || !inputSecret) {
     return false;
