@@ -7,6 +7,7 @@ Use this document when implementing or running authenticated local/Preview tests
 InsightUp uses Google OAuth for real users, but E2E tests should not automate the Google login UI. The app provides protected test-only endpoints for fixed personas and resettable seed scenarios:
 
 - `GET /test-auth`
+- `POST /api/test-auth/start`
 - `POST /api/test-auth/reset`
 - `POST /api/test-auth/login`
 
@@ -14,6 +15,7 @@ The implementation lives in:
 
 - `app/test-auth/page.tsx`
 - `components/test-auth/test-auth-panel.tsx`
+- `app/api/test-auth/start/route.ts`
 - `app/api/test-auth/login/route.ts`
 - `app/api/test-auth/reset/route.ts`
 - `app/api/test-auth/_shared.ts`
@@ -35,7 +37,9 @@ Production returns `404` even if someone accidentally sets the feature flag.
 
 Do not accept arbitrary emails or user IDs in request bodies. Only persona keys defined in `E2E_PERSONAS` are valid.
 
-Never pass `E2E_TEST_AUTH_SECRET` or `SUPABASE_SERVICE_ROLE_KEY` from server code into client props. The `/test-auth` page asks the user to paste the local secret and only sends it as the `x-e2e-test-auth-secret` request header.
+The regular reset/login APIs require the `x-e2e-test-auth-secret` request header. The `POST /api/test-auth/start` shortcut is only for local development when the complete test-auth environment is present; it wraps reset + persona login, sets same-origin auth cookies through the server Supabase client, and still returns `404` outside local development.
+
+Never pass `E2E_TEST_AUTH_SECRET` or `SUPABASE_SERVICE_ROLE_KEY` from server code into client props. The `/test-auth` page asks the user to paste the local secret for preview-style reset/login calls, but hides the secret field and uses `POST /api/test-auth/start` when the local-only shortcut is allowed.
 
 ## Personas
 
@@ -78,7 +82,13 @@ For local human testing, prefer the browser page:
 http://localhost:5500/test-auth
 ```
 
-Use the API directly for scripted tests. Use the secret from `.env.local`.
+Use the API directly for scripted tests. Use the secret from `.env.local` for reset/login calls.
+
+Local start shortcut:
+
+```powershell
+Invoke-RestMethod -Method POST -Uri "http://localhost:5500/api/test-auth/start" -ContentType "application/json" -Body '{"scenario":"dashboard-rich","persona":"alice","next":"/dashboard"}' -SessionVariable webSession
+```
 
 Reset:
 
