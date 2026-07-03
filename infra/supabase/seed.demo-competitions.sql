@@ -6,7 +6,7 @@ begin;
 
 do $$
 declare
-  v_owner_id constant uuid := '1a34a5b4-a544-4fd7-9678-ceb9e450db7d';
+  v_owner_id constant uuid := 'b797dbca-5d61-44c9-b3d2-d7f07d970db1';
 
   v_competition_id constant uuid := '3af8817b-9fd0-44cd-8c07-7cf8eb8b361f';
   v_second_competition_id constant uuid := '6fb1e380-83de-4d34-bc13-33cdb65d3aa1';
@@ -22,23 +22,23 @@ declare
   v_rina_id constant uuid := '88888888-8888-4888-8888-888888888888';
   v_omar_id constant uuid := '99999999-1111-4999-8999-111111111111';
 
-  v_owner_member_id constant uuid := '10101010-1010-4010-8010-101010101010';
-  v_luna_member_id constant uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-  v_kai_member_id constant uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-  v_mia_member_id constant uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
-  v_noah_member_id constant uuid := '55555555-aaaa-4555-8555-aaaaaaaaaaaa';
+  v_owner_member_id uuid := '10101010-1010-4010-8010-101010101010';
+  v_luna_member_id uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  v_kai_member_id uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  v_mia_member_id uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  v_noah_member_id uuid := '55555555-aaaa-4555-8555-aaaaaaaaaaaa';
 
-  v_second_owner_member_id constant uuid := '20202020-2020-4020-8020-202020202020';
-  v_sofia_member_id constant uuid := '66666666-aaaa-4666-8666-aaaaaaaaaaaa';
-  v_ethan_member_id constant uuid := '77777777-aaaa-4777-8777-aaaaaaaaaaaa';
-  v_rina_member_id constant uuid := '88888888-aaaa-4888-8888-aaaaaaaaaaaa';
-  v_omar_member_id constant uuid := '99999999-aaaa-4999-8999-aaaaaaaaaaaa';
-  v_completed_owner_member_id constant uuid := '30303030-3030-4030-8030-303030303030';
-  v_completed_luna_member_id constant uuid := '40404040-4040-4040-8040-404040404040';
-  v_completed_kai_member_id constant uuid := '50505050-5050-4050-8050-505050505050';
-  v_invited_sofia_member_id constant uuid := '60606060-6060-4060-8060-606060606060';
-  v_invited_owner_member_id constant uuid := '70707070-7070-4070-8070-707070707070';
-  v_invited_ethan_member_id constant uuid := '80808080-8080-4080-8080-808080808080';
+  v_second_owner_member_id uuid := '20202020-2020-4020-8020-202020202020';
+  v_sofia_member_id uuid := '66666666-aaaa-4666-8666-aaaaaaaaaaaa';
+  v_ethan_member_id uuid := '77777777-aaaa-4777-8777-aaaaaaaaaaaa';
+  v_rina_member_id uuid := '88888888-aaaa-4888-8888-aaaaaaaaaaaa';
+  v_omar_member_id uuid := '99999999-aaaa-4999-8999-aaaaaaaaaaaa';
+  v_completed_owner_member_id uuid := '30303030-3030-4030-8030-303030303030';
+  v_completed_luna_member_id uuid := '40404040-4040-4040-8040-404040404040';
+  v_completed_kai_member_id uuid := '50505050-5050-4050-8050-505050505050';
+  v_invited_sofia_member_id uuid := '60606060-6060-4060-8060-606060606060';
+  v_invited_owner_member_id uuid := '70707070-7070-4070-8070-707070707070';
+  v_invited_ethan_member_id uuid := '80808080-8080-4080-8080-808080808080';
 
   v_luna_start_record_id constant uuid := 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
   v_luna_latest_record_id constant uuid := 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
@@ -337,6 +337,23 @@ begin
     deleted_at = null,
     updated_at = timezone('utc', now());
 
+  select coalesce((select id from public.competition_members where competition_id = v_competition_id and user_id = v_owner_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_owner_member_id) then gen_random_uuid() else v_owner_member_id end) into v_owner_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_competition_id and user_id = v_luna_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_luna_member_id) then gen_random_uuid() else v_luna_member_id end) into v_luna_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_competition_id and user_id = v_kai_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_kai_member_id) then gen_random_uuid() else v_kai_member_id end) into v_kai_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_competition_id and user_id = v_mia_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_mia_member_id) then gen_random_uuid() else v_mia_member_id end) into v_mia_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_competition_id and user_id = v_noah_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_noah_member_id) then gen_random_uuid() else v_noah_member_id end) into v_noah_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_second_competition_id and user_id = v_owner_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_second_owner_member_id) then gen_random_uuid() else v_second_owner_member_id end) into v_second_owner_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_second_competition_id and user_id = v_sofia_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_sofia_member_id) then gen_random_uuid() else v_sofia_member_id end) into v_sofia_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_second_competition_id and user_id = v_ethan_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_ethan_member_id) then gen_random_uuid() else v_ethan_member_id end) into v_ethan_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_second_competition_id and user_id = v_rina_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_rina_member_id) then gen_random_uuid() else v_rina_member_id end) into v_rina_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_second_competition_id and user_id = v_omar_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_omar_member_id) then gen_random_uuid() else v_omar_member_id end) into v_omar_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_completed_competition_id and user_id = v_owner_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_completed_owner_member_id) then gen_random_uuid() else v_completed_owner_member_id end) into v_completed_owner_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_completed_competition_id and user_id = v_luna_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_completed_luna_member_id) then gen_random_uuid() else v_completed_luna_member_id end) into v_completed_luna_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_completed_competition_id and user_id = v_kai_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_completed_kai_member_id) then gen_random_uuid() else v_completed_kai_member_id end) into v_completed_kai_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_invited_competition_id and user_id = v_sofia_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_invited_sofia_member_id) then gen_random_uuid() else v_invited_sofia_member_id end) into v_invited_sofia_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_invited_competition_id and user_id = v_owner_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_invited_owner_member_id) then gen_random_uuid() else v_invited_owner_member_id end) into v_invited_owner_member_id;
+  select coalesce((select id from public.competition_members where competition_id = v_invited_competition_id and user_id = v_ethan_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = v_invited_ethan_member_id) then gen_random_uuid() else v_invited_ethan_member_id end) into v_invited_ethan_member_id;
+
   -- Demo competition memberships. The first competition includes mixed progress.
   insert into public.competition_members (
     id,
@@ -552,7 +569,25 @@ begin
     status = excluded.status,
     invited_by_user_id = excluded.invited_by_user_id,
     joined_at = excluded.joined_at,
+    deleted_at = null,
     updated_at = timezone('utc', now());
+
+  select id into v_owner_member_id from public.competition_members where competition_id = v_competition_id and user_id = v_owner_id and deleted_at is null;
+  select id into v_luna_member_id from public.competition_members where competition_id = v_competition_id and user_id = v_luna_id and deleted_at is null;
+  select id into v_kai_member_id from public.competition_members where competition_id = v_competition_id and user_id = v_kai_id and deleted_at is null;
+  select id into v_mia_member_id from public.competition_members where competition_id = v_competition_id and user_id = v_mia_id and deleted_at is null;
+  select id into v_noah_member_id from public.competition_members where competition_id = v_competition_id and user_id = v_noah_id and deleted_at is null;
+  select id into v_second_owner_member_id from public.competition_members where competition_id = v_second_competition_id and user_id = v_owner_id and deleted_at is null;
+  select id into v_sofia_member_id from public.competition_members where competition_id = v_second_competition_id and user_id = v_sofia_id and deleted_at is null;
+  select id into v_ethan_member_id from public.competition_members where competition_id = v_second_competition_id and user_id = v_ethan_id and deleted_at is null;
+  select id into v_rina_member_id from public.competition_members where competition_id = v_second_competition_id and user_id = v_rina_id and deleted_at is null;
+  select id into v_omar_member_id from public.competition_members where competition_id = v_second_competition_id and user_id = v_omar_id and deleted_at is null;
+  select id into v_completed_owner_member_id from public.competition_members where competition_id = v_completed_competition_id and user_id = v_owner_id and deleted_at is null;
+  select id into v_completed_luna_member_id from public.competition_members where competition_id = v_completed_competition_id and user_id = v_luna_id and deleted_at is null;
+  select id into v_completed_kai_member_id from public.competition_members where competition_id = v_completed_competition_id and user_id = v_kai_id and deleted_at is null;
+  select id into v_invited_sofia_member_id from public.competition_members where competition_id = v_invited_competition_id and user_id = v_sofia_id and deleted_at is null;
+  select id into v_invited_owner_member_id from public.competition_members where competition_id = v_invited_competition_id and user_id = v_owner_id and deleted_at is null;
+  select id into v_invited_ethan_member_id from public.competition_members where competition_id = v_invited_competition_id and user_id = v_ethan_id and deleted_at is null;
 
   -- Demo InBody records that make friend cards and leaderboards visibly different.
   insert into public.inbody_records (

@@ -49,18 +49,18 @@ declare
   comp_completed_id constant uuid := '8c16f7c8-4f5b-4bb6-8fe0-7e17be3d6f21';
   comp_invited_id constant uuid := '4e6f8b6c-7196-49d4-9d97-4de7716c8c41';
 
-  member_summer_owner constant uuid := '10101010-1010-4010-8010-101010101010';
-  member_summer_luna constant uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-  member_summer_kai constant uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-  member_summer_mia constant uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
-  member_strength_owner constant uuid := '20202020-2020-4020-8020-202020202020';
-  member_strength_sofia constant uuid := '66666666-aaaa-4666-8666-aaaaaaaaaaaa';
-  member_strength_ethan constant uuid := '77777777-aaaa-4777-8777-aaaaaaaaaaaa';
-  member_strength_noah constant uuid := '55555555-aaaa-4555-8555-aaaaaaaaaaaa';
-  member_completed_owner constant uuid := '30303030-3030-4030-8030-303030303030';
-  member_completed_luna constant uuid := '40404040-4040-4040-8040-404040404040';
-  member_invited_sofia constant uuid := '60606060-6060-4060-8060-606060606060';
-  member_invited_owner constant uuid := '70707070-7070-4070-8070-707070707070';
+  member_summer_owner uuid := '10101010-1010-4010-8010-101010101010';
+  member_summer_luna uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  member_summer_kai uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  member_summer_mia uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  member_strength_owner uuid := '20202020-2020-4020-8020-202020202020';
+  member_strength_sofia uuid := '66666666-aaaa-4666-8666-aaaaaaaaaaaa';
+  member_strength_ethan uuid := '77777777-aaaa-4777-8777-aaaaaaaaaaaa';
+  member_strength_noah uuid := '55555555-aaaa-4555-8555-aaaaaaaaaaaa';
+  member_completed_owner uuid := '30303030-3030-4030-8030-303030303030';
+  member_completed_luna uuid := '40404040-4040-4040-8040-404040404040';
+  member_invited_sofia uuid := '60606060-6060-4060-8060-606060606060';
+  member_invited_owner uuid := '70707070-7070-4070-8070-707070707070';
 begin
   if target_user_id = placeholder_id then
     raise notice 'Replace target_user_id in infra/supabase/seed.example.sql with a real auth.users id before running.';
@@ -255,6 +255,19 @@ begin
     deleted_at = null,
     updated_at = excluded.updated_at;
 
+  select coalesce((select id from public.competition_members where competition_id = comp_summer_id and user_id = target_user_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_summer_owner) then gen_random_uuid() else member_summer_owner end) into member_summer_owner;
+  select coalesce((select id from public.competition_members where competition_id = comp_summer_id and user_id = friend_luna_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_summer_luna) then gen_random_uuid() else member_summer_luna end) into member_summer_luna;
+  select coalesce((select id from public.competition_members where competition_id = comp_summer_id and user_id = friend_kai_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_summer_kai) then gen_random_uuid() else member_summer_kai end) into member_summer_kai;
+  select coalesce((select id from public.competition_members where competition_id = comp_summer_id and user_id = friend_mia_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_summer_mia) then gen_random_uuid() else member_summer_mia end) into member_summer_mia;
+  select coalesce((select id from public.competition_members where competition_id = comp_strength_id and user_id = target_user_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_strength_owner) then gen_random_uuid() else member_strength_owner end) into member_strength_owner;
+  select coalesce((select id from public.competition_members where competition_id = comp_strength_id and user_id = friend_sofia_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_strength_sofia) then gen_random_uuid() else member_strength_sofia end) into member_strength_sofia;
+  select coalesce((select id from public.competition_members where competition_id = comp_strength_id and user_id = friend_ethan_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_strength_ethan) then gen_random_uuid() else member_strength_ethan end) into member_strength_ethan;
+  select coalesce((select id from public.competition_members where competition_id = comp_strength_id and user_id = friend_noah_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_strength_noah) then gen_random_uuid() else member_strength_noah end) into member_strength_noah;
+  select coalesce((select id from public.competition_members where competition_id = comp_completed_id and user_id = target_user_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_completed_owner) then gen_random_uuid() else member_completed_owner end) into member_completed_owner;
+  select coalesce((select id from public.competition_members where competition_id = comp_completed_id and user_id = friend_luna_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_completed_luna) then gen_random_uuid() else member_completed_luna end) into member_completed_luna;
+  select coalesce((select id from public.competition_members where competition_id = comp_invited_id and user_id = friend_sofia_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_invited_sofia) then gen_random_uuid() else member_invited_sofia end) into member_invited_sofia;
+  select coalesce((select id from public.competition_members where competition_id = comp_invited_id and user_id = target_user_id and deleted_at is null), case when exists (select 1 from public.competition_members where id = member_invited_owner) then gen_random_uuid() else member_invited_owner end) into member_invited_owner;
+
   insert into public.competition_members (
     id,
     competition_id,
@@ -290,7 +303,21 @@ begin
     status = excluded.status,
     invited_by_user_id = excluded.invited_by_user_id,
     joined_at = excluded.joined_at,
+    deleted_at = null,
     updated_at = timezone('utc', now());
+
+  select id into member_summer_owner from public.competition_members where competition_id = comp_summer_id and user_id = target_user_id and deleted_at is null;
+  select id into member_summer_luna from public.competition_members where competition_id = comp_summer_id and user_id = friend_luna_id and deleted_at is null;
+  select id into member_summer_kai from public.competition_members where competition_id = comp_summer_id and user_id = friend_kai_id and deleted_at is null;
+  select id into member_summer_mia from public.competition_members where competition_id = comp_summer_id and user_id = friend_mia_id and deleted_at is null;
+  select id into member_strength_owner from public.competition_members where competition_id = comp_strength_id and user_id = target_user_id and deleted_at is null;
+  select id into member_strength_sofia from public.competition_members where competition_id = comp_strength_id and user_id = friend_sofia_id and deleted_at is null;
+  select id into member_strength_ethan from public.competition_members where competition_id = comp_strength_id and user_id = friend_ethan_id and deleted_at is null;
+  select id into member_strength_noah from public.competition_members where competition_id = comp_strength_id and user_id = friend_noah_id and deleted_at is null;
+  select id into member_completed_owner from public.competition_members where competition_id = comp_completed_id and user_id = target_user_id and deleted_at is null;
+  select id into member_completed_luna from public.competition_members where competition_id = comp_completed_id and user_id = friend_luna_id and deleted_at is null;
+  select id into member_invited_sofia from public.competition_members where competition_id = comp_invited_id and user_id = friend_sofia_id and deleted_at is null;
+  select id into member_invited_owner from public.competition_members where competition_id = comp_invited_id and user_id = target_user_id and deleted_at is null;
 
   insert into public.user_personal_goals (
     id,
