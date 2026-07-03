@@ -22,6 +22,11 @@ type TitleMode = "show" | "hide";
 type TitleAlign = "left" | "center" | "right";
 type ControlPanel = "style" | "visual" | "title" | "layout" | "metrics";
 type TextColorTarget = "title" | "brand" | "date";
+type TextProtectionMode = "auto" | "none" | "shadow" | "outline" | "enhanced";
+type TextProtectionStrength = "soft" | "medium" | "strong";
+type TextOutlineTone = "auto" | "dark" | "light";
+type TextShadowResolver = (color: string) => string;
+type StrokeOutlineResolver = (color: string) => { color: string; width: number } | null;
 
 type ShareMetric = {
   id: string;
@@ -56,10 +61,11 @@ const TIMELINE_TICK_AVERAGE_CHAR_WIDTH = 0.58;
 const SHARE_COLOR_SWATCHES = ["#ffffff", "#64748b", "#2563eb", "#10b981", "#f59e0b", "#ef4444"];
 const DEFAULT_RECORD_LIMIT = 5;
 const DEFAULT_SELECTED_METRIC_IDS = ["weight", "muscle", "fatPercent"];
-const SHARE_TEXT_SHADOW_LIGHT =
-  "0 1px 0 rgba(255,255,255,0.74), 0 2px 5px rgba(16,35,63,0.12), 0 8px 18px rgba(16,35,63,0.08)";
-const SHARE_TEXT_SHADOW_DARK =
-  "0 1px 1px rgba(0,0,0,0.38), 0 3px 8px rgba(0,0,0,0.28), 0 10px 22px rgba(0,0,0,0.18)";
+const TEXT_PROTECTION_STRENGTH = {
+  soft: { dark: 0.2, blur: 0.12, light: 0.34 },
+  medium: { dark: 0.34, blur: 0.2, light: 0.52 },
+  strong: { dark: 0.48, blur: 0.28, light: 0.68 },
+} as const satisfies Record<TextProtectionStrength, { dark: number; blur: number; light: number }>;
 const CID_METRIC_IDS = ["weight", "muscle", "fat"];
 const CID_SCALE_PADDING = 10;
 const CID_SCALE_STEP = 10;
@@ -85,8 +91,97 @@ function isPresetShareColor(color: string) {
   return SHARE_COLOR_SWATCHES.some((swatch) => swatch.toLowerCase() === color.toLowerCase());
 }
 
-function getShareTextShadow(background: ShareBackground) {
-  return background === "dark" ? SHARE_TEXT_SHADOW_DARK : SHARE_TEXT_SHADOW_LIGHT;
+function resolveTextProtectionMode(background: ShareBackground, customOpacity: number, mode: TextProtectionMode): Exclude<TextProtectionMode, "auto"> {
+  if (mode !== "auto") {
+    return mode;
+  }
+
+  if (background === "transparent" || (background === "custom" && customOpacity < 70)) {
+    return "enhanced";
+  }
+
+  if (background === "dark") {
+    return "shadow";
+  }
+
+  return "none";
+}
+
+function getColorLuminance(color: string) {
+  const normalized = color.trim().toLowerCase();
+
+  if (normalized.startsWith("#")) {
+    return getHexLuminance(normalized);
+  }
+
+  const channels = normalized.match(/\d+(?:\.\d+)?/g)?.slice(0, 3).map(Number);
+
+  if (!channels || channels.length < 3 || !channels.every(Number.isFinite)) {
+    return null;
+  }
+
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function resolveOutlineTone(color: string, tone: TextOutlineTone): Exclude<TextOutlineTone, "auto"> {
+  if (tone !== "auto") {
+    return tone;
+  }
+
+  const luminance = getColorLuminance(color);
+
+  return luminance != null && luminance > 150 ? "dark" : "light";
+}
+
+function getShareTextShadow(background: ShareBackground, customOpacity: number, mode: TextProtectionMode, strength: TextProtectionStrength, outlineTone: TextOutlineTone, color: string) {
+  const resolvedMode = resolveTextProtectionMode(background, customOpacity, mode);
+  const opacity = TEXT_PROTECTION_STRENGTH[strength];
+
+  if (resolvedMode === "none") {
+    return "none";
+  }
+
+  const softShadow = [
+    `0 1px 2px rgba(15,23,42,${opacity.dark})`,
+    `0 5px 14px rgba(15,23,42,${opacity.blur})`,
+  ];
+
+  if (resolvedMode === "shadow") {
+    return softShadow.join(", ");
+  }
+
+  const resolvedOutlineTone = resolveOutlineTone(color, outlineTone);
+  const outlineColor =
+    resolvedOutlineTone === "dark" ? `rgba(15,23,42,${Math.min(0.82, opacity.dark + 0.2)})` : `rgba(255,255,255,${opacity.light})`;
+  const outline = [
+    `1px 0 0 ${outlineColor}`,
+    `-1px 0 0 ${outlineColor}`,
+    `0 1px 0 ${outlineColor}`,
+    `0 -1px 0 ${outlineColor}`,
+  ];
+
+  if (resolvedMode === "outline") {
+    return outline.join(", ");
+  }
+
+  return [...outline, ...softShadow].join(", ");
+}
+
+function getShareStrokeOutline(background: ShareBackground, customOpacity: number, mode: TextProtectionMode, strength: TextProtectionStrength, outlineTone: TextOutlineTone, color: string) {
+  const resolvedMode = resolveTextProtectionMode(background, customOpacity, mode);
+
+  if (resolvedMode !== "outline" && resolvedMode !== "enhanced") {
+    return null;
+  }
+
+  const opacity = TEXT_PROTECTION_STRENGTH[strength];
+  const resolvedOutlineTone = resolveOutlineTone(color, outlineTone);
+  const strokeColor = resolvedOutlineTone === "dark" ? `rgba(15,23,42,${Math.min(0.82, opacity.dark + 0.2)})` : `rgba(255,255,255,${opacity.light})`;
+
+  return {
+    color: strokeColor,
+    width: strength === "strong" ? 5 : strength === "medium" ? 4 : 3.25,
+  };
 }
 
 function withReadableMetricLabel(metric: ChartMetric, labels: Record<string, string>) {
@@ -587,7 +682,7 @@ function TimelineTick({
   payload,
   fill,
   slotWidth,
-  textShadow,
+  textShadowForColor,
   visibleDateSet,
 }: {
   x?: number;
@@ -595,10 +690,11 @@ function TimelineTick({
   payload?: { value?: string };
   fill?: string;
   slotWidth: number;
-  textShadow: string;
+  textShadowForColor: TextShadowResolver;
   visibleDateSet: Set<string>;
 }) {
   const value = payload?.value;
+  const tickColor = fill ?? "#64748b";
 
   if (!value || !visibleDateSet.has(value)) {
     return null;
@@ -615,10 +711,10 @@ function TimelineTick({
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      <text dominantBaseline="middle" fill={fill} fontSize={monthLabel.fontSize} fontWeight={800} style={{ textShadow }} textAnchor="middle" x={0} y={4}>
+      <text dominantBaseline="middle" fill={fill} fontSize={monthLabel.fontSize} fontWeight={800} style={{ textShadow: textShadowForColor(tickColor) }} textAnchor="middle" x={0} y={4}>
         {monthLabel.text}
       </text>
-      <text dominantBaseline="middle" fill={fill} fontSize={dayLabel.fontSize} fontWeight={800} style={{ textShadow }} textAnchor="middle" x={0} y={13}>
+      <text dominantBaseline="middle" fill={fill} fontSize={dayLabel.fontSize} fontWeight={800} style={{ textShadow: textShadowForColor(tickColor) }} textAnchor="middle" x={0} y={13}>
         {dayLabel.text}
       </text>
     </g>
@@ -775,8 +871,21 @@ function OptionPill({
   );
 }
 
-function MetricTrendPreview({ background, item, textShadow, visibleDates }: { background: ShareBackground; item: ShareMetric; textShadow: string; visibleDates: string[] }) {
+function MetricTrendPreview({
+  background,
+  item,
+  strokeOutlineForColor,
+  textShadowForColor,
+  visibleDates,
+}: {
+  background: ShareBackground;
+  item: ShareMetric;
+  strokeOutlineForColor: StrokeOutlineResolver;
+  textShadowForColor: TextShadowResolver;
+  visibleDates: string[];
+}) {
   const visibleDateSet = useMemo(() => new Set(visibleDates), [visibleDates]);
+  const strokeOutline = strokeOutlineForColor(item.metric.color);
   const chartPoints = useMemo(
     () =>
       item.points.map((point) => ({
@@ -789,14 +898,14 @@ function MetricTrendPreview({ background, item, textShadow, visibleDates }: { ba
   return (
     <div className={cn("grid min-h-[2.45rem] min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-center gap-2 rounded-[0.75rem] px-2.5 py-1", background === "dark" ? "bg-white/7" : "bg-white/62")}>
       <div className="min-w-0">
-        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color, textShadow }}>
+        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color, textShadow: textShadowForColor(item.metric.color) }}>
           {item.metric.label}
         </p>
         <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-          <p className="font-display text-base leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
+          <p className="font-display text-base leading-none tabular-nums" style={{ color: item.metric.color, textShadow: textShadowForColor(item.metric.color) }}>
             {formatShareNumber(item.latestValue)}
           </p>
-          <p className="truncate text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
+          <p className="truncate text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color, textShadow: textShadowForColor(item.metric.color) }}>
             {formatDelta(item.delta)}
           </p>
         </div>
@@ -822,7 +931,7 @@ function MetricTrendPreview({ background, item, textShadow, visibleDates }: { ba
             />
               <Line
               dataKey="value"
-              dot={{ fill: item.metric.color, r: 2.5, strokeWidth: 0 }}
+              dot={{ fill: item.metric.color, r: 2.5, stroke: strokeOutline?.color ?? item.metric.color, strokeWidth: strokeOutline ? 1.8 : 0 }}
               isAnimationActive={false}
               stroke={item.metric.color}
               strokeOpacity={0}
@@ -833,10 +942,18 @@ function MetricTrendPreview({ background, item, textShadow, visibleDates }: { ba
                 dataKey="labelValue"
                 formatter={(value: number | null) => (value != null ? formatShareNumber(value) : "")}
                 position="top"
-                style={{ fill: item.metric.color, fontSize: 7.5, fontWeight: 700, textShadow }}
+                style={{ fill: item.metric.color, fontSize: 7.5, fontWeight: 700, textShadow: textShadowForColor(item.metric.color) }}
               />
             </Line>
-            <Customized component={DirectionalTrendOverlay} />
+            <Customized
+              component={(props: unknown) => (
+                <DirectionalTrendOverlay
+                  {...(props as Parameters<typeof DirectionalTrendOverlay>[0])}
+                  outlineStroke={strokeOutline?.color}
+                  outlineStrokeWidth={strokeOutline?.width}
+                />
+              )}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -849,14 +966,14 @@ function ShareTimelineChart({
   dateColor,
   onVisibleTicksChange,
   points,
-  textShadow,
+  textShadowForColor,
   ticks,
 }: {
   background: ShareBackground;
   dateColor: string;
   onVisibleTicksChange: (ticks: string[]) => void;
   points: ShareMetric["points"];
-  textShadow: string;
+  textShadowForColor: TextShadowResolver;
   ticks: string[];
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -907,7 +1024,7 @@ function ShareTimelineChart({
             axisLine={{ stroke: background === "dark" ? "#ffffff26" : "#0000001a" }}
             dataKey="date"
             interval={0}
-            tick={<TimelineTick fill={dateColor} slotWidth={tickSlotWidth} textShadow={textShadow} visibleDateSet={visibleTickSet} />}
+            tick={<TimelineTick fill={dateColor} slotWidth={tickSlotWidth} textShadowForColor={textShadowForColor} visibleDateSet={visibleTickSet} />}
             tickLine={false}
             ticks={visibleTicks}
           />
@@ -919,18 +1036,18 @@ function ShareTimelineChart({
   );
 }
 
-function MetricCurrentPreview({ background, item, textShadow }: { background: ShareBackground; item: ShareMetric; textShadow: string }) {
+function MetricCurrentPreview({ background, item, textShadowForColor }: { background: ShareBackground; item: ShareMetric; textShadowForColor: TextShadowResolver }) {
   return (
     <div className={cn("grid min-h-[2.45rem] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[0.75rem] px-2.5 py-1", background === "dark" ? "bg-white/7" : "bg-white/62")}>
       <div className="min-w-0">
-        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color, textShadow }}>
+        <p className="truncate text-[0.6875rem] font-semibold leading-4" style={{ color: item.metric.color, textShadow: textShadowForColor(item.metric.color) }}>
           {item.metric.label}
         </p>
-        <p className="mt-0.5 font-display text-base leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
+        <p className="mt-0.5 font-display text-base leading-none tabular-nums" style={{ color: item.metric.color, textShadow: textShadowForColor(item.metric.color) }}>
           {formatShareNumber(item.latestValue)}
         </p>
       </div>
-      <p className="shrink-0 text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color, textShadow }}>
+      <p className="shrink-0 text-[0.625rem] font-semibold leading-none tabular-nums" style={{ color: item.metric.color, textShadow: textShadowForColor(item.metric.color) }}>
         {formatDelta(item.delta)}
       </p>
     </div>
@@ -941,14 +1058,15 @@ function CidScaleAxis({
   background,
   color,
   metrics,
-  textShadow,
+  textShadowForColor,
 }: {
   background: ShareBackground;
   color: string;
   metrics: CidMetric[];
-  textShadow: string;
+  textShadowForColor: TextShadowResolver;
 }) {
   const scale = resolveCidScale(metrics);
+  const axisColor = color || (background === "dark" ? "#ffffff" : "#10213a");
 
   return (
     <div className="relative h-4 min-w-0">
@@ -957,9 +1075,9 @@ function CidScaleAxis({
           className={cn("absolute bottom-0 -translate-x-1/2 text-[0.5rem] font-black leading-none tabular-nums", tick === 100 ? "opacity-75" : "opacity-45")}
           key={tick}
           style={{
-            color: color || (background === "dark" ? "#ffffff" : "#10213a"),
+            color: axisColor,
             left: `${getCidScalePosition(tick, scale)}%`,
-            textShadow,
+            textShadow: textShadowForColor(axisColor),
           }}
         >
           {tick}
@@ -977,7 +1095,7 @@ function CidSharePreview({
   headingColor,
   metrics,
   sizeType,
-  textShadow,
+  textShadowForColor,
 }: {
   background: ShareBackground;
   bodyType: CidBodyType;
@@ -986,7 +1104,7 @@ function CidSharePreview({
   headingColor: string;
   metrics: CidMetric[];
   sizeType: CidSizeType;
-  textShadow: string;
+  textShadowForColor: TextShadowResolver;
 }) {
   const t = useTranslations();
   const scale = resolveCidScale(metrics);
@@ -1001,19 +1119,19 @@ function CidSharePreview({
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-col gap-2">
       <div className={cn("relative rounded-[1.15rem] px-3.5 py-2.5", background === "dark" ? "bg-white/8" : "bg-white/68")}>
-        <p className="absolute right-3 top-3 max-w-[4.75rem] truncate text-right font-display text-sm leading-none" style={{ color: brandColor, textShadow }}>
+        <p className="absolute right-3 top-3 max-w-[4.75rem] truncate text-right font-display text-sm leading-none" style={{ color: brandColor, textShadow: textShadowForColor(brandColor) }}>
           {brandLabel}
         </p>
         <div className="flex min-w-0 items-end gap-2">
-          <p className="font-display text-[4.8rem] font-black leading-[0.82]" style={{ color: headingColor, textShadow }}>
+          <p className="font-display text-[4.8rem] font-black leading-[0.82]" style={{ color: headingColor, textShadow: textShadowForColor(headingColor) }}>
             {bodyType}
           </p>
           <div className="min-w-0 pb-0.5 pr-12">
-            <p className="font-display text-2xl font-black leading-none" style={{ color: headingColor, textShadow }}>
+            <p className="font-display text-2xl font-black leading-none" style={{ color: headingColor, textShadow: textShadowForColor(headingColor) }}>
               {t("shareTrend.cidBodyType")}
               {sizeType ? <span className="ml-1 text-base font-black opacity-80">{t(`shareTrend.cidSize.${sizeType}`)}</span> : null}
             </p>
-            <p className="mt-0.5 line-clamp-2 text-[0.68rem] font-semibold leading-tight opacity-75" style={{ color: headingColor, textShadow }}>
+            <p className="mt-0.5 line-clamp-2 text-[0.68rem] font-semibold leading-tight opacity-75" style={{ color: headingColor, textShadow: textShadowForColor(headingColor) }}>
               {t(`shareTrend.cidDescriptions.${bodyType}`)}
             </p>
           </div>
@@ -1024,7 +1142,7 @@ function CidSharePreview({
         <div className="grid min-w-0 grid-cols-[3.75rem_minmax(0,1fr)_2.65rem] items-center gap-x-2">
           <div className="grid gap-2">
             {markerPoints.map(({ item }) => (
-              <p className="flex h-4 items-center truncate text-[0.7rem] font-black leading-none" key={item.id} style={{ color: item.color, textShadow }}>
+              <p className="flex h-4 items-center truncate text-[0.7rem] font-black leading-none" key={item.id} style={{ color: item.color, textShadow: textShadowForColor(item.color) }}>
                 {item.label}
               </p>
             ))}
@@ -1041,13 +1159,13 @@ function CidSharePreview({
           </div>
           <div className="grid gap-2">
             {markerPoints.map(({ item }) => (
-              <p className="flex h-4 items-center justify-end text-right font-display text-sm font-black leading-none tabular-nums" key={item.id} style={{ color: item.color, textShadow }}>
+              <p className="flex h-4 items-center justify-end text-right font-display text-sm font-black leading-none tabular-nums" key={item.id} style={{ color: item.color, textShadow: textShadowForColor(item.color) }}>
                 {formatShareNumber(item.value)}
               </p>
             ))}
           </div>
           <div aria-hidden />
-          <CidScaleAxis background={background} color={headingColor} metrics={metrics} textShadow={textShadow} />
+          <CidScaleAxis background={background} color={headingColor} metrics={metrics} textShadowForColor={textShadowForColor} />
           <div aria-hidden />
         </div>
       </div>
@@ -1071,8 +1189,10 @@ function SharePreviewContent({
   selectedMetrics,
   sharePosition,
   shareStyle,
+  strokeOutlineForColor,
   timelineDates,
   timelinePoints,
+  textShadowForColor,
   titleAlign,
   titleColor,
   titleMode,
@@ -1091,8 +1211,10 @@ function SharePreviewContent({
   selectedMetrics: ShareMetric[];
   sharePosition: SharePosition;
   shareStyle: ShareStyle;
+  strokeOutlineForColor: StrokeOutlineResolver;
   timelineDates: string[];
   timelinePoints: ShareMetric["points"];
+  textShadowForColor: TextShadowResolver;
   titleAlign: TitleAlign;
   titleColor: string;
   titleMode: TitleMode;
@@ -1101,7 +1223,6 @@ function SharePreviewContent({
   brandLabel: string;
 }) {
   const [visibleTimelineDates, setVisibleTimelineDates] = useState<string[]>(timelineDates);
-  const textShadow = getShareTextShadow(background);
 
   useEffect(() => {
     setVisibleTimelineDates(timelineDates);
@@ -1114,21 +1235,21 @@ function SharePreviewContent({
   return (
     <div className={cn("flex h-full w-full min-w-0 flex-col gap-2", sharePosition === "top" ? "justify-start" : sharePosition === "center" ? "justify-center" : "justify-end")}>
       <div className="min-w-0">
-        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))} style={{ color: titleColor, textShadow }}>
+        <div className={cn("flex min-w-0 w-full flex-1 flex-col", getTitleAlignClass(titleAlign))} style={{ color: titleColor, textShadow: textShadowForColor(titleColor) }}>
           <div className="min-w-0 max-w-full">{titleMode === "show" ? <h2 className="truncate font-display text-xl leading-tight">{previewTitle}</h2> : null}</div>
         </div>
       </div>
 
       {shareStyle === "cid" ? (
-        <CidSharePreview background={background} bodyType={cidBodyType} brandColor={brandColor} brandLabel={brandLabel} headingColor={cidHeadingColor} metrics={cidMetrics} sizeType={cidSizeType} textShadow={textShadow} />
+        <CidSharePreview background={background} bodyType={cidBodyType} brandColor={brandColor} brandLabel={brandLabel} headingColor={cidHeadingColor} metrics={cidMetrics} sizeType={cidSizeType} textShadowForColor={textShadowForColor} />
       ) : (
         <div className={cn("grid w-full min-w-0 gap-1.5", effectiveShareColumns === 1 ? "grid-cols-1" : "grid-cols-2")}>
           {selectedMetrics.length ? (
           selectedMetrics.map((item) =>
             shareStyle === "trend" ? (
-              <MetricTrendPreview background={background} item={item} key={item.id} textShadow={textShadow} visibleDates={visibleTimelineDates} />
+              <MetricTrendPreview background={background} item={item} key={item.id} strokeOutlineForColor={strokeOutlineForColor} textShadowForColor={textShadowForColor} visibleDates={visibleTimelineDates} />
             ) : (
-              <MetricCurrentPreview background={background} item={item} key={item.id} textShadow={textShadow} />
+              <MetricCurrentPreview background={background} item={item} key={item.id} textShadowForColor={textShadowForColor} />
             ),
           )
         ) : (
@@ -1142,9 +1263,9 @@ function SharePreviewContent({
       {shareStyle !== "cid" ? (
         <div className="grid w-full min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2 px-2.5">
           <div className="flex h-6 items-end pb-[3px]">
-            <p className="truncate font-display text-sm leading-none" style={{ color: brandColor, textShadow }}>{brandLabel}</p>
+            <p className="truncate font-display text-sm leading-none" style={{ color: brandColor, textShadow: textShadowForColor(brandColor) }}>{brandLabel}</p>
           </div>
-          {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} onVisibleTicksChange={handleVisibleTicksChange} points={timelinePoints} textShadow={textShadow} ticks={timelineDates} /> : null}
+          {shareStyle === "trend" ? <ShareTimelineChart background={background} dateColor={dateColor} onVisibleTicksChange={handleVisibleTicksChange} points={timelinePoints} textShadowForColor={textShadowForColor} ticks={timelineDates} /> : null}
         </div>
       ) : null}
     </div>
@@ -1189,6 +1310,9 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const [titleMode, setTitleMode] = useState<TitleMode>("hide");
   const [titleAlign, setTitleAlign] = useState<TitleAlign>("left");
   const [textColors, setTextColors] = useState<Partial<Record<TextColorTarget, string>>>({});
+  const [textProtectionMode, setTextProtectionMode] = useState<TextProtectionMode>("auto");
+  const [textProtectionStrength, setTextProtectionStrength] = useState<TextProtectionStrength>("medium");
+  const [textOutlineTone, setTextOutlineTone] = useState<TextOutlineTone>("auto");
   const [isSaving, setIsSaving] = useState(false);
   const [activeControl, setActiveControl] = useState<ControlPanel>("style");
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
@@ -1228,6 +1352,23 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
     { value: "center" as const, label: t("shareTrend.alignCenter") },
     { value: "right" as const, label: t("shareTrend.alignRight") },
   ];
+  const textProtectionModeOptions = [
+    { value: "auto" as const, label: t("shareTrend.textProtectionAuto") },
+    { value: "none" as const, label: t("shareTrend.textProtectionNone") },
+    { value: "shadow" as const, label: t("shareTrend.textProtectionShadow") },
+    { value: "outline" as const, label: t("shareTrend.textProtectionOutline") },
+    { value: "enhanced" as const, label: t("shareTrend.textProtectionEnhanced") },
+  ];
+  const textProtectionStrengthOptions = [
+    { value: "soft" as const, label: t("shareTrend.protectionSoft") },
+    { value: "medium" as const, label: t("shareTrend.protectionMedium") },
+    { value: "strong" as const, label: t("shareTrend.protectionStrong") },
+  ];
+  const textOutlineToneOptions = [
+    { value: "auto" as const, label: t("shareTrend.outlineToneAuto") },
+    { value: "dark" as const, label: t("shareTrend.outlineToneDark") },
+    { value: "light" as const, label: t("shareTrend.outlineToneLight") },
+  ];
   const previewRef = useRef<HTMLDivElement>(null);
   const coloredShareMetrics = useMemo(
     () =>
@@ -1260,6 +1401,14 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
   const effectiveBrandColor = textColors.brand ?? automaticMutedTextColor;
   const effectiveDateColor = textColors.date ?? automaticMutedTextColor;
   const effectiveCidHeadingColor = syncMetricColors ? colorControlledMetrics[0]?.metric.color ?? effectiveTitleColor : effectiveTitleColor;
+  const textShadowForColor = useCallback<TextShadowResolver>(
+    (color) => getShareTextShadow(shareBackground, customBackgroundOpacity, textProtectionMode, textProtectionStrength, textOutlineTone, color),
+    [customBackgroundOpacity, shareBackground, textOutlineTone, textProtectionMode, textProtectionStrength],
+  );
+  const strokeOutlineForColor = useCallback<StrokeOutlineResolver>(
+    (color) => getShareStrokeOutline(shareBackground, customBackgroundOpacity, textProtectionMode, textProtectionStrength, textOutlineTone, color),
+    [customBackgroundOpacity, shareBackground, textOutlineTone, textProtectionMode, textProtectionStrength],
+  );
   const textColorOptions = [
     { value: "title" as const, label: t("shareTrend.titlePanel"), color: effectiveTitleColor },
     { value: "brand" as const, label: t("shareTrend.brand"), color: effectiveBrandColor },
@@ -1494,8 +1643,10 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
             selectedMetrics={selectedMetrics}
             sharePosition={effectiveSharePosition}
             shareStyle={shareStyle}
+            strokeOutlineForColor={strokeOutlineForColor}
             timelineDates={timelineDates}
             timelinePoints={timelinePoints}
+            textShadowForColor={textShadowForColor}
             titleAlign={titleAlign}
             titleColor={effectiveTitleColor}
             titleMode={titleMode}
@@ -1584,6 +1735,51 @@ export function TrendShareWorkspace({ records }: TrendShareWorkspaceProps) {
                 </div>
               </>
             ) : null}
+          </div>
+        ) : null}
+
+        {activeControl === "visual" ? (
+          <div className="mt-4 grid min-w-0 gap-3">
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.textProtection")}</p>
+              <PillScrollGroup>
+                {textProtectionModeOptions.map((option) => (
+                  <OptionPill active={textProtectionMode === option.value} key={option.value} onClick={() => setTextProtectionMode(option.value)}>
+                    {option.label}
+                  </OptionPill>
+                ))}
+              </PillScrollGroup>
+            </div>
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.protectionStrength")}</p>
+              <PillScrollGroup>
+                {textProtectionStrengthOptions.map((option) => (
+                  <OptionPill
+                    active={textProtectionStrength === option.value}
+                    disabled={textProtectionMode === "none"}
+                    key={option.value}
+                    onClick={() => setTextProtectionStrength(option.value)}
+                  >
+                    {option.label}
+                  </OptionPill>
+                ))}
+              </PillScrollGroup>
+            </div>
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("shareTrend.outlineTone")}</p>
+              <PillScrollGroup>
+                {textOutlineToneOptions.map((option) => (
+                  <OptionPill
+                    active={textOutlineTone === option.value}
+                    disabled={textProtectionMode === "none" || textProtectionMode === "shadow"}
+                    key={option.value}
+                    onClick={() => setTextOutlineTone(option.value)}
+                  >
+                    {option.label}
+                  </OptionPill>
+                ))}
+              </PillScrollGroup>
+            </div>
           </div>
         ) : null}
 
