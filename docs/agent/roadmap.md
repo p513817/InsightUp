@@ -20,6 +20,7 @@ These are no longer roadmap items; treat them as existing behavior to preserve.
 - friend codes, friend snapshots, and friend history
 - personal goals with negative progress support
 - competitions with invited members, member goals, and leaderboard progress
+- shareable trend snapshots with image export and text protection controls
 - Vercel production deployment target
 
 ## Phase 1: Product Hardening
@@ -115,7 +116,8 @@ Goal:
 
 Tasks:
 
-- Stabilize share page output and screenshot/export behavior.
+- Extend sharing beyond the current trend snapshot surface when goal progress sharing is needed.
+- Keep screenshot/export behavior stable as share styling controls evolve.
 - Add report-style summaries for a selected date range.
 - Consider privacy controls for shared metrics.
 - Keep exports based on included chart records unless explicitly configured otherwise.
