@@ -10,6 +10,7 @@ The product rule that matters most: a record can exist in history without being 
 - InBody record CRUD with soft deletion and chart inclusion toggles.
 - Dashboard trend charts for overall and segmental metrics.
 - Dashboard preferences for layout, metric order, and trend display.
+- Shareable trend snapshots with chart styling, text protection controls, and image export.
 - AI trend summaries through Gemini, with cached/latest fetch separated from explicit regeneration.
 - AI scan draft input for InBody sheets, controlled by daily feature entitlement.
 - Personal goals with positive, zero, and negative progress handling.
