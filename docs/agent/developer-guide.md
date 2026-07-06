@@ -99,6 +99,12 @@ After deployment-related, auth, API, or database changes, verify:
 - Keep RLS in mind for every user-owned table.
 - Prefer RPCs for multi-table writes that must be authorization-safe and atomic.
 
+## Seed Data
+
+- `infra/supabase/seed.example.sql` is a rich example seed that expects `target_user_id` to be changed to a real `auth.users.id` before use.
+- `infra/supabase/seed.demo-competitions.sql` creates the fixed local demo owner if needed and seeds demo friends, competitions, records, and goals.
+- Both seed files are intended to be rerunnable: fixed IDs and upserts update existing rows instead of creating duplicate active demo rows.
+
 ## Known Constraints
 
 - `infra/supabase/schema.sql` is not always a full latest dump. For rollout truth, inspect ordered migrations.

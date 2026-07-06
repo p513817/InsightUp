@@ -62,6 +62,9 @@ The app intentionally remains a single deployable unit. Route handlers under `ap
 Current route handlers include:
 
 - `GET /api/me`
+- `POST /api/test-auth/start` (test-only, local development shortcut)
+- `POST /api/test-auth/reset` (test-only)
+- `POST /api/test-auth/login` (test-only)
 - `GET /api/records`
 - `POST /api/records`
 - `PATCH /api/records/:recordId`
