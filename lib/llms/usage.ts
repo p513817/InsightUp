@@ -11,6 +11,11 @@ export interface FeatureUsageRow {
   last_used_at: string | null;
 }
 
+export interface FeatureUsageReservation {
+  allowed: boolean;
+  usageCount: number;
+}
+
 export function parseEntitlementConfig(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {} as Record<string, unknown>;
@@ -81,6 +86,48 @@ export async function consumeDailyFeatureUsage(
     },
     { onConflict: "user_id,feature_key,request_date" },
   );
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function reserveDailyFeatureUsage(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  featureKey: string,
+  requestDate: string,
+  dailyLimit: number | null,
+) {
+  const { data, error } = await supabase.rpc("reserve_my_daily_feature_usage", {
+    input_feature: featureKey,
+    input_request_date: requestDate,
+    input_daily_limit: dailyLimit,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { allowed?: boolean | null; usage_count?: number | null }
+    | null
+    | undefined;
+
+  return {
+    allowed: Boolean(row?.allowed),
+    usageCount: typeof row?.usage_count === "number" ? row.usage_count : 0,
+  } satisfies FeatureUsageReservation;
+}
+
+export async function releaseDailyFeatureUsage(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  featureKey: string,
+  requestDate: string,
+) {
+  const { error } = await supabase.rpc("release_my_daily_feature_usage", {
+    input_feature: featureKey,
+    input_request_date: requestDate,
+  });
 
   if (error) {
     throw error;

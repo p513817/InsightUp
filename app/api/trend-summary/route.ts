@@ -15,6 +15,7 @@ import {
   resolveTrendSummaryEntitlement,
 } from "@/lib/inbody/trend-summary-service";
 import { getServerTranslations } from "@/lib/i18n/server";
+import { releaseDailyFeatureUsage, reserveDailyFeatureUsage } from "@/lib/llms/usage";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 async function getAuthenticatedContext() {
@@ -100,15 +101,20 @@ export async function GET() {
 
 export async function POST() {
   const { t } = await getServerTranslations();
+  let supabase: Awaited<ReturnType<typeof createServerSupabaseClient>> | null = null;
+  let requestDate: string | null = null;
+  let usageReserved = false;
 
   try {
-    const { supabase, user } = await getAuthenticatedContext();
+    const context = await getAuthenticatedContext();
+    supabase = context.supabase;
+    const { user } = context;
 
     if (!user) {
       return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
-    const requestDate = getTodayTaipeiDate();
+    requestDate = getTodayTaipeiDate();
     const entitlement = await resolveTrendSummaryEntitlement(supabase);
 
     if (entitlement.dailyLimit === 0) {
@@ -143,6 +149,28 @@ export async function POST() {
       return NextResponse.json({ message: t("summary.errors.needMoreRecords") }, { status: 400 });
     }
 
+    const reservation = await reserveDailyFeatureUsage(supabase, "trend_summary", requestDate, entitlement.dailyLimit);
+
+    if (!reservation.allowed) {
+      const structuredSummary = todaySummary?.summary_text ? decodeStoredStructuredSummary(todaySummary.summary_text) : null;
+
+      return NextResponse.json({
+        summary: structuredSummary ? toLegacySummaryText(structuredSummary) : null,
+        structuredSummary,
+        generatedAt: todaySummary?.last_generated_at ?? todaySummary?.created_at ?? null,
+        modelName: todaySummary?.model_name ?? null,
+        provider: "cache",
+        reused: true,
+        requestDate,
+        usageCount: reservation.usageCount,
+        dailyLimit: entitlement.dailyLimit,
+        planCode: entitlement.planCode,
+        canGenerate: false,
+        message: t("summary.errors.limitReached"),
+      });
+    }
+
+    usageReserved = true;
     const prompt = buildGeminiPrompt(records);
     const llmResult = await generateText(prompt, getModelPool(entitlement.config));
     const structuredSummary = parseStructuredSummaryText(llmResult.text);
@@ -153,7 +181,6 @@ export async function POST() {
 
     const summary = toLegacySummaryText(structuredSummary);
     const storedSummary = JSON.stringify(structuredSummary);
-    const nextUsageCount = currentUsageCount + 1;
 
     const { error: upsertError } = await supabase.from("llm_trend_daily_summaries").upsert(
       {
@@ -163,7 +190,7 @@ export async function POST() {
         summary_text: storedSummary,
         model_name: llmResult.model,
         source_record_count: records.length,
-        usage_count: nextUsageCount,
+        usage_count: reservation.usageCount,
         last_generated_at: new Date().toISOString(),
       },
       { onConflict: "user_id,feature_key,request_date" },
@@ -180,13 +207,21 @@ export async function POST() {
       modelName: llmResult.model,
       provider: "gemini",
       reused: false,
-      usageCount: nextUsageCount,
+      usageCount: reservation.usageCount,
       dailyLimit: entitlement.dailyLimit,
       planCode: entitlement.planCode,
-      canGenerate: entitlement.dailyLimit == null || nextUsageCount < entitlement.dailyLimit,
+      canGenerate: entitlement.dailyLimit == null || reservation.usageCount < entitlement.dailyLimit,
       requestDate,
     });
   } catch (error) {
+    if (usageReserved && supabase && requestDate) {
+      try {
+        await releaseDailyFeatureUsage(supabase, "trend_summary", requestDate);
+      } catch {
+        // Preserve the original application error when the refund path fails.
+      }
+    }
+
     if (error instanceof LlmProviderError) {
       return mapLlmErrorResponse(error);
     }
