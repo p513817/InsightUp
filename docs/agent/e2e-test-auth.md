@@ -7,6 +7,7 @@ Use this document when implementing or running authenticated local/Preview tests
 InsightUp uses Google OAuth for real users, but E2E tests should not automate the Google login UI. The app provides protected test-only endpoints for fixed personas and resettable seed scenarios:
 
 - `GET /test-auth`
+- `POST /api/test-auth/start`
 - `POST /api/test-auth/reset`
 - `POST /api/test-auth/login`
 
@@ -14,6 +15,7 @@ The implementation lives in:
 
 - `app/test-auth/page.tsx`
 - `components/test-auth/test-auth-panel.tsx`
+- `app/api/test-auth/start/route.ts`
 - `app/api/test-auth/login/route.ts`
 - `app/api/test-auth/reset/route.ts`
 - `app/api/test-auth/_shared.ts`

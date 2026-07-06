@@ -10,7 +10,8 @@ This directory contains the SQL files for the InsightUp database.
   Initial migration for a fresh Supabase project.
 - `seed.example.sql`
   Optional rich example seed data for a real authenticated user, including
-  records, friends, competitions, and goals.
+  records, friends, competitions, and goals. The seed is rerunnable and
+  restores soft-deleted competition memberships on repeat runs.
 
 ## Recommended Usage
 

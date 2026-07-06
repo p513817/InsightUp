@@ -79,6 +79,9 @@ Current route handlers include:
 - `GET /api/friends`
 - `POST /api/friends`
 - `DELETE /api/friends/:friendUserId`
+- `POST /api/test-auth/start`
+- `POST /api/test-auth/reset`
+- `POST /api/test-auth/login`
 - `GET /api/competitions`
 - `POST /api/competitions`
 - `PATCH /api/competitions/:competitionId`
