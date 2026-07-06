@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_GEMINI_ROTATION_MODELS, LlmProviderError, generateText } from "@/lib/llms";
-import { consumeDailyFeatureUsage, getDailyFeatureUsage, resolveMyFeatureEntitlement } from "@/lib/llms/usage";
+import {
+  getDailyFeatureUsage,
+  releaseDailyFeatureUsage,
+  reserveDailyFeatureUsage,
+  resolveMyFeatureEntitlement,
+} from "@/lib/llms/usage";
 import { MAX_UPLOAD_SIZE_BYTES, isOversizedScanUpload } from "@/lib/inbody/scan-upload";
 import { buildRecordScanPrompt, parseRecordScanResult } from "@/lib/inbody/scan";
 import { getTodayTaipeiDate } from "@/lib/inbody/trend-summary";
@@ -63,15 +68,20 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { t } = await getServerTranslations();
+  let supabase: Awaited<ReturnType<typeof createServerSupabaseClient>> | null = null;
+  let requestDate: string | null = null;
+  let usageReserved = false;
 
   try {
-    const { supabase, user } = await getAuthenticatedContext();
+    const context = await getAuthenticatedContext();
+    supabase = context.supabase;
+    const { user } = context;
 
     if (!user) {
       return NextResponse.json({ message: t("api.unauthorized") }, { status: 401 });
     }
 
-    const requestDate = getTodayTaipeiDate();
+    requestDate = getTodayTaipeiDate();
     const entitlement = await resolveMyFeatureEntitlement(supabase, FEATURE_KEY);
     const usage = await getDailyFeatureUsage(supabase, user.id, FEATURE_KEY, requestDate);
     const usageCount = usage?.usage_count ?? 0;
@@ -123,6 +133,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: t("api.scan.fileTooLarge") }, { status: 400 });
     }
 
+    const reservation = await reserveDailyFeatureUsage(supabase, FEATURE_KEY, requestDate, entitlement.dailyLimit);
+
+    if (!reservation.allowed) {
+      return NextResponse.json(
+        {
+          message: t("api.scan.dailyLimitReached"),
+          requestDate,
+          planCode: entitlement.planCode,
+          dailyLimit: entitlement.dailyLimit,
+          usageCount: reservation.usageCount,
+          canScan: false,
+        },
+        { status: 429 },
+      );
+    }
+
+    usageReserved = true;
     const buffer = Buffer.from(await file.arrayBuffer());
     const prompt = buildRecordScanPrompt();
     const llmResult = await generateText(prompt, [...DEFAULT_GEMINI_ROTATION_MODELS], {
@@ -130,9 +157,6 @@ export async function POST(request: Request) {
       data: buffer.toString("base64"),
     });
     const parsed = parseRecordScanResult(llmResult.text);
-    const nextUsageCount = usageCount + 1;
-
-    await consumeDailyFeatureUsage(supabase, user.id, FEATURE_KEY, requestDate, nextUsageCount);
 
     return NextResponse.json({
       draft: {
@@ -146,10 +170,18 @@ export async function POST(request: Request) {
       requestDate,
       planCode: entitlement.planCode,
       dailyLimit: entitlement.dailyLimit,
-      usageCount: nextUsageCount,
-      canScan: entitlement.dailyLimit == null || nextUsageCount < entitlement.dailyLimit,
+      usageCount: reservation.usageCount,
+      canScan: entitlement.dailyLimit == null || reservation.usageCount < entitlement.dailyLimit,
     });
   } catch (error) {
+    if (usageReserved && supabase && requestDate) {
+      try {
+        await releaseDailyFeatureUsage(supabase, FEATURE_KEY, requestDate);
+      } catch {
+        // Preserve the original application error when the refund path fails.
+      }
+    }
+
     if (error instanceof LlmProviderError) {
       return NextResponse.json(
         {
