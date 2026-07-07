@@ -42,6 +42,10 @@ export type CompetitionCreateValues = z.infer<typeof competitionCreateSchema>;
 export type CompetitionUpdateValues = z.infer<typeof competitionUpdateSchema>;
 export type CompetitionGoalCreateValues = z.infer<typeof competitionGoalCreateSchema>;
 
+export const COMPETITION_INVITEE_MUST_BE_FRIEND_ERROR = "invitee must already be your friend";
+export const COMPETITION_INVITEE_PROFILE_NOT_FOUND_ERROR = "invitee profile not found";
+export const COMPETITION_INVITEE_SELF_ERROR = "cannot invite yourself";
+
 export type CompetitionProgressRow = {
   competition_id: string;
   competition_name: string;
@@ -163,6 +167,87 @@ function mapProgressRow(row: CompetitionProgressRow) {
 
 export function normalizeCompetitionInviteeCode(value: string) {
   return normalizeFriendCode(value);
+}
+
+export function isCompetitionInviteeValidationError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message === COMPETITION_INVITEE_MUST_BE_FRIEND_ERROR
+    || error.message === COMPETITION_INVITEE_PROFILE_NOT_FOUND_ERROR
+  );
+}
+
+export function isCompetitionInviteeSelfError(error: unknown) {
+  return error instanceof Error && error.message === COMPETITION_INVITEE_SELF_ERROR;
+}
+
+export async function validateCompetitionInviteeUserIds(
+  supabase: SupabaseClient,
+  userId: string,
+  inviteeUserIds: string[],
+) {
+  const dedupedInviteeUserIds = [...new Set(inviteeUserIds.filter((value) => value !== userId))];
+
+  if (dedupedInviteeUserIds.length === 0) {
+    return dedupedInviteeUserIds;
+  }
+
+  const { data, error } = await supabase
+    .from("user_friendships")
+    .select("friend_user_id")
+    .eq("user_id", userId)
+    .in("friend_user_id", dedupedInviteeUserIds);
+
+  if (error) {
+    throw error;
+  }
+
+  const allowedFriendIds = new Set(
+    (((data || []) as Array<{ friend_user_id: string }>)).map((row) => row.friend_user_id),
+  );
+
+  if (dedupedInviteeUserIds.some((inviteeUserId) => !allowedFriendIds.has(inviteeUserId))) {
+    throw new Error(COMPETITION_INVITEE_MUST_BE_FRIEND_ERROR);
+  }
+
+  return dedupedInviteeUserIds;
+}
+
+export async function validateCompetitionInviteeFriendCodes(
+  supabase: SupabaseClient,
+  userId: string,
+  inviteeFriendCodes: string[],
+) {
+  const normalizedInviteeFriendCodes = [...new Set(
+    inviteeFriendCodes
+      .map((value) => normalizeCompetitionInviteeCode(value))
+      .filter(Boolean),
+  )];
+
+  for (const inviteeFriendCode of normalizedInviteeFriendCodes) {
+    const { data, error } = await supabase.rpc("find_user_profile_by_friend_code", {
+      input_code: inviteeFriendCode,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    const profile = ((data || []) as Array<{ user_id: string }>)[0];
+
+    if (!profile) {
+      throw new Error(COMPETITION_INVITEE_PROFILE_NOT_FOUND_ERROR);
+    }
+
+    if (profile.user_id === userId) {
+      throw new Error(COMPETITION_INVITEE_SELF_ERROR);
+    }
+  }
+
+  return normalizedInviteeFriendCodes;
 }
 
 export function groupCompetitionProgressRows(rows: CompetitionProgressRow[]) {
@@ -289,11 +374,13 @@ export async function createCompetitionWithMembers(
   supabase: SupabaseClient,
   input: CompetitionCreateValues,
   inviteeUserIds: string[],
+  inviteeFriendCodes: string[],
 ) {
   const { data, error } = await supabase.rpc("create_competition_with_members", {
     input_name: input.name,
     input_target_date: input.targetDate,
     input_invitee_user_ids: inviteeUserIds,
+    input_invitee_friend_codes: inviteeFriendCodes,
   });
 
   if (error) {
@@ -308,12 +395,14 @@ export async function updateCompetitionWithMembers(
   competitionId: string,
   input: CompetitionUpdateValues,
   inviteeUserIds: string[],
+  inviteeFriendCodes: string[],
 ) {
   const { data, error } = await supabase.rpc("update_competition_with_members", {
     input_competition_id: competitionId,
     input_name: input.name,
     input_target_date: input.targetDate,
     input_invitee_user_ids: inviteeUserIds,
+    input_invitee_friend_codes: inviteeFriendCodes,
   });
 
   if (error) {
