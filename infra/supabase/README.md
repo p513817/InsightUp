@@ -11,6 +11,8 @@ This directory contains the SQL files for the InsightUp database.
 - `seed.example.sql`
   Optional rich example seed data for a real authenticated user, including
   records, friends, competitions, and goals.
+- `seed.demo-competitions.sql`
+  Optional rerunnable competition-only demo seed.
 
 ## Recommended Usage
 
@@ -19,6 +21,7 @@ For a new project:
 1. Run `infra/supabase/migrations/20260422_001_init.sql` in the Supabase SQL Editor.
 2. Verify that the tables and policies were created.
 3. Optionally run `infra/supabase/seed.example.sql`.
+4. Optionally run `infra/supabase/seed.demo-competitions.sql` for competition-only demo data.
 
 ## Why The Seed Uses A Real User ID
 
@@ -46,6 +49,7 @@ The example seed upserts:
 - 6 directional friendships for the owner
 - 12 friend InBody records
 - 4 competitions covering active, completed, and invited states
+- Competition-only rerunnable demo seed data
 - Multiple personal and competition-linked goals
 
 This is enough to test:
