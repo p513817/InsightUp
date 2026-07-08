@@ -18,6 +18,7 @@ This is the fastest handoff file for future agents. Read this before scanning th
 - AI trend summary fetch and explicit regeneration are separate flows.
 - AI and scan usage limits come from database entitlements, not hardcoded user/email bypasses.
 - AI scan remains review-first: generate a draft, let the user confirm, then save.
+- Share trend exports include configurable text protection and outline/shadow controls for readability.
 - Competition goal target dates are locked to the competition target date.
 - OAuth callback URLs must stay environment-driven.
 
@@ -28,6 +29,7 @@ This is the fastest handoff file for future agents. Read this before scanning th
 - Dashboard preferences: `app/api/preferences/dashboard/route.ts`, `lib/dashboard-preferences.ts`
 - AI trend summary: `app/api/trend-summary/route.ts`, `lib/inbody/trend-summary.ts`, `lib/inbody/trend-summary-service.ts`, `lib/llms/*`
 - AI scan: `app/api/records/scan/route.ts`, `lib/inbody/scan.ts`, `lib/inbody/scan-upload.ts`, `lib/llms/usage.ts`
+- Share workspace: `components/share/trend-share-workspace.tsx`, `components/charts/directional-trend-line.tsx`
 - Personal goals: `app/api/personal-goals/*`, `components/personal-goals/*`, `lib/personal-goals.ts`
 - Shared goal UI: `components/ui/goal-progress-bar.tsx`, `components/ui/goal-metric-progress-card.tsx`
 - Friends: `app/api/friends/*`, `components/friends/*`, `lib/friends/*`
