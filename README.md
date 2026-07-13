@@ -12,6 +12,7 @@ The product rule that matters most: a record can exist in history without being 
 - Dashboard preferences for layout, metric order, and trend display.
 - AI trend summaries through Gemini, with cached/latest fetch separated from explicit regeneration.
 - AI scan draft input for InBody sheets, controlled by daily feature entitlement.
+- Share page for trend snapshots with export and text-protection controls.
 - Personal goals with positive, zero, and negative progress handling.
 - Friends by friend code, friend snapshots, and friend history comparison.
 - Competitions with invited members, member goals, leaderboard progress, and owner-managed membership.
