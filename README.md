@@ -13,6 +13,7 @@ The product rule that matters most: a record can exist in history without being 
 - Shareable trend snapshots with chart styling, text protection controls, and image export.
 - AI trend summaries through Gemini, with cached/latest fetch separated from explicit regeneration.
 - AI scan draft input for InBody sheets, controlled by daily feature entitlement.
+- Shareable trend images with configurable text protection, outline tone, and export controls.
 - Personal goals with positive, zero, and negative progress handling.
 - Friends by friend code, friend snapshots, and friend history comparison.
 - Competitions with invited members, member goals, leaderboard progress, and owner-managed membership.
