@@ -596,19 +596,6 @@ on public.llm_daily_feature_usage
 for select
 using (auth.uid() = user_id);
 
-drop policy if exists "Users can insert their own llm daily feature usage" on public.llm_daily_feature_usage;
-create policy "Users can insert their own llm daily feature usage"
-on public.llm_daily_feature_usage
-for insert
-with check (auth.uid() = user_id);
-
-drop policy if exists "Users can update their own llm daily feature usage" on public.llm_daily_feature_usage;
-create policy "Users can update their own llm daily feature usage"
-on public.llm_daily_feature_usage
-for update
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
-
 create or replace function public.reserve_my_daily_feature_usage(
   input_feature text,
   input_request_date date,
